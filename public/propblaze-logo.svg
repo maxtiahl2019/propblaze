@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="flame" x1="100" y1="180" x2="100" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+    <linearGradient id="flameAccent" x1="80" y1="160" x2="120" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main flame body — wide base, tapering to sharp peak -->
+  <path d="M100 22 L62 108 L76 104 L64 148 L100 132 L136 148 L124 104 L138 108 Z"
+        fill="url(#flame)"/>
+
+  <!-- Inner highlight shard — centre -->
+  <path d="M100 44 L84 102 L100 96 L116 102 Z"
+        fill="url(#flameAccent)"/>
+
+  <!-- Left inner shard -->
+  <path d="M78 90 L68 136 L90 126 L96 100 Z"
+        fill="white" fill-opacity="0.12"/>
+
+  <!-- Right inner shard -->
+  <path d="M122 90 L132 136 L110 126 L104 100 Z"
+        fill="white" fill-opacity="0.08"/>
+
+  <!-- Base bar — grounding, property reference -->
+  <rect x="56" y="148" width="88" height="10" rx="5" fill="url(#flame)"/>
+</svg>

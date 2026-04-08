@@ -1,0 +1,262 @@
+'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/store/auth'
+import { useTranslation } from '@/lib/i18n/LangContext'
+import type { Lang } from '@/lib/i18n/translations'
+
+const NAV = [
+  {
+    href: '/dashboard',
+    label: 'Dashboard',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.9"/><rect x="8.5" y="1" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.4"/><rect x="1" y="8.5" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.4"/><rect x="8.5" y="8.5" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.9"/></svg>,
+  },
+  {
+    href: '/properties',
+    label: 'My Properties',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L1.5 7V14.5H5.5V10.5H10.5V14.5H14.5V7L8 1.5Z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" fill="currentColor" fillOpacity="0.1"/></svg>,
+  },
+  {
+    href: '/leads',
+    label: 'Leads',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="5" r="3" stroke="currentColor" strokeWidth="1.25"/><path d="M1 13.5C1 11.015 3.015 9 5.5 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/><path d="M11 9V14M8.5 11.5H13.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+    badge: '3',
+  },
+  {
+    href: '/distribution',
+    label: 'Distribution',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="8" r="1.5" fill="currentColor" fillOpacity="0.4"/><circle cx="8" cy="2.5" r="1.5" fill="currentColor" fillOpacity="0.7"/><circle cx="8" cy="13.5" r="1.5" fill="currentColor" fillOpacity="0.7"/><circle cx="13.5" cy="8" r="1.5" fill="currentColor"/><path d="M4 8H6.5M9.5 4L12 7M9.5 12L12 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+  },
+  {
+    href: '/agency-demo',
+    label: 'Agency View',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.25"/><path d="M5 11.5V14.5M11 11.5V14.5M3 14.5H13" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+    badge: '3',
+  },
+  {
+    href: '/billing',
+    label: 'Billing',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.25"/><path d="M1 6.5H15" stroke="currentColor" strokeWidth="1.25"/><rect x="3" y="9" width="3" height="1.5" rx="0.75" fill="currentColor" fillOpacity="0.5"/></svg>,
+  },
+  {
+    href: '/settings',
+    label: 'Settings & Profile',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.25"/><path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M12.6 3.4L11.5 4.5M4.5 11.5L3.4 12.6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+  },
+]
+
+// ─── Compact dark language switcher ──────────────────────────────────────────
+function LangBar() {
+  const { lang, setLang } = useTranslation()
+  const langs: { code: Lang; flag: string; label: string }[] = [
+    { code: 'en', flag: '🇬🇧', label: 'EN' },
+    { code: 'ru', flag: '🇷🇺', label: 'RU' },
+    { code: 'es', flag: '🇷🇸', label: 'SR' },  // using 'es' slot for Serbian
+  ]
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      {langs.map(l => (
+        <button key={l.code} onClick={() => setLang(l.code)} style={{
+          padding: '4px 8px', borderRadius: 6, border: 'none', cursor: 'pointer',
+          background: lang === l.code ? 'rgba(230,126,34,0.15)' : 'transparent',
+          color: lang === l.code ? '#e67e22' : 'rgba(255,255,255,0.3)',
+          fontSize: '0.65rem', fontWeight: lang === l.code ? 700 : 400,
+          transition: 'all 0.15s', letterSpacing: '0.05em',
+        }}>
+          {l.flag} {l.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export const Sidebar: React.FC = () => {
+  const pathname = usePathname()
+  const router = useRouter()
+  const { user, logout } = useAuth()
+  const [showProfile, setShowProfile] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
+
+  return (
+    <aside style={{
+      width: 220,
+      minWidth: 220,
+      height: '100vh',
+      position: 'sticky',
+      top: 0,
+      background: '#0c0c0e',
+      borderRight: '1px solid rgba(255,255,255,0.07)',
+      display: 'flex',
+      flexDirection: 'column',
+      zIndex: 100,
+    }}>
+      {/* Logo */}
+      <Link href="/" style={{ textDecoration: 'none', display: 'block' }}>
+        <div style={{
+          padding: '18px 16px 14px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          cursor: 'pointer',
+        }}>
+          <div style={{ width: 30, height: 30, flexShrink: 0 }}>
+            <svg viewBox="0 0 32 32" fill="none" width="30" height="30">
+              <defs>
+                <linearGradient id="sbg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#c0392b"/>
+                  <stop offset="100%" stopColor="#e67e22"/>
+                </linearGradient>
+              </defs>
+              <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="url(#sbg)"/>
+              <ellipse cx="16" cy="18" rx="4" ry="4" fill="white" fillOpacity="0.25"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'white', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PropBlaze</div>
+            <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>AI Platform</div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Language Switcher */}
+      <LangBar />
+
+      {/* Add Property CTA */}
+      <div style={{ padding: '12px 12px 8px' }}>
+        <Link href="/properties/new"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            padding: '9px 12px',
+            borderRadius: 10,
+            background: 'linear-gradient(135deg,#c0392b,#e67e22)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            textDecoration: 'none',
+            boxShadow: '0 2px 12px rgba(192,57,43,0.35)',
+          }}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1.5V10.5M1.5 6H10.5" stroke="white" strokeWidth="1.75" strokeLinecap="round"/>
+          </svg>
+          Add Property
+        </Link>
+      </div>
+
+      {/* Nav */}
+      <nav style={{ flex: 1, padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+        {NAV.map(item => {
+          const active = pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link key={item.href} href={item.href}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '8px 10px',
+                borderRadius: 8,
+                textDecoration: 'none',
+                fontSize: '0.8125rem',
+                fontWeight: active ? 600 : 400,
+                color: active ? 'white' : 'rgba(255,255,255,0.45)',
+                background: active ? 'rgba(255,255,255,0.08)' : 'transparent',
+                transition: 'all 0.15s',
+              }}>
+              <span style={{ color: active ? '#e67e22' : 'rgba(255,255,255,0.35)', flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {item.badge && (
+                <span style={{
+                  background: 'linear-gradient(135deg,#c0392b,#e67e22)',
+                  color: 'white',
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  borderRadius: 999,
+                  minWidth: 18,
+                  textAlign: 'center',
+                }}>{item.badge}</span>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Profile / User */}
+      <div style={{ padding: '8px 10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div
+          onClick={() => setShowProfile(!showProfile)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 10px',
+            borderRadius: 10,
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            cursor: 'pointer',
+          }}>
+          {/* Avatar */}
+          <div style={{
+            width: 30,
+            height: 30,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            color: 'white',
+            flexShrink: 0,
+            background: 'linear-gradient(135deg,#c0392b,#e67e22)',
+          }}>
+            {user?.email?.charAt(0).toUpperCase() ?? 'U'}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user?.email?.split('@')[0] ?? 'User'}
+            </div>
+            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
+              Owner · Active
+            </div>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0, transform: showProfile ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+            <path d="M2.5 4.5L6 7.5L9.5 4.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
+          </svg>
+        </div>
+
+        {showProfile && (
+          <div style={{ marginTop: 4, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)', background: '#0f0f11' }}>
+            <Link href="/settings" style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
+              fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="currentColor" strokeWidth="1.25"/><path d="M2 12c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>
+              Profile & Settings
+            </Link>
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+            <button onClick={handleLogout} style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', width: '100%',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '0.75rem', color: 'rgba(192,57,43,0.8)',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 12H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3M9.5 9.5L12.5 7M12.5 7L9.5 4.5M12.5 7H5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Sign out
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
+  )
+}
+
+export default Sidebar

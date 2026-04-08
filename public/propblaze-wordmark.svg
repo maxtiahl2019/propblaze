@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 80" fill="none">
+  <defs>
+    <linearGradient id="wm" x1="0" y1="40" x2="80" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon mark (compact flame) -->
+  <path d="M40 8 L22 46 L30 43 L24 66 L40 58 L56 66 L50 43 L58 46 Z" fill="url(#wm)"/>
+  <rect x="18" y="66" width="44" height="5" rx="2.5" fill="url(#wm)"/>
+  <!-- Wordmark -->
+  <text x="90" y="58"
+        font-family="'Inter', 'Helvetica Neue', Arial, sans-serif"
+        font-weight="700"
+        font-size="48"
+        letter-spacing="-1"
+        fill="#111827">
+    <tspan fill="#111827">Prop</tspan><tspan fill="url(#wm)">Blaze</tspan>
+  </text>
+</svg>
