@@ -8,50 +8,50 @@
   --sidebar-w: 240px;
   --topbar-h: 60px;
 
-  /* Colors — Dark Slate (PropBlaze Premium) */
-  --bg: #0C0F1A;
-  --bg-card: #131828;
-  --bg-sidebar: #0F1220;
-  --surface: #131828;
-  --surface-2: #1A1F31;
-  --surface-hover: #1F2538;
-  --border: rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.15);
+  /* Colors — Cool Grey Light (PropBlaze Professional) */
+  --bg: #F4F6FA;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #EEF1F7;
+  --surface-hover: #F0F3F9;
+  --border: #DDE2EE;
+  --border-strong: #C4CBDB;
 
   /* Text */
-  --text: #E8EBF4;
-  --text-secondary: #8892AD;
-  --text-tertiary: #525D78;
-  --text-inverse: #0C0F1A;
+  --text: #1A1F2E;
+  --text-secondary: #6B7A99;
+  --text-tertiary: #9BA8C0;
+  --text-inverse: #FFFFFF;
 
   /* Brand — PropBlaze orange */
   --primary: #F97316;
-  --primary-hover: #FB8C36;
-  --primary-light: rgba(249,115,22,0.12);
-  --primary-border: rgba(249,115,22,0.28);
+  --primary-hover: #EA580C;
+  --primary-light: #FFF3E8;
+  --primary-border: #FDD0A8;
 
   /* Status */
-  --blue: #60A5FA;
-  --blue-light: rgba(96,165,250,0.1);
-  --blue-border: rgba(96,165,250,0.22);
-  --green: #34D399;
-  --green-light: rgba(52,211,153,0.1);
-  --green-border: rgba(52,211,153,0.22);
-  --amber: #FBBF24;
-  --amber-light: rgba(251,191,36,0.1);
-  --amber-border: rgba(251,191,36,0.22);
-  --red: #F87171;
-  --red-light: rgba(248,113,113,0.1);
-  --red-border: rgba(248,113,113,0.22);
-  --purple: #A78BFA;
-  --purple-light: rgba(167,139,250,0.1);
-  --purple-border: rgba(167,139,250,0.22);
+  --blue: #2563EB;
+  --blue-light: #EFF4FF;
+  --blue-border: #BFD0FE;
+  --green: #16A34A;
+  --green-light: #EDFAF3;
+  --green-border: #A7F0C4;
+  --amber: #D97706;
+  --amber-light: #FFFBEB;
+  --amber-border: #FDE68A;
+  --red: #DC2626;
+  --red-light: #FEF2F2;
+  --red-border: #FECACA;
+  --purple: #7C3AED;
+  --purple-light: #F3F0FF;
+  --purple-border: #DDD6FE;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.35);
-  --shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-md: 0 6px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-lg: 0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-sm: 0 1px 3px rgba(30,40,80,0.06);
+  --shadow: 0 2px 8px rgba(30,40,80,0.08), 0 0 0 1px rgba(30,40,80,0.04);
+  --shadow-md: 0 4px 16px rgba(30,40,80,0.1), 0 0 0 1px rgba(30,40,80,0.04);
+  --shadow-lg: 0 12px 32px rgba(30,40,80,0.14), 0 0 0 1px rgba(30,40,80,0.06);
 
   /* Radius */
   --radius-sm: 6px;
@@ -458,7 +458,7 @@ h5 { font-size: 0.875rem; font-weight: 600; }
 .animate-slide-in  { animation: slideIn 0.5s ease forwards; }
 .animate-pulse     { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(30,40,80,0.05) 50%, transparent 100%);
   background-size: 200% auto;
   animation: shimmer 2.5s linear infinite;
 }

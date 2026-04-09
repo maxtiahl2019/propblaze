@@ -7,16 +7,20 @@ import { signIn, useSession } from 'next-auth/react';
 import { useAuth, DEMO_MODE, DEMO_USER } from '@/store/auth';
 
 const C = {
-  bg:        '#0C0F1A',
-  surface:   '#131828',
-  surface2:  '#1A1F31',
-  border:    'rgba(255,255,255,0.08)',
-  borderStr: 'rgba(255,255,255,0.15)',
-  text:      '#E8EBF4',
-  textMd:    '#8892AD',
-  textSm:    '#525D78',
+  bg:        '#F4F6FA',
+  surface:   '#FFFFFF',
+  surface2:  '#EEF1F7',
+  border:    '#DDE2EE',
+  borderFoc: '#F97316',
+  text:      '#1A1F2E',
+  textMd:    '#6B7A99',
+  textSm:    '#9BA8C0',
   orange:    '#F97316',
-  orangeHov: '#FB8C36',
+  orangeHov: '#EA580C',
+  orangeLight: '#FFF3E8',
+  red:       '#DC2626',
+  redLight:  '#FEF2F2',
+  redBorder: '#FECACA',
 };
 
 export default function LoginPage() {
@@ -35,30 +39,12 @@ export default function LoginPage() {
     setTimeout(() => setVisible(true), 60);
   }, []);
 
+  // Only auto-redirect if already authenticated (not in demo mode — let user see login page)
   useEffect(() => {
-    if (DEMO_MODE) {
-      router.replace('/dashboard');
-      return;
-    }
-    if (isAuthenticated || sessionStatus === 'authenticated') {
+    if (!DEMO_MODE && (isAuthenticated || sessionStatus === 'authenticated')) {
       router.replace('/dashboard');
     }
   }, [isAuthenticated, sessionStatus, router]);
-
-  if (DEMO_MODE || isAuthenticated) {
-    return (
-      <div style={{
-        minHeight: '100vh', background: C.bg,
-        display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}>
-        <div style={{
-          width: 24, height: 24, border: `2px solid ${C.orange}`,
-          borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite'
-        }}/>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
@@ -76,8 +62,8 @@ export default function LoginPage() {
         user: DEMO_USER,
         token: 'demo-token'
       }));
-      router.push('/demo');
     }
+    router.push('/dashboard');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +73,13 @@ export default function LoginPage() {
     if (!password) newErrors.password = 'Password is required';
     if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
     setErrors({});
+
+    if (DEMO_MODE) {
+      // In demo mode, any email/password logs you into demo
+      handleDemoLogin();
+      return;
+    }
+
     try {
       const result = await signIn('credentials', { email, password, redirect: false });
       if (result?.ok) { router.replace('/dashboard'); return; }
@@ -97,30 +90,34 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: C.bg,
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      padding: '2rem 1rem', overflow: 'hidden',
+      minHeight: '100vh',
+      background: C.bg,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem 1rem',
       fontFamily: 'Inter, -apple-system, sans-serif'
     }}>
-      {/* Background glows */}
+      {/* Subtle background decoration */}
       <div style={{
-        position: 'fixed', top: '-20%', left: '50%', transform: 'translateX(-50%)',
-        width: '700px', height: '600px', borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(249,115,22,0.07) 0%, transparent 70%)',
+        position: 'fixed', top: '-10%', right: '10%',
+        width: '500px', height: '500px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 70%)',
         pointerEvents: 'none'
       }}/>
       <div style={{
-        position: 'fixed', bottom: '-15%', right: '5%',
-        width: '500px', height: '500px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(96,165,250,0.04) 0%, transparent 70%)',
+        position: 'fixed', bottom: '-10%', left: '5%',
+        width: '400px', height: '400px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 70%)',
         pointerEvents: 'none'
       }}/>
 
       <div style={{
-        width: '100%', maxWidth: 420, position: 'relative', zIndex: 1,
+        width: '100%', maxWidth: 420,
+        position: 'relative', zIndex: 1,
         opacity: visible ? 1 : 0,
-        transform: visible ? 'none' : 'translateY(20px)',
+        transform: visible ? 'none' : 'translateY(18px)',
         transition: 'all 0.6s ease'
       }}>
         {/* Logo */}
@@ -134,7 +131,7 @@ export default function LoginPage() {
                 </linearGradient>
               </defs>
               <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="url(#login-lg)"/>
-              <ellipse cx="16" cy="18" rx="4" ry="4" fill="white" fillOpacity="0.25"/>
+              <ellipse cx="16" cy="18" rx="4" ry="4" fill="white" fillOpacity="0.3"/>
             </svg>
             <div>
               <div style={{ fontWeight: 800, fontSize: '1.1rem', color: C.text, letterSpacing: '-0.02em', lineHeight: 1 }}>
@@ -147,13 +144,31 @@ export default function LoginPage() {
           </Link>
         </div>
 
+        {/* Demo mode notice */}
+        {DEMO_MODE && (
+          <div style={{
+            background: C.orangeLight,
+            border: `1px solid #FDD0A8`,
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '16px',
+            fontSize: '12.5px',
+            color: '#9A3412',
+            textAlign: 'center'
+          }}>
+            🚀 <strong>Demo mode</strong> — click "Enter Demo" or use any email/password to explore
+          </div>
+        )}
+
         {/* Card */}
         <div style={{
-          background: C.surface, border: `1px solid ${C.border}`,
-          borderRadius: '18px', padding: '28px',
-          boxShadow: '0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)'
+          background: C.surface,
+          border: `1px solid ${C.border}`,
+          borderRadius: '18px',
+          padding: '28px',
+          boxShadow: '0 4px 24px rgba(30,40,80,0.1), 0 0 0 1px rgba(30,40,80,0.04)'
         }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ textAlign: 'center', marginBottom: 22 }}>
             <h1 style={{
               fontSize: '1.35rem', fontWeight: 800, color: C.text,
               letterSpacing: '-0.03em', marginBottom: 6
@@ -174,17 +189,16 @@ export default function LoginPage() {
               color: 'white', fontWeight: 600, fontSize: '0.9rem',
               cursor: 'pointer', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: 10, marginBottom: 18,
-              boxShadow: '0 4px 20px rgba(249,115,22,0.25)',
+              boxShadow: '0 3px 14px rgba(249,115,22,0.22)',
               transition: 'all 0.15s'
             }}
-            onMouseEnter={e => { (e.currentTarget.style.background = C.orangeHov); }}
-            onMouseLeave={e => { (e.currentTarget.style.background = C.orange); }}
+            onMouseEnter={e => { (e.currentTarget.style.background = C.orangeHov); (e.currentTarget.style.boxShadow = '0 4px 20px rgba(249,115,22,0.35)'); }}
+            onMouseLeave={e => { (e.currentTarget.style.background = C.orange); (e.currentTarget.style.boxShadow = '0 3px 14px rgba(249,115,22,0.22)'); }}
           >
             <span>🚀</span>
             <span>Enter Demo</span>
           </button>
 
-          {/* Divider */}
           <Divider label="or sign in" />
 
           {/* Google */}
@@ -193,20 +207,23 @@ export default function LoginPage() {
             disabled={googleLoading}
             style={{
               width: '100%', padding: '11px 16px',
-              background: C.surface2, border: `1px solid ${C.border}`,
+              background: '#FAFAFA',
+              border: `1px solid ${C.border}`,
               borderRadius: '10px', color: C.text,
               fontWeight: 500, fontSize: '0.875rem',
               cursor: googleLoading ? 'wait' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               gap: 10, marginBottom: 18, transition: 'all 0.15s'
             }}
-            onMouseEnter={e => { if (!googleLoading) (e.currentTarget.style.borderColor = C.borderStr); }}
-            onMouseLeave={e => { (e.currentTarget.style.borderColor = C.border); }}
+            onMouseEnter={e => { if (!googleLoading) { (e.currentTarget.style.background = '#F3F4F6'); (e.currentTarget.style.borderColor = C.text === '#1A1F2E' ? '#C4CBDB' : C.border); } }}
+            onMouseLeave={e => { (e.currentTarget.style.background = '#FAFAFA'); (e.currentTarget.style.borderColor = C.border); }}
           >
             {googleLoading ? (
               <div style={{
-                width: 18, height: 18, border: `2px solid ${C.border}`,
-                borderTopColor: C.orange, borderRadius: '50%', animation: 'spin 0.7s linear infinite'
+                width: 18, height: 18,
+                border: `2px solid #E5E7EB`,
+                borderTopColor: C.orange,
+                borderRadius: '50%', animation: 'spin 0.7s linear infinite'
               }}/>
             ) : (
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -222,12 +239,12 @@ export default function LoginPage() {
           <Divider label="email" />
 
           {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 2 }}>
             {error && (
               <div style={{
-                padding: '10px 13px', background: 'rgba(248,113,113,0.1)',
-                border: '1px solid rgba(248,113,113,0.22)', borderRadius: '8px',
-                color: '#F87171', fontSize: '0.8125rem'
+                padding: '10px 13px',
+                background: C.redLight, border: `1px solid ${C.redBorder}`,
+                borderRadius: '8px', color: C.red, fontSize: '0.8125rem'
               }}>
                 {error}
               </div>
@@ -246,16 +263,16 @@ export default function LoginPage() {
                 onChange={e => { setEmail(e.target.value); setErrors({ ...errors, email: '' }); }}
                 style={{
                   width: '100%', padding: '11px 13px',
-                  background: C.surface2,
-                  border: errors.email ? '1px solid rgba(248,113,113,0.4)' : `1px solid ${C.border}`,
+                  background: C.bg,
+                  border: `1px solid ${errors.email ? C.redBorder : C.border}`,
                   borderRadius: '9px', color: C.text, fontSize: '0.9rem',
                   outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s'
                 }}
                 autoComplete="email"
                 onFocus={e => { if (!errors.email) e.currentTarget.style.borderColor = C.orange; }}
-                onBlur={e => { e.currentTarget.style.borderColor = errors.email ? 'rgba(248,113,113,0.4)' : C.border; }}
+                onBlur={e => { e.currentTarget.style.borderColor = errors.email ? C.redBorder : C.border; }}
               />
-              {errors.email && <p style={{ fontSize: '0.7rem', color: '#F87171', marginTop: 4 }}>{errors.email}</p>}
+              {errors.email && <p style={{ fontSize: '0.7rem', color: C.red, marginTop: 4 }}>{errors.email}</p>}
             </div>
 
             {/* Password */}
@@ -278,14 +295,14 @@ export default function LoginPage() {
                   onChange={e => { setPassword(e.target.value); setErrors({ ...errors, password: '' }); }}
                   style={{
                     width: '100%', padding: '11px 13px', paddingRight: 38,
-                    background: C.surface2,
-                    border: errors.password ? '1px solid rgba(248,113,113,0.4)' : `1px solid ${C.border}`,
+                    background: C.bg,
+                    border: `1px solid ${errors.password ? C.redBorder : C.border}`,
                     borderRadius: '9px', color: C.text, fontSize: '0.9rem',
                     outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s'
                   }}
                   autoComplete="current-password"
                   onFocus={e => { if (!errors.password) e.currentTarget.style.borderColor = C.orange; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = errors.password ? 'rgba(248,113,113,0.4)' : C.border; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = errors.password ? C.redBorder : C.border; }}
                 />
                 <button
                   type="button"
@@ -301,7 +318,7 @@ export default function LoginPage() {
                   }
                 </button>
               </div>
-              {errors.password && <p style={{ fontSize: '0.7rem', color: '#F87171', marginTop: 4 }}>{errors.password}</p>}
+              {errors.password && <p style={{ fontSize: '0.7rem', color: C.red, marginTop: 4 }}>{errors.password}</p>}
             </div>
 
             <button
@@ -313,7 +330,7 @@ export default function LoginPage() {
                 color: isLoading ? C.textMd : 'white',
                 fontWeight: 700, fontSize: '0.9375rem', border: 'none',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: isLoading ? 'none' : '0 4px 16px rgba(249,115,22,0.25)',
+                boxShadow: isLoading ? 'none' : '0 3px 14px rgba(249,115,22,0.22)',
                 transition: 'all 0.2s'
               }}
             >
@@ -338,9 +355,9 @@ export default function LoginPage() {
 function Divider({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }}/>
-      <span style={{ fontSize: '0.75rem', color: '#525D78' }}>{label}</span>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }}/>
+      <div style={{ flex: 1, height: 1, background: '#DDE2EE' }}/>
+      <span style={{ fontSize: '0.75rem', color: '#9BA8C0' }}>{label}</span>
+      <div style={{ flex: 1, height: 1, background: '#DDE2EE' }}/>
     </div>
   );
 }
