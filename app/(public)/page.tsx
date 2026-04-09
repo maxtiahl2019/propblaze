@@ -590,13 +590,14 @@ function AgencyMatchingSection() {
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
               <path d="M12 2C12 2 6 8 6 14C6 17.3 8.7 20 12 20C15.3 20 18 17.3 18 14C18 8 12 2 12 2Z" fill="#F97316"/>
             </svg>
-            <span style={{ color: C.textMd, fontWeight: 500 }}>PropBlaze</span>
+            <span style={{ color: C.textMd, fontWeight: 500 }}>PropBlaze EU</span>
           </div>
-          <div>© 2026 PropBlaze. All rights reserved.</div>
+          <div>© 2026 PropBlaze EU. All rights reserved.</div>
           <div style={{ display: 'flex', gap: '20px' }}>
-            {['Privacy', 'Terms', 'Contact'].map(l => (
-              <a key={l} href="#" style={{ color: C.textSm, textDecoration: 'none' }}>{l}</a>
-            ))}
+            <Link href="/privacy" style={{ color: C.textSm, textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link href="/terms" style={{ color: C.textSm, textDecoration: 'none' }}>Terms of Use</Link>
+            <Link href="/gdpr" style={{ color: C.textSm, textDecoration: 'none' }}>GDPR</Link>
+            <a href="mailto:support@propblaze.eu" style={{ color: C.textSm, textDecoration: 'none' }}>Contact</a>
           </div>
         </div>
       </footer>
