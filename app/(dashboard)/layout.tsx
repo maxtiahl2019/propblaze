@@ -52,23 +52,45 @@ export default function DashboardLayout({
     );
   }
 
+  // ── Dark sidebar CSS variable overrides (2027 design system) ──────────────
+  const darkSidebarVars = {
+    '--bg-sidebar':     '#0D0D1A',
+    '--surface':        'rgba(255,255,255,0.05)',
+    '--surface-2':      'rgba(255,255,255,0.08)',
+    '--surface-hover':  'rgba(255,255,255,0.10)',
+    '--border':         'rgba(255,255,255,0.09)',
+    '--border-strong':  'rgba(255,255,255,0.16)',
+    '--text':           '#FFFFFF',
+    '--text-secondary': 'rgba(255,255,255,0.65)',
+    '--text-tertiary':  'rgba(255,255,255,0.38)',
+    '--primary':        '#F5C200',
+    '--primary-hover':  '#E0B000',
+    '--primary-light':  'rgba(245,194,0,0.10)',
+    '--primary-border': 'rgba(245,194,0,0.28)',
+    '--green':          '#22C55E',
+    '--red':            '#EF4444',
+    '--blue':           '#3B5BDB',
+  } as React.CSSProperties;
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#080810', flexDirection: 'column' }}>
       {DEMO_MODE && (
         <div style={{
-          background: '#F97316',
-          color: 'white', fontSize: '0.7rem', fontWeight: 600,
-          textAlign: 'center', padding: '5px 16px', letterSpacing: '0.02em',
+          background: 'linear-gradient(90deg, #F5C200, #E07B00)',
+          color: '#080810', fontSize: '0.68rem', fontWeight: 700,
+          textAlign: 'center', padding: '5px 16px', letterSpacing: '0.04em',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           <span>🚀</span>
-          <span>DEMO MODE — PropBlaze preview with sample data</span>
-          <span style={{ opacity: 0.8 }}>· demo@propblaze.eu</span>
+          <span>DEMO MODE — PropBlaze · AI Property Distribution Preview</span>
+          <span style={{ opacity: 0.6 }}>· demo@propblaze.eu</span>
         </div>
       )}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <Sidebar />
-        <main style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+        <div style={darkSidebarVars}>
+          <Sidebar />
+        </div>
+        <main style={{ flex: 1, minWidth: 0, overflow: 'auto', background: '#080810' }}>
           {children}
         </main>
       </div>
