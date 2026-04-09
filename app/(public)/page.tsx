@@ -240,10 +240,10 @@ function GlassCard({ children, style = {}, glow = false }: { children: React.Rea
 // âââ Demo Data âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const DEMO_AGENCIES = [
-  { initials: 'E&', name: 'Engel & VÃ¶lkers',     city: 'Budva',            score: 97, status: 'replied',   statusColor: '#22C55E' },
+  { initials: 'E&', name: 'Engel & Volkers',     city: 'Budva',            score: 97, status: 'replied',   statusColor: '#22C55E' },
   { initials: 'SR', name: "Sotheby's Realty",    city: 'Porto Montenegro', score: 94, status: 'opened',    statusColor: '#F5C200' },
   { initials: 'SI', name: 'Savills International',city: 'London',           score: 91, status: 'sent',      statusColor: '#3B5BDB' },
-  { initials: 'KF', name: 'Knight Frank Serbia', city: 'Belgrade',         score: 88, status: 'sendingâ¦',  statusColor: '#6B7280' },
+  { initials: 'KF', name: 'Knight Frank Serbia', city: 'Belgrade',         score: 88, status: 'sending...',  statusColor: '#6B7280' },
 ]
 const DEMO_STAGES = ['matching', 'offer', 'signing', 'sent'] as const
 type DemoStage = (typeof DEMO_STAGES)[number]
@@ -265,7 +265,7 @@ function DemoStageMatching() {
     <div style={{ padding: '0 0 4px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#F5C200', opacity: 0.9 }}>
-          AI MATCHING Â· WAVE 1
+          AI MATCHING - WAVE 1
         </span>
         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>4 / 18 agencies</span>
       </div>
@@ -324,7 +324,7 @@ function DemoStageOffer() {
       </div>
       <div style={{ width: '100%', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 8, letterSpacing: '0.06em' }}>OFFER PREVIEW</div>
-        {['Villa Sveti Stefan, Budva', 'â¬485,000 Â· 210 mÂ²', 'Exclusive mandate Â· 90 days'].map((line, i) => (
+        {['Villa Sveti Stefan, Budva', 'EUR 485k - 210 sqm', 'Exclusive mandate - 90 days'].map((line, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#F5C200', flexShrink: 0 }} />
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{line}</span>
@@ -354,7 +354,7 @@ function DemoStageSigning() {
         {done ? 'â' : 'âï¸'}
       </div>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: 4 }}>{done ? 'Contract Signed!' : 'Owner Signingâ¦'}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: 4 }}>{done ? 'Contract Signed!' : 'Owner Signing...'}</div>
         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{done ? 'Distribution starts in 3 sec' : 'Exclusive agency mandate'}</div>
       </div>
       <div style={{ width: '100%' }}>
@@ -405,7 +405,7 @@ function DemoStageSent() {
     <div style={{ padding: '0 0 4px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#22C55E' }}>
-          â SENT Â· {count} AGENCIES
+          â SENT - {count} AGENCIES
         </span>
         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>3 waves</span>
       </div>
@@ -426,7 +426,7 @@ function DemoStageSent() {
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E', flexShrink: 0 }} />
         <div>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>New lead received!</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)' }}>Engel &amp; VÃ¶lkers Â· 2m ago</div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)' }}>Engel &amp; Volkers - 2m ago</div>
         </div>
       </div>
     </div>
@@ -469,9 +469,9 @@ function ProductPreview() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg, #1a2a3a, #0d1a2a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>ð </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 9, color: '#F5C200', fontWeight: 700, letterSpacing: '0.08em' }}>VILLA Â· BUDVA</div>
+          <div style={{ fontSize: 9, color: '#F5C200', fontWeight: 700, letterSpacing: '0.08em' }}>VILLA - BUDVA</div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.95)' }}>Sveti Stefan</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>â¬485,000 Â· 210 mÂ²</div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>EUR 485k - 210 sqm</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>AI Score</div>
@@ -944,12 +944,12 @@ export default function HomePage() {
 
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:16 }}>
           {[
-            { name:'Engel & VÃ¶lkers', city:'Budva Â· Montenegro', score:97, speciality:'Luxury Adriatic', tags:['Luxury','HNWI','Cross-border'] },
+            { name:'Engel & Volkers', city:'Budva - Montenegro', score:97, speciality:'Luxury Adriatic', tags:['Luxury','HNWI','Cross-border'] },
             { name:"Sotheby's Realty", city:'Porto Montenegro', score:94, speciality:'Ultra-premium', tags:['HNWI','UK buyers'] },
-            { name:'Savills International', city:'London Â· Global', score:91, speciality:'Investment grade', tags:['International','Balkans desk'] },
-            { name:'Knight Frank', city:'Belgrade Â· Serbia', score:88, speciality:'Premium Balkans', tags:['Balkans','DACH'] },
-            { name:'Win-Win Solution', city:'Belgrade Â· Serbia', score:96, speciality:'Local Expert', tags:['Belgrade','Fast response'] },
-            { name:'Tranio Partners', city:'Berlin Â· Germany', score:85, speciality:'German-speaking buyers', tags:['Expats','Digital'] },
+            { name:'Savills International', city:'London - Global', score:91, speciality:'Investment grade', tags:['International','Balkans desk'] },
+            { name:'Knight Frank', city:'Belgrade - Serbia', score:88, speciality:'Premium Balkans', tags:['Balkans','DACH'] },
+            { name:'Win-Win Solution', city:'Belgrade - Serbia', score:96, speciality:'Local Expert', tags:['Belgrade','Fast response'] },
+            { name:'Tranio Partners', city:'Berlin - Germany', score:85, speciality:'German-speaking buyers', tags:['Expats','Digital'] },
           ].map((ag, i) => (
             <FadeIn key={i} delay={i * 80}>
               <div style={{
@@ -997,7 +997,7 @@ export default function HomePage() {
           <FadeIn delay={0}>
             <PricingCard
               name="Starter"
-              price="â¬49"
+              price="EUR49"
               desc="Perfect for a single property. AI matching, email distribution, basic analytics."
               features={['1 active property','AI sales pack (3 languages)','Up to 15 agencies','Email distribution','Basic lead tracking','Mark as Sold']}
             />
@@ -1005,7 +1005,7 @@ export default function HomePage() {
           <FadeIn delay={120}>
             <PricingCard
               name="Pro"
-              price="â¬99"
+              price="EUR99"
               desc="More agencies, more channels, priority AI matching and full distribution analytics."
               highlight
               features={['1 active property','AI sales pack (3 languages)','Up to 30 agencies','Email + WhatsApp + Telegram','Full lead management','3-wave strategy','Priority AI matching','Distribution analytics']}
@@ -1014,7 +1014,7 @@ export default function HomePage() {
           <FadeIn delay={240}>
             <PricingCard
               name="Agency / Multi"
-              price="â¬199"
+              price="EUR199"
               desc="For agents managing multiple listings. Bulk distribution, white-label options."
               features={['Up to 5 active properties','Everything in Pro','Bulk distribution','Agency portal access','White-label offers','API access (coming)']}
             />
@@ -1053,7 +1053,7 @@ export default function HomePage() {
                 View live demo
               </Link>
             </div>
-            <p style={{ fontSize:'0.75rem', color:C.white40, marginTop:20 }}>No credit card required Â· Cancel anytime Â· GDPR compliant</p>
+            <p style={{ fontSize:'0.75rem', color:C.white40, marginTop:20 }}>No credit card required - Cancel anytime - GDPR compliant</p>
           </div>
         </FadeIn>
       </section>
@@ -1079,7 +1079,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div style={{ fontSize:'0.72rem', color:C.white40 }}>Â© 2026 PropBlaze Â· Built for EU property owners</div>
+          <div style={{ fontSize:'0.72rem', color:C.white40 }}>Â© 2026 PropBlaze - Built for EU property owners</div>
         </div>
       </footer>
     </div>
