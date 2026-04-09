@@ -5,29 +5,20 @@ import Link from 'next/link';
 
 // âââ 2027 Dark Palette âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const C = {
-  bg:        '#080810',
-  bg2:       '#0D0D1A',
-  bg3:       '#12121F',
-  surface:   'rgba(255,255,255,0.04)',
-  surface2:  'rgba(255,255,255,0.07)',
-  border:    'rgba(255,255,255,0.08)',
-  border2:   'rgba(255,255,255,0.14)',
-  yellow:    '#F5C200',
-  yellowSoft:'#F5C20080',
-  yellowGlow:'#F5C20030',
-  blue:      '#3B5BDB',
-  purple:    '#7048E8',
-  grad1:     'linear-gradient(135deg, #F5C200 0%, #FF8C00 100%)',
-  grad2:     'linear-gradient(135deg, #3B5BDB 0%, #7048E8 100%)',
-  glass:     'rgba(255,255,255,0.04)',
-  white:     '#FFFFFF',
-  white80:   'rgba(255,255,255,0.8)',
-  white60:   'rgba(255,255,255,0.6)',
-  white40:   'rgba(255,255,255,0.4)',
-  white20:   'rgba(255,255,255,0.2)',
-  white10:   'rgba(255,255,255,0.1)',
+  bg: '#F8F7F2',
+  bgDark: '#0D0D1A',
+  text: '#0D0D1A',
+  textMid: '#4A5568',
+  textLight: '#718096',
+  white: '#FFFFFF',
+  accent: '#1B4332',
+  accentMid: '#2D6A4F',
+  accentLight: '#52B788',
+  gold: '#C9A227',
+  border: 'rgba(0,0,0,0.08)',
+  card: 'rgba(255,255,255,0.92)',
+  glass: 'rgba(255,255,255,0.15)',
 };
-
 // âââ Cinematic Canvas Hero âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function CinematicCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -649,208 +640,232 @@ function PricingCard({ name, price, desc, features, highlight = false }: {
 }
 
 // âââ Navbar âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-function Navbar() {
+function Navbar({ lang = 'EN', setLang = ()=>{} }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 30);
-    window.addEventListener('scroll', fn);
-    return () => window.removeEventListener('scroll', fn);
+    const h = () => setScrolled(window.scrollY > 30);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
   }, []);
+  const navBg = scrolled ? 'rgba(255,255,255,0.96)' : 'transparent';
+  const navBorder = scrolled ? '1px solid rgba(0,0,0,0.08)' : '1px solid transparent';
+  const logoColor = scrolled ? '#0D0D1A' : '#FFFFFF';
+  const linkColor = scrolled ? '#4A5568' : 'rgba(255,255,255,0.88)';
   return (
     <nav style={{
-      position:'fixed', top:0, left:0, right:0, zIndex:1000,
-      padding:'0 max(24px, calc(50vw - 600px))',
-      height: 64,
-      display:'flex', alignItems:'center', justifyContent:'space-between',
-      background: scrolled ? 'rgba(8,8,16,0.85)' : 'transparent',
-      backdropFilter: scrolled ? 'blur(20px)' : 'none',
-      borderBottom: scrolled ? `1px solid ${C.border}` : 'none',
-      transition:'all 0.4s ease',
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+      height: 68, display: 'flex', alignItems: 'center',
+      padding: '0 max(24px,calc(50vw - 620px))',
+      justifyContent: 'space-between',
+      background: navBg, borderBottom: navBorder,
+      backdropFilter: scrolled ? 'blur(16px)' : 'none',
+      WebkitBackdropFilter: scrolled ? 'blur(16px)' : 'none',
+      transition: 'all 0.35s ease',
     }}>
-      {/* Logo */}
-      <Link href="/" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:10 }}>
-        <div style={{
-          width:34, height:34, borderRadius:10,
-          background:'linear-gradient(135deg, #F5C200, #E07B00)',
-          display:'flex', alignItems:'center', justifyContent:'center',
-          boxShadow:'0 0 20px rgba(245,194,0,0.3)',
-        }}>
-          <svg viewBox="0 0 32 32" fill="none" width="20" height="20">
-            <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="white"/>
-            <ellipse cx="16" cy="18" rx="4" ry="4" fill="rgba(0,0,0,0.25)"/>
-          </svg>
-        </div>
-        <div>
-          <div style={{ fontWeight:800, fontSize:'0.95rem', color:C.white, letterSpacing:'-0.02em' }}>PropBlaze</div>
-          <div style={{ fontSize:'0.52rem', color:C.yellow, letterSpacing:'0.2em', textTransform:'uppercase', marginTop:-2 }}>AI Platform</div>
-        </div>
-      </Link>
-
-      {/* Links */}
-      <div style={{ display:'flex', alignItems:'center', gap:28 }}>
+      <a href="/" style={{ display:'flex', alignItems:'center', gap:10, textDecoration:'none' }}>
+        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+          <path d="M15 2L28 10.5V28H20V19H10V28H2V10.5L15 2Z" fill="#1B4332"/>
+          <path d="M15 7L24 13V23H20V16H10V23H6V13L15 7Z" fill="#52B788" opacity="0.75"/>
+        </svg>
+        <span style={{ fontWeight:800, fontSize:19, color:logoColor, letterSpacing:'-0.5px', transition:'color 0.35s' }}>PropBlaze</span>
+      </a>
+      <div style={{ display:'flex', alignItems:'center', gap:36 }}>
         {['Features','Agencies','Pricing'].map(l => (
-          <a key={l} href={`#${l.toLowerCase()}`} style={{ fontSize:'0.82rem', color:C.white60, textDecoration:'none', transition:'color 0.2s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = C.white)}
-            onMouseLeave={e => (e.currentTarget.style.color = C.white60)}>
-            {l}
-          </a>
+          <a key={l} href={'#'+l.toLowerCase()} style={{
+            color: linkColor, textDecoration:'none', fontSize:14, fontWeight:500,
+            transition:'color 0.35s',
+          }}>{l}</a>
         ))}
       </div>
-
-      {/* CTA */}
-      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-        <Link href="/login" style={{ fontSize:'0.82rem', color:C.white60, textDecoration:'none', padding:'8px 16px' }}>
-          Sign in
-        </Link>
-        <Link href="/login" style={{
-          fontSize:'0.82rem', fontWeight:700, color:C.bg, textDecoration:'none',
-          padding:'9px 20px', borderRadius:10,
-          background: C.grad1,
-          boxShadow:'0 0 20px rgba(245,194,0,0.25)',
+      <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+        <div style={{
+          display:'flex', alignItems:'center', gap:2, padding:3, borderRadius:10,
+          background: scrolled ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.12)',
+          border: scrolled ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.2)',
         }}>
-          Get started â
-        </Link>
+          {['EN','RU','SR'].map(l => (
+            <button key={l} onClick={() => setLang(l)} style={{
+              padding:'5px 11px', borderRadius:7, border:'none', cursor:'pointer',
+              fontSize:12, fontWeight:700, transition:'all 0.2s',
+              background: lang===l ? '#FFFFFF' : 'transparent',
+              color: lang===l ? '#0D0D1A' : linkColor,
+              boxShadow: lang===l ? '0 1px 4px rgba(0,0,0,0.18)' : 'none',
+            }}>{l}</button>
+          ))}
+        </div>
+        <a href="/sign-in" style={{
+          color: linkColor, textDecoration:'none', fontSize:14, fontWeight:500, transition:'color 0.35s',
+        }}>Sign in</a>
+        <a href="/sign-up" style={{
+          background:'#1B4332', color:'#FFFFFF', padding:'10px 22px',
+          borderRadius:10, textDecoration:'none', fontSize:14, fontWeight:700,
+          boxShadow:'0 4px 14px rgba(27,67,50,0.45)', transition:'all 0.2s',
+        }}>Get started</a>
       </div>
     </nav>
   );
 }
 
-// âââ Main Page âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ===
+
 export default function HomePage() {
+  const [lang, setLang] = useState('EN');
+  const T = {
+    EN: {
+      tag: 'AI-Powered Property Distribution',
+      h1a: 'Sell Smarter.',
+      h1b: 'Reach Every Agency.',
+      sub: 'PropBlaze matches your property with the right agencies across Europe and sends a personalised offer — automatically, in minutes.',
+      cta1: 'List your property',
+      cta2: 'How it works',
+      s1n: '500+', s1l: 'Agencies',
+      s2n: '12', s2l: 'Countries',
+      s3n: '5 min', s3l: 'To launch',
+    },
+    RU: {
+      tag: 'AI-подбор агентств недвижимости',
+      h1a: 'Ваш объект.',
+      h1b: 'Лучшие агентства.',
+      sub: 'PropBlaze подбирает агентства под ваш объект и отправляет персональное предложение — автоматически, за минуты.',
+      cta1: 'Разместить объект',
+      cta2: 'Как это работает',
+      s1n: '500+', s1l: 'Агентств',
+      s2n: '12', s2l: 'Стран',
+      s3n: '5 мин', s3l: 'До запуска',
+    },
+    SR: {
+      tag: 'AI distribucija nekretnina',
+      h1a: 'Vasa nekretnina.',
+      h1b: 'Prave agencije.',
+      sub: 'PropBlaze pronalazi agencije za vasu nekretninu i salje personalizovanu ponudu automatski, za nekoliko minuta.',
+      cta1: 'Oglasi nekretninu',
+      cta2: 'Kako funkcionise',
+      s1n: '500+', s1l: 'Agencija',
+      s2n: '12', s2l: 'Zemalja',
+      s3n: '5 min', s3l: 'Do starta',
+    },
+  };
+  const tx = T[lang] || T.EN;
   return (
-    <div style={{ background: C.bg, minHeight:'100vh', color:C.white, fontFamily: "'Inter', system-ui, sans-serif", overflowX:'hidden' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        @keyframes floatIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#080810; }
-        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
-      `}</style>
+    <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+      <Navbar lang={lang} setLang={setLang} />
 
-      <Navbar />
+      {/* ===== HERO ===== */}
+      <section style={{ position:'relative', minHeight:'100vh', display:'flex', alignItems:'center', overflow:'hidden' }}>
+        <style>{`
+          @keyframes kbZoom {
+            0%   { transform: scale(1.0) translate(0px, 0px); }
+            40%  { transform: scale(1.07) translate(-12px, -6px); }
+            100% { transform: scale(1.12) translate(6px, -10px); }
+          }
+          @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes fadeUp2 {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
 
-      {/* âââ HERO âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
-      <section style={{ position:'relative', minHeight:'100vh', display:'flex', alignItems:'center', overflow:'hidden', paddingTop:64 }}>
-        {/* Canvas background */}
-        <CinematicCanvas />
+        {/* BG image with Ken Burns */}
+        <div style={{ position:'absolute', inset:0, overflow:'hidden' }}>
+          <img
+            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1800&q=85"
+            alt=""
+            style={{
+              width:'100%', height:'100%', objectFit:'cover',
+              animation:'kbZoom 22s ease-in-out infinite alternate',
+              transformOrigin:'center center',
+            }}
+          />
+          <div style={{
+            position:'absolute', inset:0,
+            background:'linear-gradient(110deg, rgba(8,16,12,0.78) 0%, rgba(8,16,12,0.60) 52%, rgba(8,16,12,0.35) 100%)',
+          }} />
+          <div style={{
+            position:'absolute', inset:0,
+            background:'linear-gradient(to top, rgba(8,16,12,0.6) 0%, transparent 50%)',
+          }} />
+        </div>
 
-        {/* Gradient overlays */}
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 40%, rgba(8,8,16,0.8) 85%, #080810 100%)', pointerEvents:'none' }}/>
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to right, rgba(8,8,16,0.7) 0%, transparent 50%, rgba(8,8,16,0.3) 100%)', pointerEvents:'none' }}/>
-
-        {/* Content */}
-        <div style={{ position:'relative', zIndex:2, width:'100%', maxWidth:1200, margin:'0 auto', padding:'0 40px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:60 }}>
-
-          {/* Left â headline */}
-          <div style={{ flex:'0 0 auto', maxWidth:580 }}>
-            {/* Badge */}
+        {/* Content grid */}
+        <div style={{
+          position:'relative', zIndex:2, width:'100%',
+          maxWidth:1280, margin:'0 auto',
+          padding:'130px max(32px,calc(50vw - 608px)) 90px',
+          display:'grid', gridTemplateColumns:'1fr 520px',
+          gap:64, alignItems:'center',
+        }}>
+          {/* Left col */}
+          <div style={{ animation:'fadeUp 0.7s 0.1s ease both' }}>
             <div style={{
-              display:'inline-flex', alignItems:'center', gap:8, marginBottom:28,
-              padding:'7px 14px 7px 8px', borderRadius:100,
-              background:'rgba(245,194,0,0.1)', border:'1px solid rgba(245,194,0,0.3)',
-              animation:'floatIn 0.8s ease',
+              display:'inline-flex', alignItems:'center', gap:8,
+              background:'rgba(82,183,136,0.18)', border:'1px solid rgba(82,183,136,0.35)',
+              borderRadius:100, padding:'7px 18px', marginBottom:30,
             }}>
-              <div style={{ width:22, height:22, borderRadius:'50%', background:C.yellow, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5H11L8 6.5L9.5 10L6 8L2.5 10L4 6.5L1 4.5H4.5L6 1Z" fill="#080810"/></svg>
-              </div>
-              <span style={{ fontSize:'0.72rem', fontWeight:700, color:C.yellow, letterSpacing:'0.05em' }}>AI-Powered Property Distribution</span>
+              <span style={{ width:7, height:7, borderRadius:'50%', background:'#52B788', display:'inline-block', flexShrink:0 }} />
+              <span style={{ color:'#A8EFC8', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{tx.tag}</span>
             </div>
 
-            {/* Headline */}
-            <h1 style={{
-              fontSize:'clamp(2.8rem,5.5vw,4.5rem)', fontWeight:900, lineHeight:1.04,
-              letterSpacing:'-0.03em', marginBottom:24,
-              animation:'floatIn 0.8s ease 0.1s both',
-            }}>
-              <span style={{ color:C.white }}>Your property.</span>
-              <br/>
-              <span style={{
-                background: C.grad1,
-                WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-              }}>Every agency.</span>
-              <br/>
-              <span style={{ color:C.white }}>Zero hassle.</span>
+            <h1 style={{ margin:'0 0 24px', lineHeight:1.06, fontWeight:800, letterSpacing:'-1.5px' }}>
+              <span style={{ display:'block', fontSize:'clamp(44px,5.2vw,74px)', color:'#FFFFFF' }}>{tx.h1a}</span>
+              <span style={{ display:'block', fontSize:'clamp(44px,5.2vw,74px)', color:'#52B788' }}>{tx.h1b}</span>
             </h1>
 
-            {/* Subtext */}
             <p style={{
-              fontSize:'1.05rem', color:C.white60, lineHeight:1.7, maxWidth:480, marginBottom:36,
-              animation:'floatIn 0.8s ease 0.2s both',
-            }}>
-              Upload your property once. Our AI matches it with the top 10â30 agencies across Europe,
-              sends personalised offers, and forwards every reply directly to you.
-            </p>
+              color:'rgba(255,255,255,0.72)', fontSize:18, lineHeight:1.7,
+              margin:'0 0 42px', maxWidth:500, fontWeight:400,
+            }}>{tx.sub}</p>
 
-            {/* CTAs */}
-            <div style={{ display:'flex', gap:14, flexWrap:'wrap', animation:'floatIn 0.8s ease 0.3s both' }}>
-              <Link href="/login" style={{
-                display:'flex', alignItems:'center', gap:8, padding:'14px 28px',
-                borderRadius:14, textDecoration:'none', fontWeight:700, fontSize:'0.95rem',
-                background: C.grad1, color: C.bg,
-                boxShadow:'0 0 40px rgba(245,194,0,0.3)',
-                transition:'all 0.2s ease',
+            <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:52 }}>
+              <a href="/sign-up" style={{
+                background:'#52B788', color:'#0A1410',
+                padding:'16px 34px', borderRadius:12,
+                textDecoration:'none', fontSize:16, fontWeight:800,
+                display:'inline-flex', alignItems:'center', gap:10,
+                boxShadow:'0 8px 28px rgba(82,183,136,0.45)',
               }}>
-                List your property
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              </Link>
-              <Link href="/login" style={{
-                display:'flex', alignItems:'center', gap:8, padding:'14px 28px',
-                borderRadius:14, textDecoration:'none', fontWeight:600, fontSize:'0.95rem',
-                color:C.white80, background:C.surface, border:`1px solid ${C.border2}`,
-                backdropFilter:'blur(10px)',
-              }}>
-                View live demo
-              </Link>
+                {tx.cta1}
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </a>
+              <a href="#features" style={{
+                color:'rgba(255,255,255,0.88)',
+                padding:'16px 28px', borderRadius:12,
+                textDecoration:'none', fontSize:16, fontWeight:600,
+                border:'1px solid rgba(255,255,255,0.28)',
+                backdropFilter:'blur(8px)',
+              }}>{tx.cta2}</a>
             </div>
 
-            {/* Trust row */}
-            <div style={{
-              display:'flex', alignItems:'center', gap:20, marginTop:32, flexWrap:'wrap',
-              animation:'floatIn 0.8s ease 0.4s both',
-            }}>
+            <div style={{ display:'flex', gap:40 }}>
               {[
-                { v:'500+', l:'Agencies in DB' },
-                { v:'10 min', l:'Time to publish' },
-                { v:'3 waves', l:'Distribution strategy' },
-              ].map((s, i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  {i > 0 && <div style={{ width:1, height:24, background:C.border }}/>}
-                  <div>
-                    <div style={{ fontSize:'1rem', fontWeight:800, color:C.yellow }}>{s.v}</div>
-                    <div style={{ fontSize:'0.65rem', color:C.white40 }}>{s.l}</div>
-                  </div>
+                { n: tx.s1n, l: tx.s1l },
+                { n: tx.s2n, l: tx.s2l },
+                { n: tx.s3n, l: tx.s3l },
+              ].map((st,i) => (
+                <div key={i} style={{ borderLeft: i>0?'1px solid rgba(255,255,255,0.15)':'none', paddingLeft: i>0?40:0 }}>
+                  <div style={{ color:'#FFFFFF', fontWeight:800, fontSize:22, letterSpacing:'-0.5px' }}>{st.n}</div>
+                  <div style={{ color:'rgba(255,255,255,0.5)', fontSize:13, marginTop:3, fontWeight:500 }}>{st.l}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right â product preview */}
-          <div style={{ flex:'0 0 auto', animation:'floatIn 0.8s ease 0.5s both', display:'flex', justifyContent:'center' }}>
+          {/* Right col: ProductPreview */}
+          <div style={{ animation:'fadeUp2 0.7s 0.25s ease both' }}>
             <ProductPreview />
           </div>
         </div>
 
-        {/* Scroll hint */}
-        <div style={{ position:'absolute', bottom:32, left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', alignItems:'center', gap:6, opacity:0.4 }}>
-          <span style={{ fontSize:'0.6rem', color:C.white, letterSpacing:'0.2em', textTransform:'uppercase' }}>Scroll</span>
-          <div style={{ width:1, height:30, background:`linear-gradient(to bottom, ${C.yellow}, transparent)`, animation:'pulse 2s infinite' }}/>
+        {/* Scroll line */}
+        <div style={{ position:'absolute', bottom:28, left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', alignItems:'center', gap:6, opacity:0.5 }}>
+          <div style={{ width:1, height:44, background:'linear-gradient(to bottom, transparent, rgba(255,255,255,0.6))' }} />
+          <div style={{ width:4, height:4, borderRadius:'50%', background:'rgba(255,255,255,0.6)' }} />
         </div>
       </section>
 
-      {/* âââ STATS BAR ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
-      <section style={{ background:C.bg2, borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}`, padding:'60px 40px' }}>
-        <div style={{ maxWidth:1000, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:40 }}>
-          <AnimatedStat value="500" suffix="+" label="Verified agencies in DB" />
-          <AnimatedStat value="10" suffix=" min" label="Average time to publish" />
-          <AnimatedStat value="3x" label="More exposure than self-listing" />
-          <AnimatedStat value="94%" label="Average response rate" />
-        </div>
-      </section>
-
-      {/* âââ HOW IT WORKS âââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
+      {/* HOW IT WORKS */}
       <section id="features" style={{ padding:'100px max(40px,calc(50vw - 600px))' }}>
         <FadeIn>
           <div style={{ textAlign:'center', marginBottom:64 }}>
