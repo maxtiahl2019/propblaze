@@ -51,31 +51,33 @@ export function WizardShell({
   }, [lastSavedAt]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
       {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }} className="sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))' }} className="w-8 h-8 rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-bold">P</span>
               </div>
-              <span className="font-semibold text-gray-900">Add Property</span>
+              <span className="font-semibold" style={{ color: 'var(--text)' }}>Add Property</span>
             </div>
             <div className="flex items-center gap-3">
               {/* Save status */}
               <span className={clsx(
                 'text-xs flex items-center gap-1 transition-all',
-                saveStatus === 'saving' && 'text-blue-500',
+                saveStatus === 'saving' && 'text-orange-500',
                 saveStatus === 'saved' && 'text-green-600',
                 saveStatus === 'error' && 'text-red-500',
                 saveStatus === 'idle' && 'text-gray-400',
-              )}>
+              )} style={{
+                color: saveStatus === 'saving' ? 'var(--primary)' : saveStatus === 'saved' ? 'var(--green)' : saveStatus === 'error' ? 'var(--red)' : 'var(--text-tertiary)',
+              }}>
                 {saveStatus === 'saving' && (
-                  <><span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse inline-block" /> Saving…</>
+                  <><span className="w-2 h-2 rounded-full animate-pulse inline-block" style={{ background: 'var(--primary)' }} /> Saving…</>
                 )}
                 {saveStatus === 'saved' && (
-                  <><span className="text-green-600">✓</span> {formatSaved()}</>
+                  <><span>✓</span> {formatSaved()}</>
                 )}
                 {saveStatus === 'error' && '⚠ Not saved'}
                 {saveStatus === 'idle' && 'Draft'}
@@ -88,7 +90,7 @@ export function WizardShell({
 
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)' }} className="rounded-2xl shadow-sm p-6 md:p-8">
           {children}
         </div>
 
@@ -100,9 +102,12 @@ export function WizardShell({
             className={clsx(
               'px-5 py-2.5 rounded-xl font-medium text-sm transition-all',
               currentStep === 0
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'cursor-not-allowed'
+                : 'hover:bg-gray-100'
             )}
+            style={{
+              color: currentStep === 0 ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+            }}
           >
             ← Back
           </button>
@@ -110,19 +115,22 @@ export function WizardShell({
           <div className="flex items-center gap-3">
             <button
               onClick={autosave}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs transition-colors"
+              style={{
+                color: 'var(--text-tertiary)',
+              }}
             >
               Save draft
             </button>
             <button
               onClick={onNext}
               disabled={!canGoNext || isSubmitting}
-              className={clsx(
-                'px-6 py-2.5 rounded-xl font-medium text-sm transition-all',
-                canGoNext && !isSubmitting
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              )}
+              className="px-6 py-2.5 rounded-xl font-medium text-sm transition-all shadow-sm"
+              style={{
+                background: (canGoNext && !isSubmitting) ? 'linear-gradient(135deg, var(--primary), var(--primary-hover))' : 'var(--surface-2)',
+                color: (canGoNext && !isSubmitting) ? 'white' : 'var(--text-tertiary)',
+                cursor: (!canGoNext || isSubmitting) ? 'not-allowed' : 'pointer',
+              }}
             >
               {isSubmitting
                 ? 'Publishing…'

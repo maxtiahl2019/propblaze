@@ -30,10 +30,10 @@ const DEMO_DOCS: UploadedDoc[] = [
 
 function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#0c0c0e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'white' }}>{title}</div>
-        {subtitle && <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>{subtitle}</div>}
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text)' }}>{title}</div>
+        {subtitle && <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 3 }}>{subtitle}</div>}
       </div>
       <div style={{ padding: '20px' }}>{children}</div>
     </div>
@@ -43,22 +43,22 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle?: 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{label}</label>
+      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{label}</label>
       {children}
-      {hint && <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)', marginTop: 4 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: 4 }}>{hint}</p>}
     </div>
   );
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '9px 12px',
-  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
-  borderRadius: 8, color: 'white', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box',
+  background: 'var(--surface-2)', border: '1px solid var(--border)',
+  borderRadius: 8, color: 'var(--text)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box',
 };
 
 const disabledInputStyle: React.CSSProperties = {
   ...inputStyle,
-  color: 'rgba(255,255,255,0.3)',
+  color: 'var(--text-tertiary)',
   cursor: 'not-allowed',
 };
 
@@ -156,30 +156,30 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div style={{ padding: '28px 32px', minHeight: '100vh', background: '#080809', color: 'white' }}>
+    <div style={{ padding: '28px 32px', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       <div style={{ maxWidth: 720 }}>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'white', letterSpacing: '-0.02em', marginBottom: 4 }}>
+          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
             Settings & Profile
           </h1>
-          <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.35)' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>
             {user?.email ?? 'your@email.com'} · Owner account
           </p>
         </div>
 
         {/* Tab nav */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#0c0c0e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 4 }}>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               padding: '8px 4px', borderRadius: 7, border: 'none', cursor: 'pointer',
               fontSize: '0.75rem', fontWeight: tab === t.id ? 600 : 400,
-              background: tab === t.id ? 'rgba(255,255,255,0.08)' : 'transparent',
-              color: tab === t.id ? 'white' : 'rgba(255,255,255,0.4)',
+              background: tab === t.id ? 'var(--surface)' : 'transparent',
+              color: tab === t.id ? 'var(--text)' : 'var(--text-tertiary)',
               transition: 'all 0.15s',
             }}>
-              <span style={{ color: tab === t.id ? '#e67e22' : 'rgba(255,255,255,0.3)' }}>{t.icon}</span>
+              <span style={{ color: tab === t.id ? 'var(--primary)' : 'var(--text-tertiary)' }}>{t.icon}</span>
               {t.label}
             </button>
           ))}

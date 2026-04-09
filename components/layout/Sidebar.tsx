@@ -47,13 +47,13 @@ const NAV = [
   },
 ]
 
-// ─── Compact dark language switcher ──────────────────────────────────────────
+// ─── Light language switcher ──────────────────────────────────────────
 function LangBar() {
   const { lang, setLang } = useTranslation()
   const langs: { code: Lang; flag: string; label: string }[] = [
     { code: 'en', flag: '🇬🇧', label: 'EN' },
     { code: 'ru', flag: '🇷🇺', label: 'RU' },
-    { code: 'es', flag: '🇷🇸', label: 'SR' },  // using 'es' slot for Serbian
+    { code: 'es', flag: '🇷🇸', label: 'SR' },
   ]
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
@@ -100,7 +100,7 @@ export const Sidebar: React.FC = () => {
       <Link href="/" style={{ textDecoration: 'none', display: 'block' }}>
         <div style={{
           padding: '18px 16px 14px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--border)',
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
@@ -110,8 +110,8 @@ export const Sidebar: React.FC = () => {
             <svg viewBox="0 0 32 32" fill="none" width="30" height="30">
               <defs>
                 <linearGradient id="sbg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#c0392b"/>
-                  <stop offset="100%" stopColor="#e67e22"/>
+                  <stop offset="0%" stopColor="#F97316"/>
+                  <stop offset="100%" stopColor="#EA580C"/>
                 </linearGradient>
               </defs>
               <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="url(#sbg)"/>
@@ -119,8 +119,8 @@ export const Sidebar: React.FC = () => {
             </svg>
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'white', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PropBlaze</div>
-            <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>AI Platform</div>
+            <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PropBlaze</div>
+            <div style={{ fontSize: '0.55rem', color: 'var(--text-tertiary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>AI Platform</div>
           </div>
         </div>
       </Link>
@@ -138,12 +138,12 @@ export const Sidebar: React.FC = () => {
             gap: 6,
             padding: '9px 12px',
             borderRadius: 10,
-            background: 'linear-gradient(135deg,#c0392b,#e67e22)',
+            background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
             color: 'white',
             fontWeight: 600,
             fontSize: '0.75rem',
             textDecoration: 'none',
-            boxShadow: '0 2px 12px rgba(192,57,43,0.35)',
+            boxShadow: 'var(--shadow-sm)',
           }}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1.5V10.5M1.5 6H10.5" stroke="white" strokeWidth="1.75" strokeLinecap="round"/>
@@ -167,15 +167,16 @@ export const Sidebar: React.FC = () => {
                 textDecoration: 'none',
                 fontSize: '0.8125rem',
                 fontWeight: active ? 600 : 400,
-                color: active ? 'white' : 'rgba(255,255,255,0.45)',
-                background: active ? 'rgba(255,255,255,0.08)' : 'transparent',
+                color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                background: active ? 'var(--primary-light)' : 'transparent',
+                border: active ? `1px solid var(--primary-border)` : '1px solid transparent',
                 transition: 'all 0.15s',
               }}>
-              <span style={{ color: active ? '#e67e22' : 'rgba(255,255,255,0.35)', flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ color: active ? 'var(--primary)' : 'var(--text-tertiary)', flexShrink: 0 }}>{item.icon}</span>
               <span style={{ flex: 1 }}>{item.label}</span>
               {item.badge && (
                 <span style={{
-                  background: 'linear-gradient(135deg,#c0392b,#e67e22)',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
                   color: 'white',
                   fontSize: '0.6rem',
                   fontWeight: 700,
@@ -191,7 +192,7 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Profile / User */}
-      <div style={{ padding: '8px 10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '8px 10px 12px', borderTop: '1px solid var(--border)' }}>
         <div
           onClick={() => setShowProfile(!showProfile)}
           style={{
@@ -200,8 +201,8 @@ export const Sidebar: React.FC = () => {
             gap: 8,
             padding: '8px 10px',
             borderRadius: 10,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
             cursor: 'pointer',
           }}>
           {/* Avatar */}
@@ -216,38 +217,38 @@ export const Sidebar: React.FC = () => {
             fontWeight: 700,
             color: 'white',
             flexShrink: 0,
-            background: 'linear-gradient(135deg,#c0392b,#e67e22)',
+            background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
           }}>
             {user?.email?.charAt(0).toUpperCase() ?? 'U'}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user?.email?.split('@')[0] ?? 'User'}
             </div>
-            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
               Owner · Active
             </div>
           </div>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0, transform: showProfile ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--text-tertiary)', flexShrink: 0, transform: showProfile ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
             <path d="M2.5 4.5L6 7.5L9.5 4.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
           </svg>
         </div>
 
         {showProfile && (
-          <div style={{ marginTop: 4, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)', background: '#0f0f11' }}>
+          <div style={{ marginTop: 4, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--surface)' }}>
             <Link href="/settings" style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
-              fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none',
+              fontSize: '0.75rem', color: 'var(--text-secondary)', textDecoration: 'none',
             }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="currentColor" strokeWidth="1.25"/><path d="M2 12c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>
               Profile & Settings
             </Link>
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+            <div style={{ height: '1px', background: 'var(--border)' }} />
             <button onClick={handleLogout} style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', width: '100%',
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '0.75rem', color: 'rgba(192,57,43,0.8)',
+              fontSize: '0.75rem', color: 'var(--red)',
             }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 12H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3M9.5 9.5L12.5 7M12.5 7L9.5 4.5M12.5 7H5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Sign out

@@ -112,10 +112,10 @@ const INCOMING_OFFERS = [
 type OfferStatus = 'new' | 'viewed' | 'responded' | 'declined';
 
 const STATUS_CFG: Record<OfferStatus, { label: string; color: string; bg: string }> = {
-  new:       { label: 'New offer',   color: '#e67e22', bg: 'rgba(230,126,34,0.15)' },
-  viewed:    { label: 'Viewed',      color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
-  responded: { label: 'Responded',   color: '#4ade80', bg: 'rgba(74,222,128,0.12)' },
-  declined:  { label: 'Declined',    color: 'rgba(255,255,255,0.3)', bg: 'rgba(255,255,255,0.06)' },
+  new:       { label: 'New offer',   color: 'var(--primary)', bg: 'var(--primary-light)' },
+  viewed:    { label: 'Viewed',      color: 'var(--blue)', bg: 'var(--blue-light)' },
+  responded: { label: 'Responded',   color: 'var(--green)', bg: 'var(--green-light)' },
+  declined:  { label: 'Declined',    color: 'var(--text-tertiary)', bg: 'var(--surface-2)' },
 };
 
 function ScoreDot({ score }: { score: number }) {
@@ -123,7 +123,7 @@ function ScoreDot({ score }: { score: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <svg width="36" height="36" viewBox="0 0 36 36">
-        <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3"/>
+        <circle cx="18" cy="18" r="16" fill="none" stroke="var(--border)" strokeWidth="3"/>
         <circle cx="18" cy="18" r="16" fill="none" stroke={color} strokeWidth="3"
           strokeDasharray={`${(score / 100) * 100.53} 100.53`}
           strokeLinecap="round" transform="rotate(-90 18 18)"/>
@@ -137,19 +137,19 @@ function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onEx
   const st = STATUS_CFG[offer.status as OfferStatus];
   return (
     <div style={{
-      background: '#0c0c0e', border: `1px solid ${offer.status === 'new' ? 'rgba(230,126,34,0.3)' : 'rgba(255,255,255,0.07)'}`,
+      background: 'var(--surface)', border: `1px solid ${offer.status === 'new' ? 'rgba(230,126,34,0.3)' : 'rgba(255,255,255,0.07)'}`,
       borderRadius: 14, overflow: 'hidden', transition: 'border 0.2s',
       boxShadow: offer.status === 'new' ? '0 0 0 1px rgba(230,126,34,0.1)' : 'none',
     }}>
       {/* Header */}
-      <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ fontSize: '1.5rem' }}>{offer.property.icon}</div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'white', letterSpacing: '-0.01em' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text)', letterSpacing: '-0.01em' }}>
               {offer.property.type} · {offer.property.area_sqm} m²
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
               {offer.property.address}
             </div>
           </div>
@@ -158,7 +158,7 @@ function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onEx
           <span style={{ padding: '3px 9px', borderRadius: 6, fontSize: '0.6875rem', fontWeight: 600, color: st.color, background: st.bg }}>
             {st.label}
           </span>
-          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
             {offer.ref}
           </span>
         </div>
@@ -177,13 +177,13 @@ function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onEx
               { icon: '📸', label: `${offer.property.photos} photos` },
               { icon: '📄', label: offer.property.has_docs ? 'Docs ✓' : 'No docs' },
             ].map(i => (
-              <span key={i.icon} style={{ padding: '3px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+              <span key={i.icon} style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid rgba(255,255,255,0.07)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 {i.icon} {i.label}
               </span>
             ))}
           </div>
 
-          <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, marginBottom: 12 }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>
             {offer.property.description}
           </p>
 
@@ -197,13 +197,13 @@ function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onEx
           </div>
 
           {/* Owner info (anonymized) */}
-          <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(192,57,43,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>👤</div>
+          <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary),0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>👤</div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
-                Owner: <strong style={{ color: 'rgba(255,255,255,0.4)' }}>●●●</strong> (revealed after contact)
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Owner: <strong style={{ color: 'var(--text-secondary)' }}>●●●</strong> (revealed after contact)
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
                 From {offer.owner.country} · Speaks {offer.owner.language} · Responds in {offer.owner.response_within}
               </div>
             </div>
@@ -214,7 +214,7 @@ function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onEx
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, minWidth: 100 }}>
           <div style={{ textAlign: 'center' }}>
             <ScoreDot score={offer.match.score} />
-            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Match score
             </div>
             <div style={{ fontSize: '0.65rem', color: '#e67e22', marginTop: 2 }}>
@@ -226,8 +226,8 @@ function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onEx
             <button onClick={onExpand} style={{
               padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
               background: 'linear-gradient(135deg,#c0392b,#e67e22)',
-              color: 'white', fontWeight: 700, fontSize: '0.75rem',
-              boxShadow: '0 3px 12px rgba(192,57,43,0.3)', whiteSpace: 'nowrap',
+              color: 'var(--text)', fontWeight: 700, fontSize: '0.75rem',
+              boxShadow: '0 3px 12px linear-gradient(135deg, var(--primary),0.3)', whiteSpace: 'nowrap',
             }}>
               Respond →
             </button>
@@ -241,16 +241,16 @@ function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onEx
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '8px 18px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'rgba(255,255,255,0.2)' }}>
+      <div style={{ padding: '8px 18px', borderTop: '1px solid var(--surface-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--border)' }}>
           <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
           <path d="M6 3.5V6.5L7.5 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
         </svg>
-        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
           Received {new Date(offer.received).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
         </span>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--border)' }}>
           ⏰ Offer expires in 5 days
         </span>
       </div>
@@ -270,28 +270,28 @@ function RespondModal({ offer, onClose }: { offer: typeof INCOMING_OFFERS[0]; on
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#0c0c0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
         {sent ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'white', marginBottom: 6 }}>Response sent!</div>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>The property owner will be notified. Contact details will be shared after mutual confirmation.</p>
+            <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Response sent!</div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>The property owner will be notified. Contact details will be shared after mutual confirmation.</p>
           </div>
         ) : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'white' }}>Respond to offer {offer.ref}</div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4 }}>
+              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Respond to offer {offer.ref}</div>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4 }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </button>
             </div>
 
-            <div style={{ padding: '10px 14px', background: 'rgba(230,126,34,0.07)', border: '1px solid rgba(230,126,34,0.2)', borderRadius: 9, marginBottom: 16, fontSize: '0.8125rem', color: 'rgba(255,255,255,0.6)' }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(230,126,34,0.07)', border: '1px solid rgba(230,126,34,0.2)', borderRadius: 9, marginBottom: 16, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
               <strong style={{ color: '#e67e22' }}>📋 {offer.property.type}</strong> · {offer.property.address} · €{offer.property.price.toLocaleString()}
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Your message to the property owner
               </label>
               <textarea
@@ -301,21 +301,21 @@ function RespondModal({ offer, onClose }: { offer: typeof INCOMING_OFFERS[0]; on
                 style={{
                   width: '100%', padding: '10px 13px', boxSizing: 'border-box',
                   background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 9, color: 'white', fontSize: '0.8125rem', outline: 'none',
+                  borderRadius: 9, color: 'var(--text)', fontSize: '0.8125rem', outline: 'none',
                   resize: 'vertical', lineHeight: 1.6,
                 }}
               />
             </div>
 
-            <div style={{ padding: '8px 12px', background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.15)', borderRadius: 8, fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: 16, lineHeight: 1.5 }}>
+            <div style={{ padding: '8px 12px', background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.15)', borderRadius: 8, fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
               🔒 Owner's contact details are shared only after they accept your response. Your agency ID (PB-AG) is used until then.
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer' }}>
+              <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer' }}>
                 Cancel
               </button>
-              <button onClick={handleSend} style={{ flex: 2, padding: '10px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: 'white', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 3px 12px rgba(192,57,43,0.3)' }}>
+              <button onClick={handleSend} style={{ flex: 2, padding: '10px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: 'var(--text)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 3px 12px linear-gradient(135deg, var(--primary),0.3)' }}>
                 Send Response →
               </button>
             </div>
@@ -335,14 +335,14 @@ export default function AgencyDemoPage() {
   const newCount = INCOMING_OFFERS.filter(o => o.status === 'new').length;
 
   return (
-    <div style={{ padding: '28px 32px', minHeight: '100vh', background: '#080809', color: 'white' }}>
+    <div style={{ padding: '28px 32px', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       {/* Demo banner */}
       <div style={{ marginBottom: 20, padding: '8px 16px', background: 'rgba(230,126,34,0.08)', border: '1px solid rgba(230,126,34,0.2)', borderRadius: 9, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8125rem' }}>
         <span style={{ fontSize: '1rem' }}>🏢</span>
         <span style={{ color: '#e67e22', fontWeight: 600 }}>Agency Demo Mode</span>
-        <span style={{ color: 'rgba(255,255,255,0.35)' }}>— this is how your agency portal looks when matched to property owners</span>
+        <span style={{ color: 'var(--text-tertiary)' }}>— this is how your agency portal looks when matched to property owners</span>
         <div style={{ flex: 1 }} />
-        <Link href="/register?role=agency" style={{ padding: '5px 12px', borderRadius: 7, background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: 'white', fontWeight: 600, fontSize: '0.75rem', textDecoration: 'none' }}>
+        <Link href="/register?role=agency" style={{ padding: '5px 12px', borderRadius: 7, background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: 'var(--text)', fontWeight: 600, fontSize: '0.75rem', textDecoration: 'none' }}>
           Register Agency →
         </Link>
       </div>
@@ -350,10 +350,10 @@ export default function AgencyDemoPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'white', letterSpacing: '-0.02em', marginBottom: 4 }}>
+          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
             Incoming Property Offers
           </h1>
-          <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.4)' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
             {INCOMING_OFFERS.length} offers matched to your agency · {newCount} new
           </p>
         </div>
@@ -365,20 +365,20 @@ export default function AgencyDemoPage() {
             { label: 'Response rate', value: '94%',    icon: '⚡', color: '#e67e22' },
             { label: 'Conversions',  value: '12',      icon: '🏆', color: '#60a5fa' },
           ].map(s => (
-            <div key={s.label} style={{ background: '#0c0c0e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '8px 14px', textAlign: 'center' }}>
+            <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '8px 14px', textAlign: 'center' }}>
               <div style={{ fontSize: '0.9rem', marginBottom: 2 }}>{s.icon}</div>
               <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+              <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Agency ID badge */}
-      <div style={{ padding: '10px 16px', background: '#0c0c0e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)' }}>Your PropBlaze Agency ID:</span>
+      <div style={{ padding: '10px 16px', background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Your PropBlaze Agency ID:</span>
         <code style={{ fontSize: '0.875rem', fontWeight: 700, color: '#e67e22', letterSpacing: '0.05em', background: 'rgba(230,126,34,0.08)', padding: '2px 8px', borderRadius: 5 }}>PB-AG-DEMO-0001</code>
-        <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)' }}>· Used in all offers until contact is confirmed</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--border)' }}>· Used in all offers until contact is confirmed</span>
       </div>
 
       {/* Offer cards */}

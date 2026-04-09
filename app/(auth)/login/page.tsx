@@ -282,10 +282,10 @@ export default function LoginPage() {
                   fontSize: '0.7rem', fontWeight: 600, color: C.textMd,
                   textTransform: 'uppercase', letterSpacing: '0.06em'
                 }}>Password</label>
-                <button type="button" style={{
+                <Link href="/forgot-password" style={{
                   background: 'none', border: 'none', fontSize: '0.75rem',
-                  color: C.orange, cursor: 'pointer', padding: 0
-                }}>Forgot password?</button>
+                  color: C.orange, cursor: 'pointer', padding: 0, textDecoration: 'none'
+                }}>Forgot password?</Link>
               </div>
               <div style={{ position: 'relative' }}>
                 <input
