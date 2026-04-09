@@ -4,8 +4,8 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/store/auth'
-import { useTranslation } from 'A/lib/i18n/LangContext'
-import type { Lang } from 'A/lib/i18n/translations'
+import { useTranslation } from '@/lib/i18n/LangContext'
+import type { Lang } from '@/lib/i18n/translations'
 
 const NAV = [
   {
@@ -47,13 +47,13 @@ const NAV = [
   },
 ]
 
-// ─── Compact dark language switcher ────────────────────────────────────────────
+// âââ Compact dark language switcher ââââââââââââââââââââââââââââââââââââââââââââ
 function LangBar() {
   const { lang, setLang } = useTranslation()
   const langs: { code: Lang; flag: string; label: string }[] = [
-    { code: 'en', flag: '🇬🇧', label: 'EN' },
-    { code: 'ru', flag: '🇷🇺', label: 'RU' },
-    { code: 'sr', flag: '🇷🇸', label: 'SR' },
+    { code: 'en', flag: 'ð¬ð§', label: 'EN' },
+    { code: 'ru', flag: 'ð·ðº', label: 'RU' },
+    { code: 'sr', flag: 'ð·ð¸', label: 'SR' },
   ]
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -226,7 +226,7 @@ export const Sidebar: React.FC = () => {
             </div>
             <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 3 }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
-              Owner · Active
+              Owner Â· Active
             </div>
           </div>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0, transform: showProfile ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
