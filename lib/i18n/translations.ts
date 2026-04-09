@@ -4,7 +4,7 @@
  * Usage: const t = useTranslation(); t('hero.title')
  */
 
-export type Lang = 'en' | 'de' | 'ru' | 'ua' | 'es'
+export type Lang = 'en' | 'de' | 'ru' | 'ua' | 'es' | 'sr'
 
 export const SUPPORTED_LANGS: { code: Lang; label: string; flag: string }[] = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -12,6 +12,7 @@ export const SUPPORTED_LANGS: { code: Lang; label: string; flag: string }[] = [
   { code: 'ru', label: 'Русский', flag: '🇷🇺' },
   { code: 'ua', label: 'Українська', flag: '🇺🇦' },
   { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'sr', label: 'Srpski', flag: '🇷🇸' },
 ]
 
 type Translations = Record<string, Record<string, string>>
@@ -362,6 +363,93 @@ export const T: Record<Lang, Translations> = {
     email: {
       trial_subject: 'Спробуйте PropBlaze безкоштовно 14 днів',
       trial_body: 'Розмістіть перший об\'єкт і охопіть 847+ агентств по всій Європі.',
+    },
+  },
+
+  sr: {
+    nav: {
+      how: 'Kako funkcioniše',
+      pricing: 'Cenovnik',
+      agencies: 'Agencije',
+      signin: 'Prijavi se',
+      start: 'Počni besplatno →',
+    },
+    hero: {
+      badge: '847 agencija aktivno u 31 EU tržištu',
+      title1: 'Prodaj pametnije.',
+      title2: 'Zatvori brže.',
+      subtitle: 'Objavi nekretninu. Naša AI pronalazi prave agencije širom Evrope i šalje personalizovanu ponudu — za 24 sata.',
+      cta_primary: 'Objavi nekretninu besplatno',
+      cta_secondary: 'Pogledaj kako funkcioniše',
+      fine_print: 'Bez kartice · Prva nekretnina besplatno · Otkaži kad god hoćeš',
+    },
+    wizard: {
+      sell: 'Prodaj',
+      rent: 'Iznajmi',
+      sell_desc: 'Pronađi kupce kroz AI-odabrane agencije širom Evrope',
+      rent_desc: 'Pronađi kvalifikovane stanare kroz sertifikovane agencije',
+      step_intent: 'Šta želiš da uradiš?',
+      step_basics: 'Osnovni podaci',
+      step_details: 'Detalji i karakteristike',
+      step_media: 'Fotografije i dokumenti',
+      step_package: 'AI paket prodaje',
+      step_preview: 'Pregled i potvrda',
+      step_payment: 'Aktiviraj kampanju',
+      photos_min: 'Minimum 3 fotografije',
+      photos_rec: 'Preporučeno: 8–12 kvalitetnih fotografija',
+      upload_photos: 'Otpremi fotografije',
+      upload_docs: 'Otpremi katastarske dokumente',
+      price: 'Tražena cena (€)',
+      property_type: 'Tip nekretnine',
+      country: 'Zemlja',
+      city: 'Grad',
+      size: 'Površina (m²)',
+      rooms: 'Spavaće sobe',
+      bathrooms: 'Kupatila',
+      floor: 'Sprat',
+      condition: 'Stanje',
+      features: 'Karakteristike i pogodnosti',
+      description: 'Opis (opciono)',
+      next: 'Sledeće →',
+      back: '← Nazad',
+      publish: 'Objavi i aktiviraj',
+      generating: 'AI kreira tvoj paket…',
+    },
+    property_types: {
+      apartment: 'Stan',
+      house: 'Kuća',
+      villa: 'Vila',
+      land: 'Plac / Zemljište',
+      commercial: 'Poslovni prostor',
+      new_build: 'Novogradnja',
+    },
+    conditions: {
+      new: 'Novo / useljivost odmah',
+      good: 'Dobro stanje',
+      renovation: 'Potrebna renovacija',
+    },
+    offer: {
+      title: 'Pregled odabranih agencija',
+      subtitle: 'Naša AI je odabrala ove agencije za tvoju nekretninu. Potvrdi da započneš distribuciju.',
+      approve: 'Potvrdi i započni distribuciju',
+      score: 'AI ocena',
+      wave: 'Talas',
+      cross_border: 'Prekogranično',
+      why: 'Zašto ova agencija?',
+      markets: 'Tržišta kupaca',
+    },
+    agency: {
+      register_title: 'Portal za agencije',
+      register_subtitle: 'Registruj se da primaš leads za nekretnine koje odgovaraju tvojoj specijalizaciji',
+      access_title: 'Pristup detaljima nekretnine',
+      access_subtitle: 'Prijavi se sa kredencijalima agencije',
+      property_id: 'ID nekretnine',
+      contact_via: 'Kontaktiraj vlasnika kroz platformu',
+      nda: 'Kontakt podaci vlasnika su zaštićeni. Sva komunikacija se odvija unutar PropBlaze.',
+    },
+    email: {
+      trial_subject: 'Isprobaj PropBlaze besplatno 14 dana',
+      trial_body: 'Objavi prvu nekretninu i dostigni 847+ agencija širom Evrope.',
     },
   },
 
