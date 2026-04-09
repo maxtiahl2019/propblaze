@@ -6,6 +6,19 @@ import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { useAuth, DEMO_MODE, DEMO_USER } from '@/store/auth';
 
+const C = {
+  bg:        '#0C0F1A',
+  surface:   '#131828',
+  surface2:  '#1A1F31',
+  border:    'rgba(255,255,255,0.08)',
+  borderStr: 'rgba(255,255,255,0.15)',
+  text:      '#E8EBF4',
+  textMd:    '#8892AD',
+  textSm:    '#525D78',
+  orange:    '#F97316',
+  orangeHov: '#FB8C36',
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
@@ -22,7 +35,6 @@ export default function LoginPage() {
     setTimeout(() => setVisible(true), 60);
   }, []);
 
-  // Auto-redirect if already authenticated
   useEffect(() => {
     if (DEMO_MODE) {
       router.replace('/dashboard');
@@ -36,26 +48,18 @@ export default function LoginPage() {
   if (DEMO_MODE || isAuthenticated) {
     return (
       <div style={{
-        minHeight: '100vh',
-        background: '#F9FAFB',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        minHeight: '100vh', background: C.bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
         <div style={{
-          width: 24,
-          height: 24,
-          border: '2px solid #F97316',
-          borderTopColor: 'transparent',
-          borderRadius: '50%',
-          animation: 'spin 0.7s linear infinite'
+          width: 24, height: 24, border: `2px solid ${C.orange}`,
+          borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite'
         }}/>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // ── Google OAuth ──────────────────────────────────────────────────────────────
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
@@ -65,7 +69,6 @@ export default function LoginPage() {
     }
   };
 
-  // ── Demo Login ────────────────────────────────────────────────────────────────
   const handleDemoLogin = () => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('propblaze-auth', JSON.stringify({
@@ -77,30 +80,16 @@ export default function LoginPage() {
     }
   };
 
-  // ── Email + Password ──────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
     if (!email.includes('@')) newErrors.email = 'Enter a valid email';
     if (!password) newErrors.password = 'Password is required';
-    if (Object.keys(newErrors).length) {
-      setErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
     setErrors({});
-
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.ok) {
-        router.replace('/dashboard');
-        return;
-      }
-
+      const result = await signIn('credentials', { email, password, redirect: false });
+      if (result?.ok) { router.replace('/dashboard'); return; }
       await login(email, password);
       router.replace('/dashboard');
     } catch {}
@@ -108,80 +97,50 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: '#FFFFFF',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem 1rem',
-      overflow: 'hidden'
+      minHeight: '100vh', background: C.bg,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: '2rem 1rem', overflow: 'hidden',
+      fontFamily: 'Inter, -apple-system, sans-serif'
     }}>
-      {/* Decorative gradient elements */}
+      {/* Background glows */}
       <div style={{
-        position: 'fixed',
-        top: -250,
-        left: '10%',
-        width: 700,
-        height: 700,
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)',
+        position: 'fixed', top: '-20%', left: '50%', transform: 'translateX(-50%)',
+        width: '700px', height: '600px', borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(249,115,22,0.07) 0%, transparent 70%)',
         pointerEvents: 'none'
       }}/>
       <div style={{
-        position: 'fixed',
-        bottom: -200,
-        right: '5%',
-        width: 500,
-        height: 500,
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 70%)',
+        position: 'fixed', bottom: '-15%', right: '5%',
+        width: '500px', height: '500px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(96,165,250,0.04) 0%, transparent 70%)',
         pointerEvents: 'none'
       }}/>
 
       <div style={{
-        width: '100%',
-        maxWidth: 420,
-        position: 'relative',
-        zIndex: 1,
+        width: '100%', maxWidth: 420, position: 'relative', zIndex: 1,
         opacity: visible ? 1 : 0,
         transform: visible ? 'none' : 'translateY(20px)',
-        transition: 'all 0.7s ease'
+        transition: 'all 0.6s ease'
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <Link href="/" style={{
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 10
-          }}>
-            <svg viewBox="0 0 32 32" fill="none" width="36" height="36">
+          <Link href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <svg viewBox="0 0 32 32" fill="none" width="34" height="34">
               <defs>
-                <linearGradient id="login-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="login-lg" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#F97316"/>
                   <stop offset="100%" stopColor="#EA580C"/>
                 </linearGradient>
               </defs>
-              <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="url(#login-logo-grad)"/>
-              <ellipse cx="16" cy="18" rx="4" ry="4" fill="white" fillOpacity="0.3"/>
+              <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="url(#login-lg)"/>
+              <ellipse cx="16" cy="18" rx="4" ry="4" fill="white" fillOpacity="0.25"/>
             </svg>
             <div>
-              <div style={{
-                fontWeight: 800,
-                fontSize: '1.125rem',
-                color: '#111827',
-                letterSpacing: '-0.02em',
-                lineHeight: 1
-              }}>
+              <div style={{ fontWeight: 800, fontSize: '1.1rem', color: C.text, letterSpacing: '-0.02em', lineHeight: 1 }}>
                 PropBlaze
               </div>
-              <div style={{
-                fontSize: '0.55rem',
-                color: '#9CA3AF',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase'
-              }}>
+              <div style={{ fontSize: '0.55rem', color: C.textSm, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 AI Platform
               </div>
             </div>
@@ -190,26 +149,18 @@ export default function LoginPage() {
 
         {/* Card */}
         <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #E5E7EB',
-          borderRadius: 18,
-          padding: '28px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          background: C.surface, border: `1px solid ${C.border}`,
+          borderRadius: '18px', padding: '28px',
+          boxShadow: '0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)'
         }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <h1 style={{
-              fontSize: '1.375rem',
-              fontWeight: 800,
-              color: '#111827',
-              letterSpacing: '-0.03em',
-              marginBottom: 5
+              fontSize: '1.35rem', fontWeight: 800, color: C.text,
+              letterSpacing: '-0.03em', marginBottom: 6
             }}>
               Welcome back
             </h1>
-            <p style={{
-              fontSize: '0.8125rem',
-              color: '#6B7280'
-            }}>
+            <p style={{ fontSize: '0.8125rem', color: C.textMd }}>
               Sign in to your PropBlaze account
             </p>
           </div>
@@ -218,94 +169,44 @@ export default function LoginPage() {
           <button
             onClick={handleDemoLogin}
             style={{
-              width: '100%',
-              padding: '11px 16px',
-              background: '#F97316',
-              border: 'none',
-              borderRadius: 10,
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              transition: 'all 0.15s',
-              marginBottom: 20
+              width: '100%', padding: '11px 16px',
+              background: C.orange, border: 'none', borderRadius: '10px',
+              color: 'white', fontWeight: 600, fontSize: '0.9rem',
+              cursor: 'pointer', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: 10, marginBottom: 18,
+              boxShadow: '0 4px 20px rgba(249,115,22,0.25)',
+              transition: 'all 0.15s'
             }}
-            onMouseEnter={e => {
-              (e.currentTarget.style.background = '#EA580C');
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget.style.background = '#F97316');
-            }}
+            onMouseEnter={e => { (e.currentTarget.style.background = C.orangeHov); }}
+            onMouseLeave={e => { (e.currentTarget.style.background = C.orange); }}
           >
             <span>🚀</span>
             <span>Enter Demo</span>
           </button>
 
           {/* Divider */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 20
-          }}>
-            <div style={{
-              flex: 1,
-              height: 1,
-              background: '#E5E7EB'
-            }}/>
-            <span style={{
-              fontSize: '0.75rem',
-              color: '#9CA3AF'
-            }}>
-              or sign in
-            </span>
-            <div style={{
-              flex: 1,
-              height: 1,
-              background: '#E5E7EB'
-            }}/>
-          </div>
+          <Divider label="or sign in" />
 
-          {/* Google OAuth button */}
+          {/* Google */}
           <button
             onClick={handleGoogle}
             disabled={googleLoading}
             style={{
-              width: '100%',
-              padding: '11px 16px',
-              background: '#F9FAFB',
-              border: '1px solid #E5E7EB',
-              borderRadius: 10,
-              color: '#111827',
-              fontWeight: 600,
-              fontSize: '0.9rem',
+              width: '100%', padding: '11px 16px',
+              background: C.surface2, border: `1px solid ${C.border}`,
+              borderRadius: '10px', color: C.text,
+              fontWeight: 500, fontSize: '0.875rem',
               cursor: googleLoading ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              transition: 'all 0.15s',
-              marginBottom: 20
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: 10, marginBottom: 18, transition: 'all 0.15s'
             }}
-            onMouseEnter={e => {
-              if (!googleLoading) (e.currentTarget.style.background = '#F3F4F6');
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget.style.background = '#F9FAFB');
-            }}
+            onMouseEnter={e => { if (!googleLoading) (e.currentTarget.style.borderColor = C.borderStr); }}
+            onMouseLeave={e => { (e.currentTarget.style.borderColor = C.border); }}
           >
             {googleLoading ? (
               <div style={{
-                width: 18,
-                height: 18,
-                border: '2px solid #E5E7EB',
-                borderTopColor: '#F97316',
-                borderRadius: '50%',
-                animation: 'spin 0.7s linear infinite'
+                width: 18, height: 18, border: `2px solid ${C.border}`,
+                borderTopColor: C.orange, borderRadius: '50%', animation: 'spin 0.7s linear infinite'
               }}/>
             ) : (
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -318,174 +219,80 @@ export default function LoginPage() {
             {googleLoading ? 'Connecting…' : 'Continue with Google'}
           </button>
 
-          {/* Divider */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 20
-          }}>
-            <div style={{
-              flex: 1,
-              height: 1,
-              background: '#E5E7EB'
-            }}/>
-            <span style={{
-              fontSize: '0.75rem',
-              color: '#9CA3AF'
-            }}>
-              email
-            </span>
-            <div style={{
-              flex: 1,
-              height: 1,
-              background: '#E5E7EB'
-            }}/>
-          </div>
+          <Divider label="email" />
 
-          {/* Email + Password form */}
-          <form onSubmit={handleSubmit} style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14
-          }}>
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
             {error && (
               <div style={{
-                padding: '10px 13px',
-                background: '#FEF2F2',
-                border: '1px solid #FECACA',
-                borderRadius: 8,
-                color: '#DC2626',
-                fontSize: '0.8125rem'
+                padding: '10px 13px', background: 'rgba(248,113,113,0.1)',
+                border: '1px solid rgba(248,113,113,0.22)', borderRadius: '8px',
+                color: '#F87171', fontSize: '0.8125rem'
               }}>
                 {error}
               </div>
             )}
 
+            {/* Email */}
             <div>
               <label style={{
-                display: 'block',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                color: '#6B7280',
-                marginBottom: 5,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em'
-              }}>
-                Email
-              </label>
+                display: 'block', fontSize: '0.7rem', fontWeight: 600,
+                color: C.textMd, marginBottom: 5,
+                textTransform: 'uppercase', letterSpacing: '0.06em'
+              }}>Email</label>
               <input
-                type="email"
-                placeholder="you@example.com"
+                type="email" placeholder="you@example.com"
                 value={email}
-                onChange={e => {
-                  setEmail(e.target.value);
-                  setErrors({ ...errors, email: '' });
-                }}
+                onChange={e => { setEmail(e.target.value); setErrors({ ...errors, email: '' }); }}
                 style={{
-                  width: '100%',
-                  padding: '11px 13px',
-                  background: '#F9FAFB',
-                  border: errors.email ? '1px solid #FECACA' : '1px solid #E5E7EB',
-                  borderRadius: 9,
-                  color: '#111827',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.15s'
+                  width: '100%', padding: '11px 13px',
+                  background: C.surface2,
+                  border: errors.email ? '1px solid rgba(248,113,113,0.4)' : `1px solid ${C.border}`,
+                  borderRadius: '9px', color: C.text, fontSize: '0.9rem',
+                  outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s'
                 }}
                 autoComplete="email"
-                onFocus={e => {
-                  if (!errors.email) (e.currentTarget.style.borderColor = '#F97316');
-                }}
-                onBlur={e => {
-                  (e.currentTarget.style.borderColor = errors.email ? '#FECACA' : '#E5E7EB');
-                }}
+                onFocus={e => { if (!errors.email) e.currentTarget.style.borderColor = C.orange; }}
+                onBlur={e => { e.currentTarget.style.borderColor = errors.email ? 'rgba(248,113,113,0.4)' : C.border; }}
               />
-              {errors.email && (
-                <p style={{
-                  fontSize: '0.7rem',
-                  color: '#DC2626',
-                  marginTop: 4
-                }}>
-                  {errors.email}
-                </p>
-              )}
+              {errors.email && <p style={{ fontSize: '0.7rem', color: '#F87171', marginTop: 4 }}>{errors.email}</p>}
             </div>
 
+            {/* Password */}
             <div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 5
-              }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                 <label style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  color: '#6B7280',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em'
-                }}>
-                  Password
-                </label>
-                <button
-                  type="button"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '0.75rem',
-                    color: '#F97316',
-                    cursor: 'pointer',
-                    padding: 0
-                  }}
-                >
-                  Forgot password?
-                </button>
+                  fontSize: '0.7rem', fontWeight: 600, color: C.textMd,
+                  textTransform: 'uppercase', letterSpacing: '0.06em'
+                }}>Password</label>
+                <button type="button" style={{
+                  background: 'none', border: 'none', fontSize: '0.75rem',
+                  color: C.orange, cursor: 'pointer', padding: 0
+                }}>Forgot password?</button>
               </div>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
-                  onChange={e => {
-                    setPassword(e.target.value);
-                    setErrors({ ...errors, password: '' });
-                  }}
+                  onChange={e => { setPassword(e.target.value); setErrors({ ...errors, password: '' }); }}
                   style={{
-                    width: '100%',
-                    padding: '11px 13px',
-                    paddingRight: 38,
-                    background: '#F9FAFB',
-                    border: errors.password ? '1px solid #FECACA' : '1px solid #E5E7EB',
-                    borderRadius: 9,
-                    color: '#111827',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s'
+                    width: '100%', padding: '11px 13px', paddingRight: 38,
+                    background: C.surface2,
+                    border: errors.password ? '1px solid rgba(248,113,113,0.4)' : `1px solid ${C.border}`,
+                    borderRadius: '9px', color: C.text, fontSize: '0.9rem',
+                    outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s'
                   }}
                   autoComplete="current-password"
-                  onFocus={e => {
-                    if (!errors.password) (e.currentTarget.style.borderColor = '#F97316');
-                  }}
-                  onBlur={e => {
-                    (e.currentTarget.style.borderColor = errors.password ? '#FECACA' : '#E5E7EB');
-                  }}
+                  onFocus={e => { if (!errors.password) e.currentTarget.style.borderColor = C.orange; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = errors.password ? 'rgba(248,113,113,0.4)' : C.border; }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   style={{
-                    position: 'absolute',
-                    right: 10,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#9CA3AF',
-                    padding: 0
+                    position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: C.textMd, padding: 0
                   }}
                 >
                   {showPassword
@@ -494,32 +301,19 @@ export default function LoginPage() {
                   }
                 </button>
               </div>
-              {errors.password && (
-                <p style={{
-                  fontSize: '0.7rem',
-                  color: '#DC2626',
-                  marginTop: 4
-                }}>
-                  {errors.password}
-                </p>
-              )}
+              {errors.password && <p style={{ fontSize: '0.7rem', color: '#F87171', marginTop: 4 }}>{errors.password}</p>}
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
               style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: 10,
-                marginTop: 4,
-                background: isLoading ? '#F3F4F6' : '#F97316',
-                color: isLoading ? '#9CA3AF' : 'white',
-                fontWeight: 700,
-                fontSize: '0.9375rem',
-                border: 'none',
+                width: '100%', padding: '12px', borderRadius: '10px', marginTop: 4,
+                background: isLoading ? C.surface2 : C.orange,
+                color: isLoading ? C.textMd : 'white',
+                fontWeight: 700, fontSize: '0.9375rem', border: 'none',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                boxShadow: isLoading ? 'none' : '0 2px 8px rgba(249,115,22,0.2)',
+                boxShadow: isLoading ? 'none' : '0 4px 16px rgba(249,115,22,0.25)',
                 transition: 'all 0.2s'
               }}
             >
@@ -528,25 +322,25 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Footer links */}
-        <p style={{
-          textAlign: 'center',
-          fontSize: '0.8125rem',
-          color: '#9CA3AF',
-          marginTop: 16
-        }}>
+        <p style={{ textAlign: 'center', fontSize: '0.8125rem', color: C.textMd, marginTop: 16 }}>
           No account yet?{' '}
-          <Link href="/register" style={{
-            color: '#F97316',
-            fontWeight: 600,
-            textDecoration: 'none'
-          }}>
+          <Link href="/register" style={{ color: C.orange, fontWeight: 600, textDecoration: 'none' }}>
             Create one
           </Link>
         </p>
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+function Divider({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }}/>
+      <span style={{ fontSize: '0.75rem', color: '#525D78' }}>{label}</span>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }}/>
     </div>
   );
 }
