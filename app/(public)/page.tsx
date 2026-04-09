@@ -34,6 +34,101 @@ const C = {
   orangeGlow:'rgba(249,115,22,0.12)',
 };
 
+function AgencyMatchingSection() {
+  const [showAll, setShowAll] = useState(false);
+
+  const displayAgencies = showAll ? DEMO_AGENCIES : DEMO_AGENCIES.slice(0, 4);
+
+  return (
+    <section id="agencies" style={{
+      background: C.surface,
+      borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`,
+      padding: '96px 32px'
+    }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+          <div style={{
+            display: 'inline-block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
+            textTransform: 'uppercase', color: C.orange, marginBottom: '10px'
+          }}>AI Matching Engine</div>
+          <h2 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '12px', color: C.text }}>
+            Smart Agency Matching
+          </h2>
+          <p style={{ color: C.textMd, fontSize: '15px' }}>
+            Every agency is scored on 12+ parameters before receiving your listing
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '32px' }}>
+          {displayAgencies.map((agency) => (
+            <div key={agency.id} style={{
+              background: C.bg,
+              border: `1px solid ${agency.isRealEmail ? '#FDD0A8' : C.border}`,
+              borderRadius: '14px', padding: '24px',
+              boxShadow: agency.isRealEmail ? '0 4px 20px rgba(249,115,22,0.08)' : '0 2px 6px rgba(30,40,80,0.04)',
+              transition: 'all 0.25s'
+            }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(30,40,80,0.1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = agency.isRealEmail ? '0 4px 20px rgba(249,115,22,0.08)' : '0 2px 6px rgba(30,40,80,0.04)'; }}>
+              {agency.isRealEmail && (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  background: '#FFF3E8', border: '1px solid #FDD0A8',
+                  color: '#C2410C', padding: '3px 10px', borderRadius: '99px',
+                  fontSize: '11px', fontWeight: 600, marginBottom: '14px'
+                }}>★ Real email</div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '14px' }}>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '3px', color: C.text }}>
+                    {agency.flag} {agency.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: C.textMd }}>{agency.city}, {agency.country}</div>
+                </div>
+                <div style={{
+                  background: agency.isRealEmail ? C.orange : C.surface2,
+                  color: agency.isRealEmail ? 'white' : C.textMd,
+                  padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 700
+                }}>
+                  {agency.score}/100
+                </div>
+              </div>
+              <div style={{ height: '4px', background: C.border, borderRadius: '99px', marginBottom: '14px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${agency.score}%`, background: agency.isRealEmail ? C.orange : C.borderStr, borderRadius: '99px' }}/>
+              </div>
+              <div style={{ fontSize: '12px', color: C.textMd, marginBottom: '14px', paddingBottom: '14px', borderBottom: `1px solid ${C.border}` }}>
+                {agency.specialization}
+              </div>
+              <div style={{ display: 'flex', gap: '20px', fontSize: '12px', color: C.textMd }}>
+                <div><span style={{ color: C.text, fontWeight: 600 }}>{agency.deals_30d}</span> deals/mo</div>
+                <div><span style={{ color: C.text, fontWeight: 600 }}>{agency.response_rate}%</span> response</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {!showAll && (
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={() => setShowAll(true)}
+              style={{
+                padding: '12px 28px', background: 'transparent',
+                border: `2px solid ${C.orange}`, color: C.orange,
+                borderRadius: '8px', fontSize: '14px', fontWeight: 600,
+                cursor: 'pointer', transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.orange; (e.currentTarget as HTMLElement).style.color = 'white'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = C.orange; }}
+            >
+              Show all 10 matched agencies
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -349,129 +444,6 @@ export default function LandingPage() {
 
       {/* Agency Matching */}
       <AgencyMatchingSection />
-
-function AgencyMatchingSection() {
-  const [showAll, setShowAll] = useState(false);
-  const C = {
-    bg:        '#F4F6FA',
-    surface:   '#FFFFFF',
-    surface2:  '#EEF1F7',
-    border:    '#DDE2EE',
-    borderStr: '#C4CBDB',
-    text:      '#1A1F2E',
-    textMd:    '#6B7A99',
-    textSm:    '#9BA8C0',
-    orange:    '#F97316',
-    orangeHov: '#EA580C',
-    orangeGlow:'rgba(249,115,22,0.12)',
-  };
-
-  const displayAgencies = showAll ? DEMO_AGENCIES : DEMO_AGENCIES.slice(0, 4);
-
-  return (
-    <section id="agencies" style={{
-      background: C.surface,
-      borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`,
-      padding: '96px 32px'
-    }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-          <div style={{
-            display: 'inline-block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
-            textTransform: 'uppercase', color: C.orange, marginBottom: '10px'
-          }}>AI Matching Engine</div>
-          <h2 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '12px', color: C.text }}>
-            Smart Agency Matching
-          </h2>
-          <p style={{ color: C.textMd, fontSize: '15px' }}>
-            Every agency is scored on 12+ parameters before receiving your listing
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '32px' }}>
-          {displayAgencies.map((agency, i) => (
-            <div key={agency.id} style={{
-              background: C.bg,
-              border: `1px solid ${agency.isRealEmail ? '#FDD0A8' : C.border}`,
-              borderRadius: '14px', padding: '24px',
-              boxShadow: agency.isRealEmail ? '0 4px 20px rgba(249,115,22,0.08)' : '0 2px 6px rgba(30,40,80,0.04)',
-              transition: 'all 0.25s'
-            }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(30,40,80,0.1)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = agency.isRealEmail ? '0 4px 20px rgba(249,115,22,0.08)' : '0 2px 6px rgba(30,40,80,0.04)'; }}>
-              {agency.isRealEmail && (
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '5px',
-                  background: '#FFF3E8', border: '1px solid #FDD0A8',
-                  color: '#C2410C', padding: '3px 10px', borderRadius: '99px',
-                  fontSize: '11px', fontWeight: 600, marginBottom: '14px'
-                }}>★ Real email</div>
-              )}
-              <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '14px' }}>
-                <div>
-                  <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '3px', color: C.text }}>
-                    {agency.flag} {agency.name}
-                  </div>
-                  <div style={{ fontSize: '12px', color: C.textMd }}>{agency.city}, {agency.country}</div>
-                </div>
-                <div style={{
-                  background: agency.isRealEmail ? C.orange : C.surface2,
-                  color: agency.isRealEmail ? 'white' : C.textMd,
-                  padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 700
-                }}>
-                  {agency.score}/100
-                </div>
-              </div>
-
-              {/* Score bar */}
-              <div style={{
-                height: '4px', background: C.border, borderRadius: '99px',
-                marginBottom: '14px', overflow: 'hidden'
-              }}>
-                <div style={{
-                  height: '100%', width: `${agency.score}%`,
-                  background: agency.isRealEmail ? C.orange : C.borderStr, borderRadius: '99px'
-                }}/>
-              </div>
-
-              <div style={{
-                fontSize: '12px', color: C.textMd, marginBottom: '14px',
-                paddingBottom: '14px', borderBottom: `1px solid ${C.border}`
-              }}>
-                {agency.specialization}
-              </div>
-              <div style={{ display: 'flex', gap: '20px', fontSize: '12px', color: C.textMd }}>
-                <div><span style={{ color: C.text, fontWeight: 600 }}>{agency.deals_30d}</span> deals/mo</div>
-                <div><span style={{ color: C.text, fontWeight: 600 }}>{agency.response_rate}%</span> response</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {!showAll && (
-          <div style={{ textAlign: 'center' }}>
-            <button
-              onClick={() => setShowAll(true)}
-              style={{
-                padding: '12px 28px',
-                background: 'transparent',
-                border: `2px solid ${C.orange}`,
-                color: C.orange,
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.orange; (e.currentTarget as HTMLElement).style.color = 'white'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = C.orange; }}
-            >
-              Show all 10 matched agencies
-            </button>
-          </div>
-        )}
-      </div>
-    </section>
 
       {/* Pricing */}
       <section id="pricing" style={{ padding: '96px 32px' }}>
