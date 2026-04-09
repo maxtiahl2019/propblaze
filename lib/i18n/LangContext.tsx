@@ -55,8 +55,8 @@ export function useTranslation() {
 
 export function LangSwitcher({ className }: { className?: string }) {
   const { lang, setLang } = useTranslation()
-  const FLAGS: Record<Lang, string> = { en: '🇬🇧', de: '🇩🇪', ru: '🇷🇺', ua: '🇺🇦', es: '🇪🇸' }
-  const LABELS: Record<Lang, string> = { en: 'EN', de: 'DE', ru: 'RU', ua: 'UA', es: 'ES' }
+  const FLAGS: Record<Lang, string> = { en: '🇬🇧', de: '🇩🇪', ru: '🇷🇺', ua: '🇺🇦', es: '🇪🇸', sr: '🇷🇸' }
+  const LABELS: Record<Lang, string> = { en: 'EN', de: 'DE', ru: 'RU', ua: 'UA', es: 'ES', sr: 'SR' }
 
   return (
     <div className={`flex items-center gap-1 ${className ?? ''}`}>
