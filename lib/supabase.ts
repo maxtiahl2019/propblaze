@@ -5,10 +5,11 @@ import { createClient } from '@supabase/supabase-js';
 // Get credentials from: https://app.supabase.com → Project Settings → API
 // ─────────────────────────────────────────────────────────────────────────────
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
 // Single shared client instance (browser-safe)
+// Uses placeholder values at build time — real values come from env at runtime
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -65,4 +66,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 // ─────────────────────────────────────────────────────────────────────────────
 // Check if Supabase is configured (non-empty URL)
 // ─────────────────────────────────────────────────────────────────────────────
-export const isSupabaseConfigured = !!supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL_HERE';
+export const isSupabaseConfigured =
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.NEXT_PUBLIC_SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' &&
+  process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co';

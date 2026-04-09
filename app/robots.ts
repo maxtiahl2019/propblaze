@@ -1,3 +1,4 @@
+export const dynamic = "force-static";
 import { MetadataRoute } from 'next'
 
 const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN || 'https://propblaze.com'

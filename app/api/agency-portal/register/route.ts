@@ -1,3 +1,4 @@
+export const dynamic = "force-static";
 /**
  * POST /api/agency-portal/register
  * Agency registration — creates an agency account with unique ID.

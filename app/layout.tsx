@@ -1,17 +1,11 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
-import dynamic from 'next/dynamic'
 import './globals.css'
 import { LangProvider } from '@/lib/i18n/LangContext'
 import PropBlazeProviders from '@/components/providers/AuthProviders'
+import PropBlazeAssistant from '@/components/assistant/PropBlazeAssistant'
 
-const PropBlazeAssistant = dynamic(
-  () => import('@/components/assistant/PropBlazeAssistant'),
-  { ssr: false }
-)
-
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
+const geistSans = { variable: '--font-geist-sans' }
+const geistMono = { variable: '--font-geist-mono' }
 
 const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN || 'https://propblaze.com'
 
