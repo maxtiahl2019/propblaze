@@ -30,10 +30,20 @@ const NAV = [
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="2.5" cy="8" r="1.5" fill="currentColor" fillOpacity="0.4"/><circle cx="8" cy="2.5" r="1.5" fill="currentColor" fillOpacity="0.7"/><circle cx="8" cy="13.5" r="1.5" fill="currentColor" fillOpacity="0.7"/><circle cx="13.5" cy="8" r="1.5" fill="currentColor"/><path d="M4 8H6.5M9.5 4L12 7M9.5 12L12 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
   },
   {
-    href: '/agency-demo',
-    label: 'Agency View',
+    href: '/documents',
+    label: 'Documents',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2.5C2 2.22 2.22 2 2.5 2H9L14 7V13.5C14 13.78 13.78 14 13.5 14H2.5C2.22 14 2 13.78 2 13.5V2.5Z" stroke="currentColor" strokeWidth="1.25"/><path d="M9 2V7H14" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+  },
+  {
+    href: '/messenger',
+    label: 'Messages',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3.5C2 3.22 2.22 3 2.5 3H13.5C13.78 3 14 3.22 14 3.5V11.5C14 11.78 13.78 12 13.5 12H3L1.5 13.5V3.5Z" stroke="currentColor" strokeWidth="1.25"/></svg>,
+    badge: '1',
+  },
+  {
+    href: '/agency-portal',
+    label: 'Agency Portal',
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.25"/><path d="M5 11.5V14.5M11 11.5V14.5M3 14.5H13" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
-    badge: '3',
   },
   {
     href: '/billing',
