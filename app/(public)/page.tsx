@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-// ─── Design tokens ─────────────────────────────────────────────────────────────
+// âââ Design tokens âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const C = {
   bg:       '#07070F',
   bg2:      '#0C0C1A',
@@ -23,7 +23,7 @@ const C = {
   green:    '#22C55E',
 };
 
-// ─── Global keyframes ─────────────────────────────────────────────────────────
+// âââ Global keyframes âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function GlobalStyles() {
   return (
     <style>{`
@@ -60,6 +60,7 @@ function GlobalStyles() {
         from { opacity:0; transform:translateY(10px); }
         to   { opacity:1; transform:translateY(0);    }
       }
+      @keyframes droneDrift{0%{transform:scale(1.08) translate(0px,0px)}25%{transform:scale(1.12) translate(-18px,-12px)}50%{transform:scale(1.10) translate(-8px,10px)}75%{transform:scale(1.13) translate(15px,-8px)}100%{transform:scale(1.08) translate(0px,0px)}}
       @keyframes breatheA {
         0%,100% { transform:scale(1) translate(0,0);         opacity:0.55; }
         50%      { transform:scale(1.18) translate(50px,-40px); opacity:0.8;  }
@@ -106,7 +107,7 @@ function GlobalStyles() {
   );
 }
 
-// ─── Scroll FadeIn ────────────────────────────────────────────────────────────
+// âââ Scroll FadeIn ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
@@ -127,7 +128,7 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 }
 
-// ─── Stat counter ─────────────────────────────────────────────────────────────
+// âââ Stat counter âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AnimatedStat({ value, suffix = '', label }: { value: string; suffix?: string; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
@@ -144,13 +145,13 @@ function AnimatedStat({ value, suffix = '', label }: { value: string; suffix?: s
   );
 }
 
-// ─── Deal Dashboard — premium hero right panel ────────────────────────────────
+// âââ Deal Dashboard â premium hero right panel ââââââââââââââââââââââââââââââââ
 function DealDashboard() {
   const [phase, setPhase] = useState(0);
   const [barW, setBarW] = useState([0, 0, 0, 0, 0]);
 
   const agencies = [
-    { name: 'Engel & Völkers',      city: 'Montenegro', score: 97 },
+    { name: 'Engel & VÃ¶lkers',      city: 'Montenegro', score: 97 },
     { name: "Sotheby's Realty",     city: 'Porto',      score: 94 },
     { name: 'Savills International',city: 'London',     score: 91 },
     { name: 'Knight Frank',         city: 'Belgrade',   score: 88 },
@@ -183,7 +184,7 @@ function DealDashboard() {
       animation: 'scaleIn 1s cubic-bezier(0.16,1,0.3,1) 0.5s both',
     }}>
 
-      {/* ─── Card 1: Property listing ─────────────────────────────────── */}
+      {/* âââ Card 1: Property listing âââââââââââââââââââââââââââââââââââ */}
       <div style={{
         ...glassCard,
         position: 'absolute', top: 0, left: 20, right: 20,
@@ -201,11 +202,11 @@ function DealDashboard() {
               <span style={{ fontSize:'0.58rem', fontWeight:800, letterSpacing:'0.14em', color:C.yellow }}>ACTIVE LISTING</span>
             </div>
             <div style={{ fontSize:'1.08rem', fontWeight:800, color:C.white, letterSpacing:'-0.02em', lineHeight:1.2 }}>Villa Montenegro</div>
-            <div style={{ fontSize:'0.72rem', color:C.white40, marginTop:3 }}>Budva Bay · Montenegro</div>
+            <div style={{ fontSize:'0.72rem', color:C.white40, marginTop:3 }}>Budva Bay Â· Montenegro</div>
           </div>
           <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:'1.25rem', fontWeight:900, color:C.white, letterSpacing:'-0.03em' }}>€890K</div>
-            <div style={{ fontSize:'0.62rem', color:C.white40, marginTop:2 }}>4 bed · 380 m²</div>
+            <div style={{ fontSize:'1.25rem', fontWeight:900, color:C.white, letterSpacing:'-0.03em' }}>â¬890K</div>
+            <div style={{ fontSize:'0.62rem', color:C.white40, marginTop:2 }}>4 bed Â· 380 mÂ²</div>
           </div>
         </div>
 
@@ -243,7 +244,7 @@ function DealDashboard() {
             position:'absolute', top:9, right:9,
             background:'rgba(59,91,219,0.18)', border:'1px solid rgba(59,91,219,0.38)',
             borderRadius:6, padding:'3px 8px', fontSize:'0.58rem', fontWeight:700, color:'#A5C4FF',
-          }}>⋄ SEA VIEW</div>
+          }}>â SEA VIEW</div>
         </div>
 
         {/* AI analysis bar */}
@@ -253,7 +254,7 @@ function DealDashboard() {
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                 <div style={{ width:5, height:5, borderRadius:'50%', background: phase>=2 ? C.green : '#3B82F6', animation:'dotBlink 0.85s ease infinite' }}/>
                 <span style={{ fontSize:'0.62rem', color:C.white40 }}>
-                  {phase < 2 ? 'AI analysis in progress…' : '✓ Analysis complete · 94/100'}
+                  {phase < 2 ? 'AI analysis in progressâ¦' : 'â Analysis complete Â· 94/100'}
                 </span>
               </div>
               <span style={{ fontSize:'0.68rem', fontWeight:800, color: phase>=2 ? C.green : '#3B82F6' }}>
@@ -273,7 +274,7 @@ function DealDashboard() {
         )}
       </div>
 
-      {/* ─── Card 2: Agency match results ────────────────────────────────── */}
+      {/* âââ Card 2: Agency match results ââââââââââââââââââââââââââââââââââ */}
       {phase >= 2 && (
         <div style={{
           ...glassCard,
@@ -309,7 +310,7 @@ function DealDashboard() {
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
                   <span style={{ fontSize:'0.68rem', fontWeight:600, color:C.white80, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:156 }}>{ag.name}</span>
-                  <span style={{ fontSize:'0.7rem', fontWeight:800, color: i===0 ? C.yellow : C.white60, flexShrink:0, marginLeft:4 }}>{barW[i]>0 ? ag.score : '—'}</span>
+                  <span style={{ fontSize:'0.7rem', fontWeight:800, color: i===0 ? C.yellow : C.white60, flexShrink:0, marginLeft:4 }}>{barW[i]>0 ? ag.score : 'â'}</span>
                 </div>
                 <div style={{ height:3, background:'rgba(255,255,255,0.06)', borderRadius:3 }}>
                   <div style={{
@@ -326,7 +327,7 @@ function DealDashboard() {
         </div>
       )}
 
-      {/* ─── Floating: lead notification ──────────────────────────────────── */}
+      {/* âââ Floating: lead notification ââââââââââââââââââââââââââââââââââââ */}
       {phase >= 3 && (
         <div style={{
           position:'absolute', top:-20, right:-20,
@@ -344,13 +345,13 @@ function DealDashboard() {
             </div>
             <div>
               <div style={{ fontSize:'0.7rem', fontWeight:700, color:C.white, marginBottom:2 }}>New lead received</div>
-              <div style={{ fontSize:'0.6rem', color:C.white40 }}>Engel & Völkers · 97% match</div>
+              <div style={{ fontSize:'0.6rem', color:C.white40 }}>Engel & VÃ¶lkers Â· 97% match</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Floating: offer/payment ───────────────────────────────────────── */}
+      {/* âââ Floating: offer/payment âââââââââââââââââââââââââââââââââââââââââ */}
       {phase >= 4 && (
         <div style={{
           position:'absolute', bottom:-16, right:-14,
@@ -364,12 +365,12 @@ function DealDashboard() {
         }}>
           <div style={{ display:'flex', alignItems:'center', gap:9 }}>
             <div style={{ width:30, height:30, borderRadius:9, background:'rgba(245,194,0,0.1)', border:'1px solid rgba(245,194,0,0.28)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.95rem', flexShrink:0 }}>
-              💰
+              ð°
             </div>
             <div>
               <div style={{ fontSize:'0.68rem', fontWeight:700, color:C.white, marginBottom:1 }}>Offer arrived</div>
-              <div style={{ fontSize:'0.82rem', fontWeight:900, color:C.yellow, letterSpacing:'-0.02em' }}>€885,000</div>
-              <div style={{ fontSize:'0.58rem', color:C.white40 }}>Knight Frank · 2h ago</div>
+              <div style={{ fontSize:'0.82rem', fontWeight:900, color:C.yellow, letterSpacing:'-0.02em' }}>â¬885,000</div>
+              <div style={{ fontSize:'0.58rem', color:C.white40 }}>Knight Frank Â· 2h ago</div>
             </div>
           </div>
         </div>
@@ -378,7 +379,7 @@ function DealDashboard() {
   );
 }
 
-// ─── Step card ────────────────────────────────────────────────────────────────
+// âââ Step card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function StepCard({ n, title, desc, icon }: { n:string; title:string; desc:string; icon:React.ReactNode }) {
   const [hov, setHov] = useState(false);
   return (
@@ -402,7 +403,7 @@ function StepCard({ n, title, desc, icon }: { n:string; title:string; desc:strin
   );
 }
 
-// ─── Feature row ──────────────────────────────────────────────────────────────
+// âââ Feature row ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function FeatureRow({ icon, title, desc, accent=false }: { icon:React.ReactNode; title:string; desc:string; accent?:boolean }) {
   return (
     <div style={{ display:'flex', gap:16, padding:'20px 24px', borderRadius:16, background: accent ? 'rgba(245,194,0,0.06)' : 'transparent', border:`1px solid ${accent ? 'rgba(245,194,0,0.15)' : 'transparent'}` }}>
@@ -415,7 +416,7 @@ function FeatureRow({ icon, title, desc, accent=false }: { icon:React.ReactNode;
   );
 }
 
-// ─── Pricing card ─────────────────────────────────────────────────────────────
+// âââ Pricing card âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function PricingCard({ name, price, desc, features, highlight=false }: { name:string; price:string; desc:string; features:string[]; highlight?:boolean }) {
   const [hov, setHov] = useState(false);
   return (
@@ -456,7 +457,7 @@ function PricingCard({ name, price, desc, features, highlight=false }: { name:st
   );
 }
 
-// ─── Navbar ───────────────────────────────────────────────────────────────────
+// âââ Navbar âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -496,23 +497,23 @@ function Navbar() {
       <div style={{ display:'flex', alignItems:'center', gap:12 }}>
         <Link href="/login" style={{ fontSize:'0.82rem', color:C.white60, textDecoration:'none', padding:'8px 16px' }}>Sign in</Link>
         <Link href="/login" style={{ fontSize:'0.82rem', fontWeight:700, color:C.bg, textDecoration:'none', padding:'9px 20px', borderRadius:10, background:C.grad1, boxShadow:'0 0 20px rgba(245,194,0,0.25)', animation:'glowPulse 3s ease 2s infinite' }}>
-          Get started →
+          Get started â
         </Link>
       </div>
     </nav>
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
+// âââ Main Page âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function HomePage() {
   return (
     <div style={{ background:C.bg, minHeight:'100vh', color:C.white, fontFamily:"'Inter',system-ui,sans-serif", overflowX:'hidden' }}>
       <GlobalStyles/>
       <Navbar/>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           HERO
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{
         position:'relative', minHeight:'100vh', overflow:'hidden',
         display:'flex', alignItems:'center',
@@ -524,7 +525,7 @@ export default function HomePage() {
           <div style={{ position:'absolute', top:'40%', right:'5%', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,91,219,0.12) 0%, transparent 70%)', filter:'blur(80px)', animation:'breatheB 18s ease-in-out infinite 3s' }}/>
           <div style={{ position:'absolute', bottom:'10%', left:'5%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(112,72,232,0.09) 0%, transparent 70%)', filter:'blur(80px)', animation:'breatheC 20s ease-in-out infinite 6s' }}/>
           {/* Dot grid */}
-          <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px)', backgroundSize:'48px 48px', opacity:0.6 }}/>
+          <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}><svg style={{position:'absolute',width:'100%',height:'100%',opacity:0.065,animation:'droneDrift 32s linear infinite'}} viewBox='0 0 1280 900' preserveAspectRatio='xMidYMid slice'><line x1='0' y1='0' x2='0' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='160' y1='0' x2='160' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='320' y1='0' x2='320' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='480' y1='0' x2='480' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='640' y1='0' x2='640' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='800' y1='0' x2='800' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='960' y1='0' x2='960' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='1120' y1='0' x2='1120' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='120' x2='1280' y2='120' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='240' x2='1280' y2='240' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='360' x2='1280' y2='360' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='480' x2='1280' y2='480' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='600' x2='1280' y2='600' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='720' x2='1280' y2='720' stroke='#fff' strokeWidth='0.5'/><rect x='40' y='20' width='90' height='70' rx='4' fill='rgba(245,194,0,0.55)'/><rect x='290' y='15' width='110' height='85' rx='5' fill='rgba(59,91,219,0.5)'/><rect x='560' y='10' width='95' height='80' rx='4' fill='rgba(245,194,0,0.4)'/><rect x='700' y='25' width='130' height='95' rx='6' fill='rgba(59,91,219,0.45)'/><rect x='200' y='155' width='120' height='90' rx='5' fill='rgba(245,194,0,0.45)'/><rect x='820' y='145' width='140' height='100' rx='6' fill='rgba(59,91,219,0.4)'/><rect x='40' y='290' width='110' height='80' rx='5' fill='rgba(59,91,219,0.35)'/><rect x='510' y='295' width='115' height='85' rx='5' fill='rgba(245,194,0,0.42)'/><rect x='490' y='395' width='155' height='115' rx='8' fill='rgba(245,194,0,0.6)' stroke='rgba(245,194,0,0.85)' strokeWidth='2'/><ellipse cx='618' cy='288' rx='24' ry='17' fill='rgba(96,165,250,0.4)'/><ellipse cx='178' cy='448' rx='30' ry='21' fill='rgba(74,222,128,0.3)'/></svg></div><div style={{position:'absolute',top:86,right:42,opacity:0.2,fontFamily:'monospace',fontSize:'0.62rem',color:'rgba(245,194,0,1)',lineHeight:2,animation:'breatheA 9s ease-in-out infinite',letterSpacing:'0.04em'}}><div>ALT  148m</div><div>LAT  43.8N</div><div>LON  18.4E</div><div>PROPBLAZE</div></div><div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px)', backgroundSize:'48px 48px', opacity:0.6 }}/>
         </div>
 
         {/* Content grid */}
@@ -534,7 +535,7 @@ export default function HomePage() {
           gap:60, alignItems:'center', width:'100%', maxWidth:1280, margin:'0 auto',
         }}>
 
-          {/* ── Left: copy ──────────────────────────────────────────────── */}
+          {/* ââ Left: copy ââââââââââââââââââââââââââââââââââââââââââââââââ */}
           <div style={{ maxWidth:580 }}>
             {/* Badge */}
             <div style={{
@@ -569,7 +570,7 @@ export default function HomePage() {
               fontSize:'1.05rem', color:C.white60, lineHeight:1.72, maxWidth:460, marginBottom:36,
               animation:'floatIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.9s both',
             }}>
-              Upload your property once. Our AI matches it with the top 10–30 agencies across Europe, sends personalised offers, and forwards every reply directly to you.
+              Upload your property once. Our AI matches it with the top 10â30 agencies across Europe, sends personalised offers, and forwards every reply directly to you.
             </p>
 
             {/* CTAs */}
@@ -621,7 +622,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── Right: deal dashboard ────────────────────────────────────── */}
+          {/* ââ Right: deal dashboard ââââââââââââââââââââââââââââââââââââââ */}
           <div style={{ display:'flex', justifyContent:'center', paddingRight:40 }}>
             <DealDashboard/>
           </div>
@@ -646,7 +647,7 @@ export default function HomePage() {
               fontSize:'1.05rem', color:C.white60, lineHeight:1.72, maxWidth:460, marginBottom:36,
               animation:'floatIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.9s both',
             }}>
-              Upload your property once. Our AI matches it with the top 10–30 agencies across Europe, sends personalised offers, and forwards every reply directly to you.
+              Upload your property once. Our AI matches it with the top 10â30 agencies across Europe, sends personalised offers, and forwards every reply directly to you.
             </p>
 
             {/* CTAs */}
@@ -698,7 +699,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── Right: deal dashboard ────────────────────────────────────── */}
+          {/* ââ Right: deal dashboard ââââââââââââââââââââââââââââââââââââââ */}
           <div style={{ display:'flex', justifyContent:'center', paddingRight:40 }}>
             <DealDashboard/>
           </div>
@@ -711,9 +712,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           STATS BAR
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{ background:C.bg2, borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}`, padding:'64px 40px' }}>
         <div style={{ maxWidth:960, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:40 }}>
           <AnimatedStat value="500" suffix="+" label="Verified agencies in DB"/>
@@ -723,9 +724,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           HOW IT WORKS
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section id="features" style={{ padding:'100px max(40px,calc(50vw - 600px))' }}>
         <FadeIn>
           <div style={{ textAlign:'center', marginBottom:64 }}>
@@ -739,9 +740,9 @@ export default function HomePage() {
         </FadeIn>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:20 }}>
           {[
-            { n:'01', title:'Describe your property', icon:<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L3 9V19H8V14H14V19H19V9L11 2Z" stroke={C.yellow} strokeWidth="1.5" strokeLinejoin="round"/></svg>, desc:'Fill in our smart wizard in 5–10 minutes. Upload photos, set your price, and tell us your target buyer.' },
+            { n:'01', title:'Describe your property', icon:<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L3 9V19H8V14H14V19H19V9L11 2Z" stroke={C.yellow} strokeWidth="1.5" strokeLinejoin="round"/></svg>, desc:'Fill in our smart wizard in 5â10 minutes. Upload photos, set your price, and tell us your target buyer.' },
             { n:'02', title:'AI builds your sales pack', icon:<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke={C.yellow} strokeWidth="1.5"/><path d="M8 11l2 2 4-4" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, desc:'Our AI writes professional descriptions in 3 languages and selects the best-matching agencies from our database.' },
-            { n:'03', title:'You approve, we distribute', icon:<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 11L7 7L11 11" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/><path d="M7 7V17M11 11H19M15 7L19 11L15 15" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, desc:'Review the offer list, confirm, and watch 10–30 personalised emails reach top agencies. Every reply lands in your inbox.' },
+            { n:'03', title:'You approve, we distribute', icon:<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 11L7 7L11 11" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/><path d="M7 7V17M11 11H19M15 7L19 11L15 15" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, desc:'Review the offer list, confirm, and watch 10â30 personalised emails reach top agencies. Every reply lands in your inbox.' },
           ].map((s,i) => (
             <FadeIn key={i} delay={i*120}>
               <StepCard {...s}/>
@@ -750,9 +751,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           FEATURES GRID
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{ background:C.bg2, padding:'100px max(40px,calc(50vw - 600px))' }}>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center', maxWidth:1200, margin:'0 auto' }}>
           <FadeIn>
@@ -776,7 +777,7 @@ export default function HomePage() {
                 { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9h4l3-6 3 12 3-6 2 0" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'AI matching engine', desc:'Hard filters + weighted scoring + LLM semantic boost ranks agencies by probability of sale.' },
                 { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="10" rx="2" stroke={C.yellow} strokeWidth="1.5"/><path d="M5 8h8M5 11h5" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'Multi-channel delivery', desc:'Email + WhatsApp Business + Telegram. Every agency reply forwarded to you instantly.' },
                 { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v4M9 12v4M2 9h4M12 9h4" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="9" r="3" stroke={C.yellow} strokeWidth="1.5"/></svg>, title:'3-wave distribution strategy', desc:'Top agencies first. If no response, expand automatically to wave 2 and 3. Maximum reach.' },
-                { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 3H4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke={C.yellow} strokeWidth="1.5"/><path d="M7 9l2 2 4-4" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'Mark as Sold — stops billing', desc:'One click marks your property sold. Subscription stops automatically. No manual cancellation.' },
+                { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 3H4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke={C.yellow} strokeWidth="1.5"/><path d="M7 9l2 2 4-4" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'Mark as Sold â stops billing', desc:'One click marks your property sold. Subscription stops automatically. No manual cancellation.' },
               ].map((f,i) => (
                 <FeatureRow key={i} {...f}/>
               ))}
@@ -785,9 +786,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           AGENCY NETWORK
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section id="agencies" style={{ padding:'100px max(40px,calc(50vw - 600px))' }}>
         <FadeIn>
           <div style={{ textAlign:'center', marginBottom:64 }}>
@@ -797,18 +798,18 @@ export default function HomePage() {
               <span style={{ background:C.grad1, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Across Europe & beyond.</span>
             </h2>
             <p style={{ fontSize:'1rem', color:C.white60, maxWidth:500, margin:'0 auto' }}>
-              From boutique local specialists to global brands — our AI selects who's most likely to sell your property.
+              From boutique local specialists to global brands â our AI selects who's most likely to sell your property.
             </p>
           </div>
         </FadeIn>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:16 }}>
           {[
-            { name:'Engel & Völkers',      city:'Budva · Montenegro',  score:97, specialty:'Luxury Adriatic',        tags:['Luxury','HNWI','Cross-border'] },
+            { name:'Engel & VÃ¶lkers',      city:'Budva Â· Montenegro',  score:97, specialty:'Luxury Adriatic',        tags:['Luxury','HNWI','Cross-border'] },
             { name:"Sotheby's Realty",     city:'Porto Montenegro',     score:94, specialty:'Ultra-premium',          tags:['HNWI','UK buyers'] },
-            { name:'Savills International',city:'London · Global',      score:91, specialty:'Investment grade',       tags:['International','Balkans desk'] },
-            { name:'Knight Frank',         city:'Belgrade · Serbia',    score:88, specialty:'Premium Balkans',        tags:['Balkans','DACH'] },
-            { name:'Win-Win Solution',     city:'Belgrade · Serbia',    score:96, specialty:'Local Expert',           tags:['Belgrade','Fast response'] },
-            { name:'Tranio Partners',      city:'Berlin · Germany',     score:85, specialty:'German-speaking buyers', tags:['Expats','Digital'] },
+            { name:'Savills International',city:'London Â· Global',      score:91, specialty:'Investment grade',       tags:['International','Balkans desk'] },
+            { name:'Knight Frank',         city:'Belgrade Â· Serbia',    score:88, specialty:'Premium Balkans',        tags:['Balkans','DACH'] },
+            { name:'Win-Win Solution',     city:'Belgrade Â· Serbia',    score:96, specialty:'Local Expert',           tags:['Belgrade','Fast response'] },
+            { name:'Tranio Partners',      city:'Berlin Â· Germany',     score:85, specialty:'German-speaking buyers', tags:['Expats','Digital'] },
           ].map((ag,i) => (
             <FadeIn key={i} delay={i*80}>
               <div
@@ -834,9 +835,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           PRICING
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section id="pricing" style={{ background:C.bg2, padding:'100px max(40px,calc(50vw - 600px))' }}>
         <FadeIn>
           <div style={{ textAlign:'center', marginBottom:64 }}>
@@ -849,15 +850,15 @@ export default function HomePage() {
           </div>
         </FadeIn>
         <div style={{ display:'flex', gap:20, justifyContent:'center', flexWrap:'wrap', alignItems:'center' }}>
-          <FadeIn delay={0}><PricingCard name="Starter" price="€49" desc="Perfect for a single property. AI matching, email distribution, basic analytics." features={['1 active property','AI sales pack (3 languages)','Up to 15 agencies','Email distribution','Basic lead tracking','Mark as Sold']}/></FadeIn>
-          <FadeIn delay={120}><PricingCard name="Pro" price="€99" desc="More agencies, more channels, priority AI matching and full distribution analytics." highlight features={['1 active property','AI sales pack (3 languages)','Up to 30 agencies','Email + WhatsApp + Telegram','Full lead management','3-wave strategy','Priority AI matching','Distribution analytics']}/></FadeIn>
-          <FadeIn delay={240}><PricingCard name="Agency / Multi" price="€199" desc="For agents managing multiple listings. Bulk distribution, white-label options." features={['Up to 5 active properties','Everything in Pro','Bulk distribution','Agency portal access','White-label offers','API access (coming)']}/></FadeIn>
+          <FadeIn delay={0}><PricingCard name="Starter" price="â¬49" desc="Perfect for a single property. AI matching, email distribution, basic analytics." features={['1 active property','AI sales pack (3 languages)','Up to 15 agencies','Email distribution','Basic lead tracking','Mark as Sold']}/></FadeIn>
+          <FadeIn delay={120}><PricingCard name="Pro" price="â¬99" desc="More agencies, more channels, priority AI matching and full distribution analytics." highlight features={['1 active property','AI sales pack (3 languages)','Up to 30 agencies','Email + WhatsApp + Telegram','Full lead management','3-wave strategy','Priority AI matching','Distribution analytics']}/></FadeIn>
+          <FadeIn delay={240}><PricingCard name="Agency / Multi" price="â¬199" desc="For agents managing multiple listings. Bulk distribution, white-label options." features={['Up to 5 active properties','Everything in Pro','Bulk distribution','Agency portal access','White-label offers','API access (coming)']}/></FadeIn>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           FINAL CTA
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{ position:'relative', padding:'120px max(40px,calc(50vw - 600px))', textAlign:'center', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:600, height:400, borderRadius:'50%', background:'rgba(245,194,0,0.06)', filter:'blur(80px)', pointerEvents:'none' }}/>
         <FadeIn>
@@ -872,20 +873,20 @@ export default function HomePage() {
             </p>
             <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
               <Link href="/login" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'16px 36px', borderRadius:14, textDecoration:'none', fontWeight:700, fontSize:'1rem', background:C.grad1, color:C.bg, boxShadow:'0 0 60px rgba(245,194,0,0.3)' }}>
-                List your property →
+                List your property â
               </Link>
               <Link href="/login" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'16px 36px', borderRadius:14, textDecoration:'none', fontWeight:600, fontSize:'1rem', color:C.white80, background:C.surface, border:`1px solid ${C.border2}` }}>
                 View live demo
               </Link>
             </div>
-            <p style={{ fontSize:'0.75rem', color:C.white40, marginTop:20 }}>No credit card required · Cancel anytime · GDPR compliant</p>
+            <p style={{ fontSize:'0.75rem', color:C.white40, marginTop:20 }}>No credit card required Â· Cancel anytime Â· GDPR compliant</p>
           </div>
         </FadeIn>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
+      {/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
           FOOTER
-      ═══════════════════════════════════════════════════════════════════════ */}
+      âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <footer style={{ background:C.bg2, borderTop:`1px solid ${C.border}`, padding:'48px max(40px,calc(50vw - 600px))' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:24 }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
@@ -902,7 +903,7 @@ export default function HomePage() {
               <a key={l} href={h} style={{ fontSize:'0.78rem', color:C.white40, textDecoration:'none' }}>{l}</a>
             ))}
           </div>
-          <div style={{ fontSize:'0.72rem', color:C.white40 }}>© 2026 PropBlaze · Built for EU property owners</div>
+          <div style={{ fontSize:'0.72rem', color:C.white40 }}>Â© 2026 PropBlaze Â· Built for EU property owners</div>
         </div>
       </footer>
     </div>
