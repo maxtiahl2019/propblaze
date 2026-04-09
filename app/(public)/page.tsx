@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-// ─── 2027 Dark Palette ─────────────────────────────────────────────────────────
+// âââ 2027 Dark Palette âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const C = {
   bg:        '#080810',
   bg2:       '#0D0D1A',
@@ -28,7 +28,7 @@ const C = {
   white10:   'rgba(255,255,255,0.1)',
 };
 
-// ─── Cinematic Canvas Hero ─────────────────────────────────────────────────────
+// âââ Cinematic Canvas Hero âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function CinematicCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
@@ -157,7 +157,7 @@ function CinematicCanvas() {
         ctx.fill();
       });
 
-      // Center property node — large glowing orb
+      // Center property node â large glowing orb
       const cx = propX(), cy = propY();
 
       // Outer ring pulse
@@ -219,7 +219,7 @@ function CinematicCanvas() {
   );
 }
 
-// ─── Glass Card ───────────────────────────────────────────────────────────────
+// âââ Glass Card âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function GlassCard({ children, style = {}, glow = false }: { children: React.ReactNode; style?: React.CSSProperties; glow?: boolean }) {
   return (
     <div style={{
@@ -236,149 +236,265 @@ function GlassCard({ children, style = {}, glow = false }: { children: React.Rea
   );
 }
 
-// ─── Live Product Preview Card ─────────────────────────────────────────────────
-function ProductPreview() {
-  const [tick, setTick] = useState(0);
+// âââ Live Product Preview Card âââââââââââââââââââââââââââââââââââââââââââââââââ
+// âââ Demo Data âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+const DEMO_AGENCIES = [
+  { initials: 'E&', name: 'Engel & VÃ¶lkers',     city: 'Budva',            score: 97, status: 'replied',   statusColor: '#22C55E' },
+  { initials: 'SR', name: "Sotheby's Realty",    city: 'Porto Montenegro', score: 94, status: 'opened',    statusColor: '#F5C200' },
+  { initials: 'SI', name: 'Savills International',city: 'London',           score: 91, status: 'sent',      statusColor: '#3B5BDB' },
+  { initials: 'KF', name: 'Knight Frank Serbia', city: 'Belgrade',         score: 88, status: 'sendingâ¦',  statusColor: '#6B7280' },
+]
+const DEMO_STAGES = ['matching', 'offer', 'signing', 'sent'] as const
+type DemoStage = (typeof DEMO_STAGES)[number]
+const DEMO_DURATIONS: Record<DemoStage, number> = { matching: 3500, offer: 3500, signing: 3200, sent: 3000 }
+
+// âââ Stage: Matching âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+function DemoStageMatching() {
+  const [revealed, setRevealed] = useState(0)
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 2000);
-    return () => clearInterval(id);
-  }, []);
-
-  const agencies = [
-    { name: 'Engel & Völkers', city: 'Budva', score: 97, status: 'replied', color: '#22C55E' },
-    { name: "Sotheby's Realty", city: 'Porto Montenegro', score: 94, status: 'opened', color: '#F5C200' },
-    { name: 'Savills International', city: 'London', score: 91, status: 'sent', color: '#3B5BDB' },
-    { name: 'Knight Frank Serbia', city: 'Belgrade', score: 88, status: 'sending...', color: '#7048E8' },
-  ];
-
-  const activeAgency = tick % agencies.length;
+    setRevealed(0)
+    const timers = DEMO_AGENCIES.map((_, i) =>
+      setTimeout(() => setRevealed(i + 1), 200 + i * 350)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [])
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Main card */}
-      <GlassCard glow style={{ padding: 20, width: 340 }}>
-        {/* Property header */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-          <div style={{
-            width: 52, height: 52, borderRadius: 12, flexShrink: 0,
-            background: 'linear-gradient(135deg, #1E3A5F 0%, #0D1B2A 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: `1px solid ${C.border2}`,
-            position: 'relative', overflow: 'hidden',
+    <div style={{ padding: '0 0 4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#F5C200', opacity: 0.9 }}>
+          AI MATCHING Â· WAVE 1
+        </span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>4 / 18 agencies</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {DEMO_AGENCIES.map((ag, i) => (
+          <div key={ag.name} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8,
+            background: i === 0 ? 'rgba(245,194,0,0.08)' : 'rgba(255,255,255,0.03)',
+            border: '1px solid ' + (i === 0 ? 'rgba(245,194,0,0.2)' : 'rgba(255,255,255,0.06)'),
+            opacity: revealed > i ? 1 : 0,
+            transform: revealed > i ? 'translateY(0)' : 'translateY(6px)',
+            transition: 'opacity 0.3s ease, transform 0.3s ease',
           }}>
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M11 2L3 9V19H8V14H14V19H19V9L11 2Z" fill={C.yellow} fillOpacity="0.9"/>
-            </svg>
-            {/* Status dot */}
-            <div style={{ position:'absolute', top:4, right:4, width:7, height:7, borderRadius:'50%', background:'#22C55E', boxShadow:'0 0 6px #22C55E' }}/>
-          </div>
-          <div>
-            <div style={{ fontSize:'0.75rem', color:C.yellow, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:2 }}>Villa · Budva</div>
-            <div style={{ fontSize:'1.05rem', fontWeight:700, color:C.white, lineHeight:1.2 }}>Sveti Stefan</div>
-            <div style={{ fontSize:'0.7rem', color:C.white60, marginTop:2 }}>€485,000 · 210 m²</div>
-          </div>
-          <div style={{ marginLeft:'auto', textAlign:'right' }}>
-            <div style={{ fontSize:'0.65rem', color:C.white40, marginBottom:2 }}>AI Score</div>
-            <div style={{ fontSize:'1.4rem', fontWeight:800, color:C.yellow, lineHeight:1 }}>97</div>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height:1, background:C.border, marginBottom:14 }}/>
-
-        {/* Agencies label */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-          <span style={{ fontSize:'0.65rem', color:C.white40, textTransform:'uppercase', letterSpacing:'0.1em' }}>AI Matching · Wave 1</span>
-          <span style={{ fontSize:'0.65rem', color:C.yellow, fontWeight:600 }}>4 / 18 agencies</span>
-        </div>
-
-        {/* Agency rows */}
-        {agencies.map((ag, i) => (
-          <div key={i} style={{
-            display:'flex', alignItems:'center', gap:10,
-            padding:'8px 10px', borderRadius:10, marginBottom:4,
-            background: activeAgency === i ? 'rgba(245,194,0,0.07)' : 'transparent',
-            border: `1px solid ${activeAgency === i ? 'rgba(245,194,0,0.2)' : 'transparent'}`,
-            transition: 'all 0.5s ease',
-          }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-              background: `${ag.color}18`,
-              border: `1px solid ${ag.color}40`,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize:'0.55rem', fontWeight:800, color:ag.color,
-            }}>
-              {ag.name.charAt(0)}{ag.name.split(' ')[1]?.charAt(0)}
+            <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.7)', flexShrink: 0 }}>
+              {ag.initials}
             </div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:'0.7rem', fontWeight:600, color:C.white80, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{ag.name}</div>
-              <div style={{ fontSize:'0.6rem', color:C.white40 }}>{ag.city}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ag.name}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{ag.city}</div>
             </div>
-            <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
-              <div style={{ fontSize:'0.65rem', fontWeight:700, color:ag.color }}>{ag.score}</div>
-              <div style={{
-                fontSize:'0.55rem', fontWeight:700, color:ag.color,
-                padding:'2px 6px', borderRadius:4,
-                background:`${ag.color}20`,
-              }}>
-                {ag.status}
-              </div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#F5C200', flexShrink: 0 }}>{ag.score}</span>
+            <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: ag.statusColor + '22', color: ag.statusColor, flexShrink: 0 }}>
+              {ag.status}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Distribution progress</span>
+        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Wave 1 of 3</span>
+      </div>
+      <div style={{ marginTop: 4, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1 }}>
+        <div style={{ height: '100%', width: '32%', background: '#F5C200', borderRadius: 1 }} />
+      </div>
+    </div>
+  )
+}
+
+// âââ Stage: Offer ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+function DemoStageOffer() {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 100); return () => clearTimeout(t) }, [])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 8px', gap: 14, opacity: visible ? 1 : 0, transition: 'opacity 0.4s ease' }}>
+      <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(245,194,0,0.12)', border: '1px solid rgba(245,194,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+        ð
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: 4 }}>Exclusive Offer Ready</div>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+          AI prepared a personalised offer for<br />
+          <span style={{ color: '#F5C200' }}>18 top agencies</span> in 3 waves
+        </div>
+      </div>
+      <div style={{ width: '100%', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 8, letterSpacing: '0.06em' }}>OFFER PREVIEW</div>
+        {['Villa Sveti Stefan, Budva', 'â¬485,000 Â· 210 mÂ²', 'Exclusive mandate Â· 90 days'].map((line, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#F5C200', flexShrink: 0 }} />
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{line}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ width: '100%', padding: '9px 0', borderRadius: 8, textAlign: 'center', background: 'linear-gradient(135deg, #F5C200, #F09000)', fontSize: 11, fontWeight: 700, color: '#0a0a0a' }}>
+        Review &amp; Approve â
+      </div>
+    </div>
+  )
+}
+
+// âââ Stage: Signing ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+function DemoStageSigning() {
+  const [progress, setProgress] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setProgress(p => Math.min(p + 4, 100)), 80)
+    return () => clearInterval(t)
+  }, [])
+  const done = progress >= 100
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 8px', gap: 14 }}>
+      <div style={{ width: 52, height: 52, borderRadius: 16, background: done ? 'rgba(34,197,94,0.12)' : 'rgba(59,91,219,0.12)', border: '1px solid ' + (done ? 'rgba(34,197,94,0.3)' : 'rgba(59,91,219,0.3)'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, transition: 'all 0.4s ease' }}>
+        {done ? 'â' : 'âï¸'}
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.95)', marginBottom: 4 }}>{done ? 'Contract Signed!' : 'Owner Signingâ¦'}</div>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{done ? 'Distribution starts in 3 sec' : 'Exclusive agency mandate'}</div>
+      </div>
+      <div style={{ width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Signing progress</span>
+          <span style={{ fontSize: 9, color: done ? '#22C55E' : 'rgba(255,255,255,0.5)', fontWeight: 600 }}>{progress}%</span>
+        </div>
+        <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3 }}>
+          <div style={{ height: '100%', borderRadius: 3, width: progress + '%', background: done ? '#22C55E' : 'linear-gradient(90deg, #3B5BDB, #7C3AED)', transition: 'width 0.08s linear, background 0.4s ease' }} />
+        </div>
+      </div>
+      <div style={{ width: '100%', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <svg width="100%" height="36" viewBox="0 0 200 36">
+          <path
+            d="M 10 28 C 30 10, 50 32, 70 18 C 90 4, 110 30, 130 16 C 150 2, 170 24, 190 20"
+            fill="none"
+            stroke={done ? '#22C55E' : '#F5C200'}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeDasharray="220"
+            strokeDashoffset={220 - (220 * progress) / 100}
+            style={{ transition: 'stroke-dashoffset 0.08s linear, stroke 0.4s ease' }}
+          />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+// âââ Stage: Sent âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+function DemoStageSent() {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (count < 18) {
+      const t = setTimeout(() => setCount(c => c + 1), 120)
+      return () => clearTimeout(t)
+    }
+  }, [count])
+
+  const waves = [
+    { label: 'Wave 1', sent: Math.min(count, 10), total: 10, color: '#22C55E' },
+    { label: 'Wave 2', sent: Math.max(0, Math.min(count - 10, 5)), total: 5, color: '#F5C200' },
+    { label: 'Wave 3', sent: Math.max(0, Math.min(count - 15, 3)), total: 3, color: '#3B5BDB' },
+  ]
+
+  return (
+    <div style={{ padding: '0 0 4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#22C55E' }}>
+          â SENT Â· {count} AGENCIES
+        </span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>3 waves</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {waves.map(w => (
+          <div key={w.label}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>{w.label}</span>
+              <span style={{ fontSize: 10, color: w.color, fontWeight: 600 }}>{w.sent}/{w.total} sent</span>
+            </div>
+            <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
+              <div style={{ height: '100%', borderRadius: 2, background: w.color, width: (w.total > 0 ? (w.sent / w.total) * 100 : 0) + '%', transition: 'width 0.12s ease' }} />
             </div>
           </div>
         ))}
-
-        {/* Progress bar */}
-        <div style={{ marginTop:12 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-            <span style={{ fontSize:'0.6rem', color:C.white40 }}>Distribution progress</span>
-            <span style={{ fontSize:'0.6rem', color:C.yellow, fontWeight:600 }}>Wave 1 of 3</span>
-          </div>
-          <div style={{ height:4, borderRadius:4, background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
-            <div style={{
-              height:'100%', borderRadius:4,
-              background: 'linear-gradient(90deg, #F5C200, #FF8C00)',
-              width:`${22 + (tick % 5) * 4}%`,
-              transition:'width 1s ease',
-              boxShadow:'0 0 8px rgba(245,194,0,0.5)',
-            }}/>
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Floating notification */}
-      <div style={{
-        position:'absolute', bottom:-20, right:-30,
-        background:'rgba(34,197,94,0.12)',
-        border:'1px solid rgba(34,197,94,0.3)',
-        borderRadius:12, padding:'8px 14px',
-        backdropFilter:'blur(20px)',
-        display:'flex', alignItems:'center', gap:8,
-        animation:'floatIn 0.5s ease',
-      }}>
-        <div style={{ width:8, height:8, borderRadius:'50%', background:'#22C55E', boxShadow:'0 0 8px #22C55E' }}/>
-        <div>
-          <div style={{ fontSize:'0.65rem', fontWeight:700, color:'#22C55E' }}>New lead received!</div>
-          <div style={{ fontSize:'0.58rem', color:C.white60 }}>Engel & Völkers · 2m ago</div>
-        </div>
       </div>
-
-      {/* Floating score badge */}
-      <div style={{
-        position:'absolute', top:-16, left:-20,
-        background:C.yellow,
-        borderRadius:12, padding:'6px 12px',
-        display:'flex', alignItems:'center', gap:6,
-      }}>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M6 1L7.5 4.5H11L8 6.5L9.5 10L6 8L2.5 10L4 6.5L1 4.5H4.5L6 1Z" fill="#080810"/>
-        </svg>
-        <span style={{ fontSize:'0.65rem', fontWeight:800, color:'#080810' }}>97% Match Score</span>
+      <div style={{ marginTop: 14, padding: '8px 10px', borderRadius: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E', flexShrink: 0 }} />
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>New lead received!</div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)' }}>Engel &amp; VÃ¶lkers Â· 2m ago</div>
+        </div>
       </div>
     </div>
-  );
+  )
 }
 
-// ─── Animated Number ──────────────────────────────────────────────────────────
+// âââ ProductPreview ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+function ProductPreview() {
+  const [stageIdx, setStageIdx] = useState(0)
+  const [fading, setFading] = useState(false)
+  const stage = DEMO_STAGES[stageIdx]
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFading(true)
+      setTimeout(() => {
+        setStageIdx(i => (i + 1) % DEMO_STAGES.length)
+        setFading(false)
+      }, 250)
+    }, DEMO_DURATIONS[stage])
+    return () => clearTimeout(t)
+  }, [stage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div style={{ width: 260, background: 'linear-gradient(145deg, #111118, #0d0d14)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)' }}>
+      {/* Title bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        {['#FF5F57','#FFBD2E','#28C840'].map(c => (
+          <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+        ))}
+        <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>PropBlaze AI</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
+          {DEMO_STAGES.map((s, i) => (
+            <div key={s} style={{ width: 6, height: 6, borderRadius: '50%', background: i === stageIdx ? '#F5C200' : 'rgba(255,255,255,0.15)', transition: 'background 0.3s ease' }} />
+          ))}
+        </div>
+      </div>
+      {/* Property header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg, #1a2a3a, #0d1a2a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>ð </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 9, color: '#F5C200', fontWeight: 700, letterSpacing: '0.08em' }}>VILLA Â· BUDVA</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.95)' }}>Sveti Stefan</div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>â¬485,000 Â· 210 mÂ²</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>AI Score</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#F5C200', lineHeight: 1 }}>97</div>
+        </div>
+      </div>
+      {/* Stage content */}
+      <div style={{ padding: '12px 14px', opacity: fading ? 0 : 1, transform: fading ? 'translateY(4px)' : 'translateY(0)', transition: 'opacity 0.25s ease, transform 0.25s ease', minHeight: 200 }}>
+        {stage === 'matching' && <DemoStageMatching key={stageIdx} />}
+        {stage === 'offer'    && <DemoStageOffer    key={stageIdx} />}
+        {stage === 'signing'  && <DemoStageSigning  key={stageIdx} />}
+        {stage === 'sent'     && <DemoStageSent     key={stageIdx} />}
+      </div>
+      {/* Bottom stage indicator */}
+      <div style={{ padding: '6px 14px 10px', display: 'flex', justifyContent: 'center', gap: 4 }}>
+        {DEMO_STAGES.map((s, i) => (
+          <div key={s} style={{ height: 2, borderRadius: 1, flex: i === stageIdx ? 2 : 1, background: i === stageIdx ? '#F5C200' : 'rgba(255,255,255,0.12)', transition: 'all 0.3s ease' }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function AnimatedStat({ value, suffix = '', label }: { value: string; suffix?: string; label: string }) {
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -403,7 +519,7 @@ function AnimatedStat({ value, suffix = '', label }: { value: string; suffix?: s
   );
 }
 
-// ─── Section fade in ──────────────────────────────────────────────────────────
+// âââ Section fade in ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function FadeIn({ children, delay = 0, style = {} }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -424,7 +540,7 @@ function FadeIn({ children, delay = 0, style = {} }: { children: React.ReactNode
   );
 }
 
-// ─── Step card ────────────────────────────────────────────────────────────────
+// âââ Step card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function StepCard({ n, title, desc, icon }: { n: string; title: string; desc: string; icon: React.ReactNode }) {
   const [hov, setHov] = useState(false);
   return (
@@ -460,7 +576,7 @@ function StepCard({ n, title, desc, icon }: { n: string; title: string; desc: st
   );
 }
 
-// ─── Feature row ──────────────────────────────────────────────────────────────
+// âââ Feature row ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function FeatureRow({ icon, title, desc, accent = false }: { icon: React.ReactNode; title: string; desc: string; accent?: boolean }) {
   return (
     <div style={{ display:'flex', gap:16, padding:'20px 24px', borderRadius:16, background: accent ? 'rgba(245,194,0,0.06)' : 'transparent', border:`1px solid ${accent ? 'rgba(245,194,0,0.15)' : 'transparent'}` }}>
@@ -479,7 +595,7 @@ function FeatureRow({ icon, title, desc, accent = false }: { icon: React.ReactNo
   );
 }
 
-// ─── Pricing Card ─────────────────────────────────────────────────────────────
+// âââ Pricing Card âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function PricingCard({ name, price, desc, features, highlight = false }: {
   name: string; price: string; desc: string; features: string[]; highlight?: boolean;
 }) {
@@ -532,7 +648,7 @@ function PricingCard({ name, price, desc, features, highlight = false }: {
   );
 }
 
-// ─── Navbar ───────────────────────────────────────────────────────────────────
+// âââ Navbar âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -592,14 +708,14 @@ function Navbar() {
           background: C.grad1,
           boxShadow:'0 0 20px rgba(245,194,0,0.25)',
         }}>
-          Get started →
+          Get started â
         </Link>
       </div>
     </nav>
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
+// âââ Main Page âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function HomePage() {
   return (
     <div style={{ background: C.bg, minHeight:'100vh', color:C.white, fontFamily: "'Inter', system-ui, sans-serif", overflowX:'hidden' }}>
@@ -616,7 +732,7 @@ export default function HomePage() {
 
       <Navbar />
 
-      {/* ═══ HERO ═══════════════════════════════════════════════════════════════ */}
+      {/* âââ HERO âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{ position:'relative', minHeight:'100vh', display:'flex', alignItems:'center', overflow:'hidden', paddingTop:64 }}>
         {/* Canvas background */}
         <CinematicCanvas />
@@ -628,7 +744,7 @@ export default function HomePage() {
         {/* Content */}
         <div style={{ position:'relative', zIndex:2, width:'100%', maxWidth:1200, margin:'0 auto', padding:'0 40px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:60 }}>
 
-          {/* Left — headline */}
+          {/* Left â headline */}
           <div style={{ flex:'0 0 auto', maxWidth:580 }}>
             {/* Badge */}
             <div style={{
@@ -664,7 +780,7 @@ export default function HomePage() {
               fontSize:'1.05rem', color:C.white60, lineHeight:1.7, maxWidth:480, marginBottom:36,
               animation:'floatIn 0.8s ease 0.2s both',
             }}>
-              Upload your property once. Our AI matches it with the top 10–30 agencies across Europe,
+              Upload your property once. Our AI matches it with the top 10â30 agencies across Europe,
               sends personalised offers, and forwards every reply directly to you.
             </p>
 
@@ -711,7 +827,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right — product preview */}
+          {/* Right â product preview */}
           <div style={{ flex:'0 0 auto', animation:'floatIn 0.8s ease 0.5s both', display:'flex', justifyContent:'center' }}>
             <ProductPreview />
           </div>
@@ -724,7 +840,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ STATS BAR ══════════════════════════════════════════════════════════ */}
+      {/* âââ STATS BAR ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{ background:C.bg2, borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}`, padding:'60px 40px' }}>
         <div style={{ maxWidth:1000, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:40 }}>
           <AnimatedStat value="500" suffix="+" label="Verified agencies in DB" />
@@ -734,7 +850,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ HOW IT WORKS ═══════════════════════════════════════════════════════ */}
+      {/* âââ HOW IT WORKS âââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section id="features" style={{ padding:'100px max(40px,calc(50vw - 600px))' }}>
         <FadeIn>
           <div style={{ textAlign:'center', marginBottom:64 }}>
@@ -753,7 +869,7 @@ export default function HomePage() {
               n:'01', title:'Describe your property', icon:(
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L3 9V19H8V14H14V19H19V9L11 2Z" stroke={C.yellow} strokeWidth="1.5" strokeLinejoin="round"/></svg>
               ),
-              desc:'Fill in our smart wizard in 5–10 minutes. Upload photos, set your price, and tell us your target buyer.',
+              desc:'Fill in our smart wizard in 5â10 minutes. Upload photos, set your price, and tell us your target buyer.',
             },
             {
               n:'02', title:'AI builds your sales pack', icon:(
@@ -765,7 +881,7 @@ export default function HomePage() {
               n:'03', title:'You approve, we distribute', icon:(
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 11L7 7L11 11" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/><path d="M7 7V17M11 11H19M15 7L19 11L15 15" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>
               ),
-              desc:'Review the offer list, confirm, and watch 10–30 personalised emails reach top agencies. Every reply lands in your inbox.',
+              desc:'Review the offer list, confirm, and watch 10â30 personalised emails reach top agencies. Every reply lands in your inbox.',
             },
           ].map((s, i) => (
             <FadeIn key={i} delay={i * 120}>
@@ -775,7 +891,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ FEATURES GRID ══════════════════════════════════════════════════════ */}
+      {/* âââ FEATURES GRID ââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{ background:C.bg2, padding:'100px max(40px,calc(50vw - 600px))' }}>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center', maxWidth:1200, margin:'0 auto' }}>
           {/* Left */}
@@ -802,7 +918,7 @@ export default function HomePage() {
                 { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9h4l3-6 3 12 3-6 2 0" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'AI matching engine', desc:'Hard filters + weighted scoring + LLM semantic boost ranks agencies by probability of sale.' },
                 { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="10" rx="2" stroke={C.yellow} strokeWidth="1.5"/><path d="M5 8h8M5 11h5" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'Multi-channel delivery', desc:'Email + WhatsApp Business + Telegram. Every agency reply forwarded to you instantly.' },
                 { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v4M9 12v4M2 9h4M12 9h4" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="9" r="3" stroke={C.yellow} strokeWidth="1.5"/></svg>, title:'3-wave distribution strategy', desc:'Top agencies first. If no response, expand automatically to wave 2 and 3. Maximum reach.' },
-                { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 3H4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke={C.yellow} strokeWidth="1.5"/><path d="M7 9l2 2 4-4" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'Mark as Sold — stops billing', desc:'One click marks your property sold. Subscription stops automatically. No manual cancellation.' },
+                { icon:<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 3H4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke={C.yellow} strokeWidth="1.5"/><path d="M7 9l2 2 4-4" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round"/></svg>, title:'Mark as Sold â stops billing', desc:'One click marks your property sold. Subscription stops automatically. No manual cancellation.' },
               ].map((f, i) => (
                 <FeatureRow key={i} {...f} />
               ))}
@@ -811,7 +927,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ AGENCY NETWORK ═════════════════════════════════════════════════════ */}
+      {/* âââ AGENCY NETWORK âââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section id="agencies" style={{ padding:'100px max(40px,calc(50vw - 600px))' }}>
         <FadeIn>
           <div style={{ textAlign:'center', marginBottom:64 }}>
@@ -821,19 +937,19 @@ export default function HomePage() {
               <span style={{ background:C.grad1, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Across Europe & beyond.</span>
             </h2>
             <p style={{ fontSize:'1rem', color:C.white60, maxWidth:500, margin:'0 auto' }}>
-              From boutique local specialists to global brands — our AI selects who's most likely to sell your property.
+              From boutique local specialists to global brands â our AI selects who's most likely to sell your property.
             </p>
           </div>
         </FadeIn>
 
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:16 }}>
           {[
-            { name:'Engel & Völkers', city:'Budva · Montenegro', score:97, speciality:'Luxury Adriatic', tags:['Luxury','HNWI','Cross-border'] },
+            { name:'Engel & VÃ¶lkers', city:'Budva Â· Montenegro', score:97, speciality:'Luxury Adriatic', tags:['Luxury','HNWI','Cross-border'] },
             { name:"Sotheby's Realty", city:'Porto Montenegro', score:94, speciality:'Ultra-premium', tags:['HNWI','UK buyers'] },
-            { name:'Savills International', city:'London · Global', score:91, speciality:'Investment grade', tags:['International','Balkans desk'] },
-            { name:'Knight Frank', city:'Belgrade · Serbia', score:88, speciality:'Premium Balkans', tags:['Balkans','DACH'] },
-            { name:'Win-Win Solution', city:'Belgrade · Serbia', score:96, speciality:'Local Expert', tags:['Belgrade','Fast response'] },
-            { name:'Tranio Partners', city:'Berlin · Germany', score:85, speciality:'German-speaking buyers', tags:['Expats','Digital'] },
+            { name:'Savills International', city:'London Â· Global', score:91, speciality:'Investment grade', tags:['International','Balkans desk'] },
+            { name:'Knight Frank', city:'Belgrade Â· Serbia', score:88, speciality:'Premium Balkans', tags:['Balkans','DACH'] },
+            { name:'Win-Win Solution', city:'Belgrade Â· Serbia', score:96, speciality:'Local Expert', tags:['Belgrade','Fast response'] },
+            { name:'Tranio Partners', city:'Berlin Â· Germany', score:85, speciality:'German-speaking buyers', tags:['Expats','Digital'] },
           ].map((ag, i) => (
             <FadeIn key={i} delay={i * 80}>
               <div style={{
@@ -865,7 +981,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ PRICING ════════════════════════════════════════════════════════════ */}
+      {/* âââ PRICING ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section id="pricing" style={{ background:C.bg2, padding:'100px max(40px,calc(50vw - 600px))' }}>
         <FadeIn>
           <div style={{ textAlign:'center', marginBottom:64 }}>
@@ -881,7 +997,7 @@ export default function HomePage() {
           <FadeIn delay={0}>
             <PricingCard
               name="Starter"
-              price="€49"
+              price="â¬49"
               desc="Perfect for a single property. AI matching, email distribution, basic analytics."
               features={['1 active property','AI sales pack (3 languages)','Up to 15 agencies','Email distribution','Basic lead tracking','Mark as Sold']}
             />
@@ -889,7 +1005,7 @@ export default function HomePage() {
           <FadeIn delay={120}>
             <PricingCard
               name="Pro"
-              price="€99"
+              price="â¬99"
               desc="More agencies, more channels, priority AI matching and full distribution analytics."
               highlight
               features={['1 active property','AI sales pack (3 languages)','Up to 30 agencies','Email + WhatsApp + Telegram','Full lead management','3-wave strategy','Priority AI matching','Distribution analytics']}
@@ -898,7 +1014,7 @@ export default function HomePage() {
           <FadeIn delay={240}>
             <PricingCard
               name="Agency / Multi"
-              price="€199"
+              price="â¬199"
               desc="For agents managing multiple listings. Bulk distribution, white-label options."
               features={['Up to 5 active properties','Everything in Pro','Bulk distribution','Agency portal access','White-label offers','API access (coming)']}
             />
@@ -906,7 +1022,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ FINAL CTA ══════════════════════════════════════════════════════════ */}
+      {/* âââ FINAL CTA ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <section style={{ position:'relative', padding:'120px max(40px,calc(50vw - 600px))', textAlign:'center', overflow:'hidden' }}>
         {/* Glow */}
         <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:600, height:400, borderRadius:'50%', background:'rgba(245,194,0,0.06)', filter:'blur(80px)', pointerEvents:'none' }}/>
@@ -927,7 +1043,7 @@ export default function HomePage() {
                 background:C.grad1, color:C.bg,
                 boxShadow:'0 0 60px rgba(245,194,0,0.3)',
               }}>
-                List your property →
+                List your property â
               </Link>
               <Link href="/login" style={{
                 display:'inline-flex', alignItems:'center', gap:8, padding:'16px 36px',
@@ -937,12 +1053,12 @@ export default function HomePage() {
                 View live demo
               </Link>
             </div>
-            <p style={{ fontSize:'0.75rem', color:C.white40, marginTop:20 }}>No credit card required · Cancel anytime · GDPR compliant</p>
+            <p style={{ fontSize:'0.75rem', color:C.white40, marginTop:20 }}>No credit card required Â· Cancel anytime Â· GDPR compliant</p>
           </div>
         </FadeIn>
       </section>
 
-      {/* ═══ FOOTER ═════════════════════════════════════════════════════════════ */}
+      {/* âââ FOOTER âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <footer style={{ background:C.bg2, borderTop:`1px solid ${C.border}`, padding:'48px max(40px,calc(50vw - 600px))' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:24 }}>
           {/* Brand */}
@@ -963,7 +1079,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div style={{ fontSize:'0.72rem', color:C.white40 }}>© 2026 PropBlaze · Built for EU property owners</div>
+          <div style={{ fontSize:'0.72rem', color:C.white40 }}>Â© 2026 PropBlaze Â· Built for EU property owners</div>
         </div>
       </footer>
     </div>
