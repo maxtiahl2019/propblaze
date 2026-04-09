@@ -168,13 +168,16 @@ export default function OfferApprovalPage() {
   // --- Loading skeleton ---
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
         <div className="text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <span className="text-2xl">✨</span>
+          <div className="relative w-16 h-16 mx-auto mb-5">
+            <div className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(249,115,22,0.15)' }} />
+            <div className="relative w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)' }}>
+              <span className="text-2xl">✦</span>
+            </div>
           </div>
-          <p className="text-gray-600 font-medium">Loading your AI-prepared offer…</p>
-          <p className="text-sm text-gray-400 mt-1">Matching agencies and preparing pitch</p>
+          <p className="text-white/70 font-semibold">AI is preparing your offer…</p>
+          <p className="text-sm text-white/30 mt-1">Matching agencies · Building pitch · Translating</p>
         </div>
       </div>
     );
@@ -183,20 +186,20 @@ export default function OfferApprovalPage() {
   // --- Approval success ---
   if (approvalSuccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-sm">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
+        <div className="text-center max-w-sm px-6">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', boxShadow: '0 0 40px rgba(34,197,94,0.15)' }}>
             <span className="text-4xl">🚀</span>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Distribution starts now!</h2>
-          <p className="text-gray-500 mt-2">
-            Your offer was approved. Wave 1 will be sent to {matches.filter(m => m.wave_number === 1).length} agencies within 24 hours.
+          <h2 className="text-2xl font-bold text-white">Distribution starts now!</h2>
+          <p className="text-white/40 mt-2">
+            Wave 1 will be sent to {matches.filter(m => m.wave_number === 1).length} agencies within 24 hours.
           </p>
           <div className="mt-6 space-y-2">
-            <div className="flex items-center gap-2 justify-center text-sm text-green-600">
+            <div className="flex items-center gap-2 justify-center text-sm text-green-400">
               <span>✓</span> Offer approved & locked
             </div>
-            <div className="flex items-center gap-2 justify-center text-sm text-blue-600">
+            <div className="flex items-center gap-2 justify-center text-sm text-white/40">
               <span>↗</span> Redirecting to your property dashboard…
             </div>
           </div>
@@ -214,32 +217,43 @@ export default function OfferApprovalPage() {
     : '';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: '#0a0a0a' }}>
+      {/* Ambient glow */}
+      <div className="fixed inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute -top-60 -left-60 w-[600px] h-[600px] rounded-full opacity-[0.06]"
+          style={{ background: 'radial-gradient(circle, #f97316, transparent 70%)' }} />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full opacity-[0.04]"
+          style={{ background: 'radial-gradient(circle, #a855f7, transparent 70%)' }} />
+      </div>
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="sticky top-0 z-10" style={{ background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => router.push(`/dashboard/properties/${id}`)}
-                className="text-gray-400 hover:text-gray-600 text-sm"
+                className="text-white/30 hover:text-white/70 text-sm transition-colors"
               >
                 ← Back
               </button>
-              <span className="text-gray-300">/</span>
-              <h1 className="text-base font-semibold text-gray-900">Offer Approval</h1>
+              <span className="text-white/15">/</span>
+              <h1 className="text-base font-semibold text-white">Offer Approval</h1>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">{propertyTitle} · {propertyLocation}</p>
+            <p className="text-xs text-white/30 mt-0.5">{propertyTitle} · {propertyLocation}</p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge variant="warning">⏳ Awaiting your approval</Badge>
+            <span className="text-xs font-medium px-3 py-1.5 rounded-full text-orange-400" style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.25)' }}>
+              ⏳ Awaiting your approval
+            </span>
             {hasUnsavedEdits && (
               <button
                 type="button"
                 onClick={handleSaveEdits}
                 disabled={savingEdits}
-                className="text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50"
+                className="text-xs text-white/60 px-3 py-1.5 rounded-lg transition-colors hover:text-white"
+                style={{ border: '1px solid rgba(255,255,255,0.12)' }}
               >
                 {savingEdits ? 'Saving…' : 'Save edits'}
               </button>
@@ -248,41 +262,49 @@ export default function OfferApprovalPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6">
         {/* Intro banner */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-5 text-white mb-4">
+        <div className="rounded-2xl p-5 mb-4" style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.15), rgba(168,85,247,0.10))', border: '1px solid rgba(249,115,22,0.20)' }}>
           <div className="flex items-start gap-4">
-            <div className="text-3xl">🤖</div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}>
+              <span className="text-xl">✦</span>
+            </div>
             <div>
-              <h2 className="font-bold text-lg">AI has prepared your offer</h2>
-              <p className="text-blue-100 text-sm mt-1">
-                Review the cover letter and agency list below. You can edit any text before approving.
-                <strong className="text-white"> Nothing is sent until you click Approve.</strong>
+              <h2 className="font-bold text-lg text-white">AI has prepared your offer</h2>
+              <p className="text-white/50 text-sm mt-1">
+                Review the cover letter and agency list. You can edit any text before approving.{' '}
+                <strong className="text-white/80">Nothing is sent until you click Approve.</strong>
               </p>
-              <div className="flex flex-wrap gap-3 mt-3 text-sm">
-                <span className="bg-white/20 rounded-full px-3 py-1">📧 {matches.length} agencies matched</span>
-                <span className="bg-white/20 rounded-full px-3 py-1">🌍 3 language versions</span>
-                <span className="bg-white/20 rounded-full px-3 py-1">📸 {(offer as any)?.selected_media_ids?.length || 5} photos</span>
-                <span className="bg-white/20 rounded-full px-3 py-1">⚡ Wave 1: {matches.filter(m => m.wave_number === 1).length} agencies now</span>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {[
+                  `📧 ${matches.length} agencies matched`,
+                  `🌍 3 language versions`,
+                  `📸 ${(offer as any)?.selected_media_ids?.length || 5} photos`,
+                  `⚡ Wave 1: ${matches.filter(m => m.wave_number === 1).length} agencies now`,
+                ].map(tag => (
+                  <span key={tag} className="text-xs font-medium px-3 py-1 rounded-full text-white/60" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </div>
 
         {/* 30-day auto-cycle notice */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <div className="rounded-xl p-4 mb-6 flex items-start gap-3" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)' }}>
           <span className="text-xl flex-shrink-0">🔄</span>
           <div className="text-sm">
-            <p className="font-semibold text-amber-800">Automatic re-cycle if not sold</p>
-            <p className="text-amber-700 mt-0.5">
-              If no deal closes in <strong>30 days</strong>, AI automatically selects a new batch of agencies, prepares a fresh offer, and sends it to you for approval again — until your property is sold.
+            <p className="font-semibold text-yellow-400/80">Automatic re-cycle if not sold</p>
+            <p className="text-white/40 mt-0.5">
+              If no deal closes in <strong className="text-white/60">30 days</strong>, AI automatically selects a new batch of agencies and sends a fresh offer for your approval — until your property is sold.
               Billing pauses the moment you mark it sold.
             </p>
           </div>
         </div>
 
         {/* Mobile panel switcher */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 lg:hidden">
+        <div className="flex gap-1 p-1 rounded-xl mb-6 lg:hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
           {([
             { key: 'offer', label: '📄 Offer content' },
             { key: 'agencies', label: `🎯 Agencies (${matches.length})` },
@@ -293,8 +315,9 @@ export default function OfferApprovalPage() {
               onClick={() => setActivePanel(key)}
               className={clsx(
                 'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
-                activePanel === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'
+                activePanel === key ? 'text-white' : 'text-white/30'
               )}
+              style={activePanel === key ? { background: 'rgba(255,255,255,0.08)' } : {}}
             >
               {label}
             </button>
@@ -302,15 +325,13 @@ export default function OfferApprovalPage() {
         </div>
 
         {/* Main content — two columns on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
           {/* Left: Offer preview */}
           <div className={clsx(activePanel !== 'offer' && 'hidden lg:block')}>
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
               <div className="flex items-center justify-between mb-5">
-                <h3 className="font-semibold text-gray-900">Offer content</h3>
-                <span className="text-xs text-gray-400 flex items-center gap-1">
-                  ✏️ Click any field to edit
-                </span>
+                <h3 className="font-semibold text-white">Offer content</h3>
+                <span className="text-xs text-white/30">✏️ Click any field to edit</span>
               </div>
               {offer && (
                 <OfferPreview
@@ -326,11 +347,11 @@ export default function OfferApprovalPage() {
           {/* Right: Agency list + actions */}
           <div className={clsx('space-y-4', activePanel !== 'agencies' && 'hidden lg:block')}>
             {/* Approve box */}
-            <div className="bg-white rounded-2xl border-2 border-green-200 p-5 space-y-3">
+            <div className="rounded-2xl p-5 space-y-3" style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.20)', backdropFilter: 'blur(12px)' }}>
               <div>
-                <h3 className="font-semibold text-gray-900 text-base">Ready to send?</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Approving will lock this version and schedule Wave 1 distribution within 24h.
+                <h3 className="font-semibold text-white text-base">Ready to send?</h3>
+                <p className="text-xs text-white/35 mt-0.5">
+                  Approving will lock this version and schedule Wave 1 within 24h.
                 </p>
               </div>
 
@@ -340,11 +361,17 @@ export default function OfferApprovalPage() {
                 onClick={handleApprove}
                 disabled={action !== null}
                 className={clsx(
-                  'w-full py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2',
-                  action === null
-                    ? 'bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  'w-full py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2',
                 )}
+                style={action === null ? {
+                  background: 'linear-gradient(135deg, #16a34a, #22c55e)',
+                  boxShadow: '0 8px 24px rgba(34,197,94,0.30)',
+                  color: 'white',
+                } : {
+                  background: 'rgba(255,255,255,0.06)',
+                  color: 'rgba(255,255,255,0.25)',
+                  cursor: 'not-allowed',
+                }}
               >
                 {action === 'approving' ? (
                   <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Approving…</>
@@ -359,7 +386,8 @@ export default function OfferApprovalPage() {
                   type="button"
                   onClick={() => setShowChangeModal(true)}
                   disabled={action !== null}
-                  className="py-2 px-3 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                  className="py-2 px-3 rounded-xl text-xs font-medium text-white/50 hover:text-white/80 transition-colors disabled:opacity-30"
+                  style={{ border: '1px solid rgba(255,255,255,0.10)' }}
                 >
                   🔄 Request changes
                 </button>
@@ -367,22 +395,23 @@ export default function OfferApprovalPage() {
                   type="button"
                   onClick={() => setShowRejectModal(true)}
                   disabled={action !== null}
-                  className="py-2 px-3 rounded-xl border border-red-100 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50"
+                  className="py-2 px-3 rounded-xl text-xs font-medium text-red-400/70 hover:text-red-400 transition-colors disabled:opacity-30"
+                  style={{ border: '1px solid rgba(239,68,68,0.15)' }}
                 >
                   ✕ Decline offer
                 </button>
               </div>
 
-              <p className="text-xs text-gray-400 text-center">
-                You'll receive a distribution report via email & Telegram/WhatsApp
+              <p className="text-xs text-white/25 text-center">
+                Distribution report sent via email & Telegram/WhatsApp
               </p>
             </div>
 
             {/* Agency match list */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Matched agencies</h3>
-                <span className="text-xs text-gray-400">{matches.length} total</span>
+                <h3 className="font-semibold text-white">Matched agencies</h3>
+                <span className="text-xs text-white/30">{matches.length} total</span>
               </div>
               <AgencyMatchList matches={matches} loading={loading} />
             </div>
@@ -392,18 +421,17 @@ export default function OfferApprovalPage() {
 
       {/* Request Changes Modal */}
       {showChangeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="font-bold text-gray-900 text-lg mb-2">Request changes</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              Describe what you'd like to change. AI will regenerate the offer.
-            </p>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}>
+          <div className="rounded-2xl p-6 max-w-md w-full" style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
+            <h3 className="font-bold text-white text-lg mb-2">Request changes</h3>
+            <p className="text-sm text-white/40 mb-4">Describe what you'd like to change. AI will regenerate the offer.</p>
             <textarea
               value={changeNote}
               onChange={(e) => setChangeNote(e.target.value)}
-              placeholder="e.g. Make the pitch more professional, emphasize the sea view, adjust the subject line…"
+              placeholder="e.g. Make the pitch more professional, emphasize the view, adjust the subject line…"
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-4"
+              className="w-full px-4 py-3 rounded-xl text-sm text-white/80 placeholder-white/20 resize-none mb-4 focus:outline-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
               autoFocus
             />
             <div className="flex gap-3">
@@ -411,19 +439,16 @@ export default function OfferApprovalPage() {
                 type="button"
                 onClick={handleRequestChanges}
                 disabled={!changeNote.trim() || action === 'requesting_changes'}
-                className={clsx(
-                  'flex-1 py-2.5 rounded-xl font-medium text-sm transition-all',
-                  changeNote.trim() && action !== 'requesting_changes'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                )}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', boxShadow: '0 4px 16px rgba(249,115,22,0.3)' }}
               >
                 {action === 'requesting_changes' ? 'Regenerating…' : '🔄 Regenerate offer'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowChangeModal(false)}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+                style={{ border: '1px solid rgba(255,255,255,0.08)' }}
               >
                 Cancel
               </button>
@@ -434,32 +459,33 @@ export default function OfferApprovalPage() {
 
       {/* Reject Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="font-bold text-gray-900 text-lg mb-2">Decline this offer?</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              This will cancel the current offer. You can request a new one later.
-            </p>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}>
+          <div className="rounded-2xl p-6 max-w-md w-full" style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
+            <h3 className="font-bold text-white text-lg mb-2">Decline this offer?</h3>
+            <p className="text-sm text-white/40 mb-4">This will cancel the current offer. You can request a new one later.</p>
             <textarea
               value={rejectionNote}
               onChange={(e) => setRejectionNote(e.target.value)}
               placeholder="Optional: tell us why you're declining…"
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none resize-none mb-4"
+              className="w-full px-4 py-3 rounded-xl text-sm text-white/80 placeholder-white/20 resize-none mb-4 focus:outline-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
             />
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={handleReject}
                 disabled={action === 'rejecting'}
-                className="flex-1 py-2.5 rounded-xl font-medium text-sm bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-all"
+                className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', boxShadow: '0 4px 16px rgba(220,38,38,0.25)' }}
               >
                 {action === 'rejecting' ? 'Declining…' : 'Decline offer'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowRejectModal(false)}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+                style={{ border: '1px solid rgba(255,255,255,0.08)' }}
               >
                 Cancel
               </button>
