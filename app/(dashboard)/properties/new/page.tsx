@@ -69,7 +69,7 @@ export default function PropertiesNewPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
-  // Step 4: Documents, Distribution
+  // Step 4: Distribution
   const [isSending, setIsSending] = useState(false);
   const [sendProgress, setSendProgress] = useState(0);
   const [distributionComplete, setDistributionComplete] = useState(false);
@@ -846,49 +846,9 @@ export default function PropertiesNewPage() {
           </div>
         )}
 
-        {currentStep === 4 && (
-          <div>
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f0f0ff', marginBottom: 8 }}>Legal Documents</h2>
-              <p style={{ color: 'rgba(240,240,255,0.55)', fontSize: '0.9rem', lineHeight: 1.6 }}>Upload your title deed and any supporting documents. All files are encrypted and only accessible to you.</p>
-            </div>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(240,240,255,0.5)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Title Deed *</div>
-              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(245,194,0,0.3)', borderRadius: 14, padding: '32px 20px', cursor: 'pointer', background: 'rgba(245,194,0,0.04)', gap: 12, transition: 'all 0.2s' }}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(245,194,0,0.7)'}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(245,194,0,0.3)'}}>
-                <div style={{ fontSize: 36 }}>📄</div>
-                <div style={{ color: 'rgba(240,240,255,0.7)', fontSize: '0.9rem', textAlign: 'center' }}>Click to upload or drag and drop<br/><span style={{ color: 'rgba(240,240,255,0.4)', fontSize: '0.78rem' }}>PDF, JPG, PNG — max 20 MB</span></div>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} />
-              </label>
-            </div>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(240,240,255,0.5)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Additional Documents (optional)</div>
-              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(96,165,250,0.25)', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', background: 'rgba(96,165,250,0.03)', gap: 10, transition: 'all 0.2s' }}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(96,165,250,0.5)'}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(96,165,250,0.25)'}}>
-                <div style={{ fontSize: 28 }}>📎</div>
-                <div style={{ color: 'rgba(240,240,255,0.55)', fontSize: '0.85rem', textAlign: 'center' }}>Floor plan, energy certificate, inspection reports<br/><span style={{ color: 'rgba(240,240,255,0.35)', fontSize: '0.76rem' }}>Multiple files, PDF or images</span></div>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style={{ display: 'none' }} />
-              </label>
-            </div>
-            <div style={{ background: 'rgba(59,91,219,0.1)', border: '1px solid rgba(59,91,219,0.25)', borderRadius: 12, padding: '14px 18px', display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 20 }}>
-              <span style={{ fontSize: 18 }}>🔒</span>
-              <div>
-                <div style={{ color: '#93c5fd', fontWeight: 700, fontSize: '0.83rem', marginBottom: 4 }}>Bank-grade encryption</div>
-                <div style={{ color: 'rgba(240,240,255,0.55)', fontSize: '0.8rem', lineHeight: 1.6 }}>All documents are encrypted (AES-256) in EU-region servers. Never shared with agencies without your explicit consent.</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <input type="checkbox" id="doc_consent" style={{ marginTop: 3, accentColor: '#f5c200', width: 16, height: 16, cursor: 'pointer' }} />
-              <label htmlFor="doc_consent" style={{ color: 'rgba(240,240,255,0.6)', fontSize: '0.82rem', lineHeight: 1.6, cursor: 'pointer' }}>I confirm I have the legal right to share these documents and consent to PropBlaze storing them securely for distribution purposes.</label>
-            </div>
-          </div>
-        )}
-
+        {currentStep === 4 && (<div style={{padding:0}}><h2 style={{fontSize:"1.4rem",fontWeight:800,color:"#f0f0ff",marginBottom:8}}>Legal Documents</h2><p style={{color:"rgba(240,240,255,0.55)",fontSize:"0.9rem",lineHeight:1.6,marginBottom:24}}>Upload title deed and supporting documents. Files are encrypted and only visible to you.</p><div style={{marginBottom:20}}><div style={{fontSize:"0.78rem",fontWeight:700,color:"rgba(240,240,255,0.5)",textTransform:"uppercase",marginBottom:10}}>Title Deed *</div><label style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px",border:"2px dashed rgba(245,194,0,0.3)",borderRadius:14,cursor:"pointer",gap:10}}><span style={{fontSize:36}}>📄</span><span style={{color:"rgba(240,240,255,0.7)"}}>Click or drag PDF / JPG / PNG</span><input type="file" accept=".pdf,.jpg,.png" style={{display:"none"}}/></label></div><div style={{background:"rgba(59,91,219,0.1)",border:"1px solid rgba(59,91,219,0.25)",borderRadius:12,padding:"14px 18px",display:"flex",gap:12,marginBottom:16}}><span>🔒</span><div><div style={{color:"#93c5fd",fontWeight:700,fontSize:"0.83rem"}}>Bank-grade encryption</div><div style={{color:"rgba(240,240,255,0.55)",fontSize:"0.8rem"}}>AES-256, EU servers. Never shared without consent.</div></div></div></div>)}
         {/* Step 5: Distribution */}
-        {currentStep === 4
-        {currentStep === 4 && (
+        {currentStep === 4currentStep === 4 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
               Distribution to Agencies
