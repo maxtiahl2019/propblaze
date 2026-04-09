@@ -1,58 +1,78 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MatchScore } from '@/lib/types';
+import React from 'react';
 import clsx from 'clsx';
+
+interface MatchScore {
+  agency_id: string;
+  total_score: number;
+  wave_number: number;
+}
 
 interface AgencyMatchListProps {
   matches: MatchScore[];
   loading?: boolean;
+  onSelect?: (id: string) => void;
+  selectedIds?: string[];
 }
 
-// ── Circular score ring ──────────────────────────────────────────────────────────
-function ScoreRing({ score }: { score: number }) {
-  const pct = Math.round(score * 100);
-  const r = 20;
-  const circ = 2 * Math.PI * r;
-  const dash = (pct / 100) * circ;
-  const color = pct >= 85 ? '#22c55e' : pct >= 65 ? '#f97316' : '#ef4444';
+export default function AgencyMatchList({
+  matches,
+  loading = false,
+  onSelect,
+  selectedIds = [],
+}: AgencyMatchListProps) {
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="animate-pulse h-16 rounded-xl bg-white/5" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!matches.length) {
+    return (
+      <div className="text-center py-10 text-white/40 text-sm">
+        No agency matches found.
+      </div>
+    );
+  }
 
   return (
-    <div className="relative w-14 h-14 flex-shrink-0 flex items-center justify-center">
-      <svg width="56" height="56" className="rotate-[-90deg]">
-        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4" />
-        <circle
-          cx="28" cy="28" r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="4"
-          strokeDasharray={`${dash} ${circ}`}
-          strokeLinecap="round"
-          style={{ transition: 'stroke-dasharray 0.8s ease', filter: `drop-shadow(0 0 4px ${color}80)` }}
-        />
-      </svg>
-      <span className="absolute text-xs font-black" style={{ color }}>{pct}%</span>
+    <div className="space-y-3">
+      {matches.map((m) => {
+        const selected = selectedIds.includes(m.agency_id);
+        const scoreColor =
+          m.total_score >= 88
+            ? 'text-green-400'
+            : m.total_score >= 78
+            ? 'text-yellow-400'
+            : 'text-purple-400';
+
+        return (
+          <div
+            key={m.agency_id}
+            onClick={() => onSelect?.(m.agency_id)}
+            className={clsx(
+              'flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all',
+              selected
+                ? 'border-orange-500/60 bg-orange-500/10'
+                : 'border-white/10 bg-white/5 hover:border-white/20'
+            )}
+          >
+            <div>
+              <p className="text-sm font-medium text-white">{m.agency_id}</p>
+              <p className="text-xs text-white/40 mt-0.5">Wave {m.wave_number}</p>
+            </div>
+            <div className="text-right">
+              <p className={clsx('text-lg font-bold', scoreColor)}>{m.total_score}</p>
+              <p className="text-xs text-white/40">score</p>
+            </div>
+          </div>
+        );
+      })}
     </div>
-  
-  9��p�function DimBar({ dim, val }:''��fnnction: DimBar({ dim, val }: { dim: string; val: number }) {
-  const max = DIM_MAX[dim] || 20;
-  const pct = Math.min((val / max) * 100, 100);
-  const label = DIM_LABELS[dim] || dim.replace(/_/g, ' ');
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-[10px]">
-        <span className="text-white/50">{label}</span>
-        <span className="text-white/40">{val}/{max}</span>
-      </div>
-      <div className="h-1 rounded-full bg-white/8">
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${pct}%`,
-            background: pct >= 80 ? '#22c55e' : pct >= 50 ? '#f97316' : 'rgba(255,255,255,0.3)',
-          }}
-        />
-      </div>
-    </div>
-  
-  9��p�function DimBar({ dim, val }:''��
+  );
+}
