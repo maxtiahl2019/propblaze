@@ -140,12 +140,12 @@ export default function AgencyPortalPage() {
           boxShadow: 'var(--shadow-md)',
         }}>
           {/* Property header */}
-          <div style({
+          <div style={{
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             marginBottom: 24,
-          })>
+          }}>
             <div style={{ flex: 1 }}>
               <h2 style={{
                 fontSize: '1.25rem',
