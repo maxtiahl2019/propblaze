@@ -132,7 +132,7 @@ export default function LandingPage() {
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: '5px 12px', borderRadius: '99px',
-              border: `1px solid ${C.primaryBorder || 'rgba(249,115,22,0.28)'}`,
+              border: `1px solid rgba(249,115,22,0.28)`,
               background: 'rgba(249,115,22,0.08)',
               color: '#FB923C', fontSize: '12px', fontWeight: 600,
               letterSpacing: '0.04em', marginBottom: '28px'
