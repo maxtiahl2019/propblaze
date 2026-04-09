@@ -53,17 +53,17 @@ export default function DashboardLayout({
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#080809', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', flexDirection: 'column' }}>
       {DEMO_MODE && (
         <div style={{
-          background: 'linear-gradient(90deg,rgba(192,57,43,0.9),rgba(230,126,34,0.9))',
+          background: '#F97316',
           color: 'white', fontSize: '0.7rem', fontWeight: 600,
           textAlign: 'center', padding: '5px 16px', letterSpacing: '0.02em',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
-          <span>🔥</span>
+          <span>🚀</span>
           <span>DEMO MODE — PropBlaze preview with sample data</span>
-          <span style={{ opacity: 0.6 }}>· demo@propblaze.com</span>
+          <span style={{ opacity: 0.8 }}>· demo@propblaze.eu</span>
         </div>
       )}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>

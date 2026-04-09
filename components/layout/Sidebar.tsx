@@ -56,12 +56,12 @@ function LangBar() {
     { code: 'es', flag: '🇷🇸', label: 'SR' },  // using 'es' slot for Serbian
   ]
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
       {langs.map(l => (
         <button key={l.code} onClick={() => setLang(l.code)} style={{
           padding: '4px 8px', borderRadius: 6, border: 'none', cursor: 'pointer',
-          background: lang === l.code ? 'rgba(230,126,34,0.15)' : 'transparent',
-          color: lang === l.code ? '#e67e22' : 'rgba(255,255,255,0.3)',
+          background: lang === l.code ? 'var(--primary-light)' : 'transparent',
+          color: lang === l.code ? 'var(--primary)' : 'var(--text-tertiary)',
           fontSize: '0.65rem', fontWeight: lang === l.code ? 700 : 400,
           transition: 'all 0.15s', letterSpacing: '0.05em',
         }}>
@@ -90,8 +90,8 @@ export const Sidebar: React.FC = () => {
       height: '100vh',
       position: 'sticky',
       top: 0,
-      background: '#0c0c0e',
-      borderRight: '1px solid rgba(255,255,255,0.07)',
+      background: 'var(--bg-sidebar)',
+      borderRight: '1px solid var(--border)',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 100,

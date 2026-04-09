@@ -8,45 +8,50 @@
   --sidebar-w: 240px;
   --topbar-h: 60px;
 
-  /* Colors — Dark premium (PropBlaze) */
-  --bg: #080809;
-  --surface: #0c0c0e;
-  --surface-2: #111115;
-  --surface-hover: #17171c;
-  --border: rgba(255,255,255,0.07);
-  --border-strong: rgba(255,255,255,0.12);
+  /* Colors — Light clean (PropBlaze) */
+  --bg: #F9FAFB;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F3F4F6;
+  --surface-hover: #F9FAFB;
+  --border: #E5E7EB;
+  --border-strong: #D1D5DB;
 
   /* Text */
-  --text: #ffffff;
-  --text-secondary: rgba(255,255,255,0.6);
-  --text-tertiary: rgba(255,255,255,0.3);
-  --text-inverse: #000000;
+  --text: #111827;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --text-inverse: #FFFFFF;
 
-  /* Brand — PropBlaze fire */
-  --blue: #c0392b;
-  --blue-hover: #e67e22;
-  --blue-light: rgba(192,57,43,0.1);
-  --blue-border: rgba(192,57,43,0.3);
+  /* Brand — PropBlaze orange */
+  --primary: #F97316;
+  --primary-hover: #EA580C;
+  --primary-light: #FFF7ED;
+  --primary-border: #FED7AA;
 
   /* Status */
-  --green: #16a34a;
-  --green-light: #f0fdf4;
-  --green-border: #bbf7d0;
-  --amber: #d97706;
-  --amber-light: #fffbeb;
-  --amber-border: #fde68a;
-  --red: #dc2626;
-  --red-light: #fef2f2;
-  --red-border: #fecaca;
-  --purple: #7c3aed;
-  --purple-light: #f5f3ff;
-  --purple-border: #ddd6fe;
+  --blue: #2563EB;
+  --blue-light: #EFF6FF;
+  --blue-border: #BFDBFE;
+  --green: #16A34A;
+  --green-light: #F0FDF4;
+  --green-border: #BBFB7D0;
+  --amber: #D97706;
+  --amber-light: #FFFBEB;
+  --amber-border: #FDE68A;
+  --red: #DC2626;
+  --red-light: #FEF2F2;
+  --red-border: #FECACA;
+  --purple: #7C3AED;
+  --purple-light: #F5F3FF;
+  --purple-border: #DDD6FE;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
   /* Radius */
   --radius-sm: 6px;
@@ -97,8 +102,8 @@ h5 { font-size: 0.875rem; font-weight: 600; }
 /* ─── Scrollbar ─────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
 /* ─── Component Layer ───────────────────────────────────────────── */
 @layer components {
@@ -122,11 +127,11 @@ h5 { font-size: 0.875rem; font-weight: 600; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-primary {
-    background: var(--blue);
+    background: var(--primary);
     color: white;
-    border-color: var(--blue);
+    border-color: var(--primary);
   }
-  .btn-primary:hover:not(:disabled) { background: var(--blue-hover); border-color: var(--blue-hover); }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
   .btn-secondary {
     background: var(--surface);
@@ -134,13 +139,13 @@ h5 { font-size: 0.875rem; font-weight: 600; }
     border-color: var(--border);
     box-shadow: var(--shadow-sm);
   }
-  .btn-secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--border-strong); }
+  .btn-secondary:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border-strong); }
 
   .btn-ghost {
     background: transparent;
     color: var(--text-secondary);
   }
-  .btn-ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text); }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
 
   .btn-danger {
     background: var(--red-light);
@@ -191,8 +196,8 @@ h5 { font-size: 0.875rem; font-weight: 600; }
   }
   .input::placeholder { color: var(--text-tertiary); }
   .input:focus {
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgb(249 115 22 / 0.12);
   }
   .input:disabled { background: var(--surface-2); color: var(--text-secondary); cursor: not-allowed; }
   .input-error { border-color: var(--red); }
@@ -231,6 +236,7 @@ h5 { font-size: 0.875rem; font-weight: 600; }
     border: 1px solid transparent;
     white-space: nowrap;
   }
+  .badge-primary { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); }
   .badge-blue  { background: var(--blue-light);   color: var(--blue);   border-color: var(--blue-border); }
   .badge-green { background: var(--green-light);  color: var(--green);  border-color: var(--green-border); }
   .badge-amber { background: var(--amber-light);  color: var(--amber);  border-color: var(--amber-border); }
@@ -264,7 +270,7 @@ h5 { font-size: 0.875rem; font-weight: 600; }
     vertical-align: middle;
   }
   .table tr:last-child td { border-bottom: none; }
-  .table tbody tr:hover td { background: var(--surface-hover); }
+  .table tbody tr:hover td { background: var(--surface-2); }
 
   /* Progress bar */
   .pbar {
@@ -275,7 +281,7 @@ h5 { font-size: 0.875rem; font-weight: 600; }
   }
   .pbar-fill {
     height: 100%;
-    background: var(--blue);
+    background: var(--primary);
     border-radius: 99px;
     transition: width 600ms ease;
   }
@@ -298,11 +304,11 @@ h5 { font-size: 0.875rem; font-weight: 600; }
     text-decoration: none;
     border: 1px solid transparent;
   }
-  .nav-item:hover { background: var(--surface-hover); color: var(--text); }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
   .nav-item.active {
-    background: var(--blue-light);
-    color: var(--blue);
-    border-color: var(--blue-border);
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary-border);
   }
 
   /* Stat */
@@ -415,99 +421,44 @@ h5 { font-size: 0.875rem; font-weight: 600; }
     color: var(--text-secondary);
     flex-shrink: 0;
   }
-  .step-dot.active { border-color: var(--blue); background: var(--blue); color: white; }
+  .step-dot.active { border-color: var(--primary); background: var(--primary); color: white; }
   .step-dot.done   { border-color: var(--green); background: var(--green); color: white; }
 }
 
-/* ─── PropBlaze Cinematic Animations ───────────────────────────────────────── */
+/* ─── PropBlaze Animations ───────────────────────────────────────── */
 
-/* Ambient glow drift — slow breathing movement */
-@keyframes ambientDrift {
-  0%   { transform: translate(0, 0) scale(1);   opacity: 0.06; }
-  33%  { transform: translate(40px, -30px) scale(1.1); opacity: 0.09; }
-  66%  { transform: translate(-20px, 20px) scale(0.95); opacity: 0.05; }
-  100% { transform: translate(0, 0) scale(1);   opacity: 0.06; }
-}
-
-/* Slow pan right — like drone footage */
-@keyframes slowPanRight {
-  0%   { transform: translateX(-2%) scale(1.04); }
-  100% { transform: translateX(2%)  scale(1.04); }
-}
-
-/* Scan line sweep */
-@keyframes scanSweep {
-  0%   { top: -2px;   opacity: 0; }
-  5%   { opacity: 0.6; }
-  95%  { opacity: 0.3; }
-  100% { top: 100%;   opacity: 0; }
-}
-
-/* Float up — particles */
-@keyframes floatUp {
-  0%   { transform: translateY(0px); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 0.6; }
-  100% { transform: translateY(-120px); opacity: 0; }
-}
-
-/* Subtle horizontal line drift */
-@keyframes lineDrift {
-  0%   { transform: translateX(-100%); opacity: 0; }
-  10%  { opacity: 0.15; }
-  90%  { opacity: 0.08; }
-  100% { transform: translateX(200%);  opacity: 0; }
-}
-
-/* Gradient breathe */
-@keyframes breathe {
-  0%, 100% { opacity: 0.04; filter: blur(80px); }
-  50%       { opacity: 0.09; filter: blur(60px); }
-}
-
-/* Card data flicker — numbers cycling */
-@keyframes dataFlicker {
-  0%, 90%, 100% { opacity: 1; }
-  95%           { opacity: 0.3; }
-}
-
-/* Pulse ring */
-@keyframes pulseRing {
-  0%   { transform: scale(1);    opacity: 0.4; }
-  100% { transform: scale(2.5);  opacity: 0; }
-}
-
-/* Glow shimmer */
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-/* Fade up entrance */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Fade in */
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* Hero text reveal */
-@keyframes textReveal {
-  from { opacity: 0; transform: translateY(16px) skewY(1deg); }
-  to   { opacity: 1; transform: translateY(0) skewY(0deg); }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 /* Utility classes */
-.animate-ambient   { animation: ambientDrift 12s ease-in-out infinite; }
-.animate-breathe   { animation: breathe 8s ease-in-out infinite; }
 .animate-fade-up   { animation: fadeUp 0.8s ease forwards; }
 .animate-fade-in   { animation: fadeIn 0.6s ease forwards; }
+.animate-slide-in  { animation: slideIn 0.5s ease forwards; }
+.animate-pulse     { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 50%, transparent 100%);
   background-size: 200% auto;
   animation: shimmer 2.5s linear infinite;
 }
