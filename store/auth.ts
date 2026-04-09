@@ -193,6 +193,26 @@ export const useAuth = create<AuthStore>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      // In DEMO_MODE: always force authenticated state after rehydration
+      onRehydrateStorage: () => (state) => {
+        if (DEMO_MODE && state) {
+          state.isAuthenticated = true;
+          state.user = DEMO_USER;
+          state.token = 'demo-token';
+        }
+      },
+      merge: (persisted: any, current) => {
+        if (DEMO_MODE) {
+          return {
+            ...current,
+            ...persisted,
+            isAuthenticated: true,
+            user: DEMO_USER,
+            token: 'demo-token',
+          };
+        }
+        return { ...current, ...persisted };
+      },
     }
   )
 );

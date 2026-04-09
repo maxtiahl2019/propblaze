@@ -57,10 +57,14 @@ export default function LoginPage() {
 
   const handleDemoLogin = () => {
     if (typeof window !== 'undefined') {
+      // Write correct Zustand persist format (wrapped in "state")
       localStorage.setItem('propblaze-auth', JSON.stringify({
-        isAuthenticated: true,
-        user: DEMO_USER,
-        token: 'demo-token'
+        state: {
+          isAuthenticated: true,
+          user: DEMO_USER,
+          token: 'demo-token',
+        },
+        version: 0,
       }));
     }
     router.push('/dashboard');
