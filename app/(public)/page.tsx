@@ -4,104 +4,310 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DEMO_AGENCIES } from '@/lib/demo-agencies';
 
-interface Agency {
-  id: string;
-  name: string;
-  email: string;
-  website: string;
-  country: string;
-  city: string;
-  flag: string;
-  specialization: string;
-  languages: string[];
-  score: number;
-  deals_30d: number;
-  response_rate: number;
-  isRealEmail?: boolean;
-}
-
+// ─── Yellow · Black · White palette ────────────────────────────────────────────
 const C = {
-  bg:        '#F4F6FA',
-  surface:   '#FFFFFF',
-  surface2:  '#EEF1F7',
-  border:    '#DDE2EE',
-  borderStr: '#C4CBDB',
-  text:      '#1A1F2E',
-  textMd:    '#6B7A99',
-  textSm:    '#9BA8C0',
-  orange:    '#F97316',
-  orangeHov: '#EA580C',
-  orangeGlow:'rgba(249,115,22,0.12)',
+  white:   '#FFFFFF',
+  offwhite:'#FAFAF8',
+  grey:    '#F4F4F2',
+  grey2:   '#EAEAE8',
+  black:   '#0A0A0A',
+  black2:  '#1A1A1A',
+  ink:     '#3A3A3A',
+  mid:     '#6A6A6A',
+  muted:   '#9A9A9A',
+  yellow:  '#F5C400',
+  yellowH: '#E0B000',
+  yellowL: '#FFFBE6',
+  yellowB: '#F5C40033',
+  green:   '#16A34A',
 };
 
-function AgencyMatchingSection() {
-  const [showAll, setShowAll] = useState(false);
+// ─── Architectural line‑art SVG hero illustration ──────────────────────────────
+function CityLineArt() {
+  return (
+    <svg
+      viewBox="0 0 900 420"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
+    >
+      {/* Sky */}
+      <rect width="900" height="420" fill="#FAFAF8"/>
 
-  const displayAgencies = showAll ? DEMO_AGENCIES : DEMO_AGENCIES.slice(0, 4);
+      {/* Ground line */}
+      <line x1="0" y1="380" x2="900" y2="380" stroke={C.grey2} strokeWidth="1.5"/>
+
+      {/* ─ far-left cluster ─ */}
+      <rect x="30"  y="270" width="40" height="110" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+      <rect x="34"  y="280" width="8"  height="12" rx="0.5" fill={C.grey2}/>
+      <rect x="46"  y="280" width="8"  height="12" rx="0.5" fill={C.yellow} opacity="0.55"/>
+      <rect x="34"  y="300" width="8"  height="12" rx="0.5" fill={C.grey2}/>
+      <rect x="46"  y="300" width="8"  height="12" rx="0.5" fill={C.grey2}/>
+
+      <rect x="78"  y="210" width="55" height="170" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+      {[0,1,2,3,4].map(r => [0,1,2].map(c => (
+        <rect key={`a-${r}-${c}`} x={82 + c*16} y={220 + r*30} width="10" height="18" rx="0.5"
+          fill={r===1 && c===1 ? C.yellow : C.grey2} opacity={r===1&&c===1?0.7:1}/>
+      )))}
+
+      {/* ─ central tower (focal) ─ */}
+      <rect x="370" y="60"  width="90" height="320" rx="1" fill={C.white} stroke={C.black2} strokeWidth="1.5"/>
+      <rect x="380" y="48"  width="70" height="16"  rx="1" fill={C.white} stroke={C.black2} strokeWidth="1"/>
+      <rect x="408" y="30"  width="14" height="22"  rx="0.5" fill={C.black2}/>
+      <rect x="413" y="14"  width="4"  height="18"  fill={C.yellow}/>
+      {/* window grid */}
+      {[0,1,2,3,4,5,6,7,8,9].map(r => [0,1,2,3].map(c => (
+        <rect key={`ct-${r}-${c}`} x={376 + c*20} y={72 + r*30} width="13" height="20" rx="0.5"
+          fill={r%3===0&&c%2===1 ? C.yellow : r%2===0 ? C.black2 : C.grey2}
+          opacity={r%3===0&&c%2===1?0.65: r%2===0?0.12:0.55}/>
+      )))}
+
+      {/* ─ left mid ─ */}
+      <rect x="160" y="160" width="70" height="220" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+      {[0,1,2,3,4,5].map(r => [0,1,2].map(c => (
+        <rect key={`lm-${r}-${c}`} x={166 + c*21} y={170 + r*34} width="14" height="22" rx="0.5"
+          fill={r===2&&c===0 ? C.yellow : C.grey2} opacity={r===2&&c===0?0.65:0.7}/>
+      )))}
+      <rect x="242" y="250" width="50" height="130" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+
+      {/* ─ right cluster ─ */}
+      <rect x="490" y="180" width="75" height="200" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+      {[0,1,2,3,4].map(r => [0,1,2].map(c => (
+        <rect key={`rm-${r}-${c}`} x={496 + c*22} y={190 + r*37} width="15" height="24" rx="0.5"
+          fill={r===1&&c===2 ? C.yellow : C.grey2} opacity={r===1&&c===2?0.6:0.65}/>
+      )))}
+      <rect x="576" y="130" width="85" height="250" rx="1" fill={C.white} stroke={C.black2} strokeWidth="1.25"/>
+      {[0,1,2,3,4,5,6].map(r => [0,1,2,3].map(c => (
+        <rect key={`rl-${r}-${c}`} x={582 + c*19} y={140 + r*34} width="12" height="22" rx="0.5"
+          fill={r===3&&c===1 ? C.yellow : C.black2}
+          opacity={r===3&&c===1?0.65:0.1}/>
+      )))}
+
+      <rect x="674" y="220" width="55" height="160" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+      <rect x="740" y="290" width="65" height="090" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+      <rect x="820" y="200" width="55" height="180" rx="1" fill={C.white} stroke={C.grey2} strokeWidth="1"/>
+
+      {/* Ground shadow */}
+      <rect x="0" y="378" width="900" height="42" fill="url(#gfade)"/>
+      <defs>
+        <linearGradient id="gfade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={C.offwhite} stopOpacity="0"/>
+          <stop offset="100%" stopColor={C.offwhite} stopOpacity="1"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+// ─── Live product card shown in hero ──────────────────────────────────────────
+function HeroCard() {
+  const [pulse, setPulse] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPulse(p => (p + 1) % 4), 1800);
+    return () => clearInterval(t);
+  }, []);
+
+  const agencies = [
+    { flag: '🇷🇸', name: 'Win-Win Solution',   score: 96, top: true },
+    { flag: '🇩🇪', name: 'Engel & Völkers',    score: 97 },
+    { flag: '🇲🇪', name: "Sotheby's MNE",      score: 94 },
+    { flag: '🇬🇧', name: 'Savills Intl',        score: 91 },
+  ];
 
   return (
-    <section id="agencies" style={{
-      background: C.surface,
-      borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`,
-      padding: '96px 32px'
+    <div style={{
+      background: C.white,
+      border: `1.5px solid ${C.grey2}`,
+      borderRadius: '16px',
+      overflow: 'hidden',
+      boxShadow: '0 24px 64px rgba(10,10,10,0.12), 0 4px 12px rgba(10,10,10,0.06)',
     }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+      {/* Window chrome */}
+      <div style={{
+        background: C.offwhite, borderBottom: `1px solid ${C.grey2}`,
+        padding: '10px 14px',
+        display: 'flex', alignItems: 'center', gap: '8px',
+      }}>
+        <div style={{ display: 'flex', gap: '5px' }}>
+          {['#FF5F56','#FEBC2E','#28C840'].map((c,i) => (
+            <div key={i} style={{ width: 9, height: 9, borderRadius: '50%', background: c, opacity: 0.7 }}/>
+          ))}
+        </div>
+        <div style={{
+          flex: 1, background: C.grey,
+          borderRadius: '5px', padding: '4px 10px',
+          fontSize: '10.5px', color: C.muted,
+          textAlign: 'center', maxWidth: '220px', margin: '0 auto',
+        }}>propblaze.eu/dashboard</div>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '18px' }}>
+        {/* Property row */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: '14px', paddingBottom: '12px',
+          borderBottom: `1px solid ${C.grey2}`,
+        }}>
+          <div>
+            <div style={{ fontSize: '12.5px', fontWeight: 700, color: C.black, marginBottom: '2px' }}>
+              Apartment · Belgrade
+            </div>
+            <div style={{ fontSize: '11px', color: C.mid }}>€285,000 · 78 m² · 3 bed</div>
+          </div>
           <div style={{
-            display: 'inline-block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
-            textTransform: 'uppercase', color: C.orange, marginBottom: '10px'
+            background: '#F0FDF4', border: '1px solid #BBF7D0',
+            color: C.green, padding: '3px 9px', borderRadius: '99px',
+            fontSize: '10px', fontWeight: 600,
+          }}>✓ Matched</div>
+        </div>
+
+        {/* Agency label */}
+        <div style={{
+          fontSize: '9.5px', fontWeight: 700, color: C.muted,
+          letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px',
+        }}>Top agencies · Wave 1</div>
+
+        {/* Agency list */}
+        {agencies.map((ag, i) => (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 10px', borderRadius: '8px', marginBottom: '5px',
+            background: i === pulse % 4 ? C.yellowL : C.offwhite,
+            border: `1px solid ${i === pulse % 4 ? C.yellow : C.grey2}`,
+            transition: 'all 0.5s ease',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '26px', height: '26px', borderRadius: '6px',
+                background: i === pulse % 4 ? C.yellowB : C.grey,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '13px', transition: 'background 0.5s',
+              }}>{ag.flag}</div>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: C.black }}>{ag.name}</div>
+            </div>
+            <div style={{
+              fontSize: '12px', fontWeight: 800,
+              color: i === pulse % 4 ? C.black : C.mid,
+              transition: 'color 0.5s',
+            }}>{ag.score}<span style={{ fontSize: '9px', fontWeight: 400 }}>/100</span></div>
+          </div>
+        ))}
+
+        {/* Progress footer */}
+        <div style={{
+          marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.grey2}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ fontSize: '10.5px', color: C.mid }}>Sending Wave 1…</div>
+          <div style={{ display: 'flex', gap: '3px' }}>
+            {[0,1,2,3,4,5].map(i => (
+              <div key={i} style={{
+                width: '3px',
+                height: i <= (pulse + 1) * 1.5 ? '10px' : '5px',
+                background: i <= (pulse + 1) * 1.5 ? C.yellow : C.grey2,
+                borderRadius: '99px', transition: 'all 0.5s ease',
+              }}/>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Agency matching section ────────────────────────────────────────────────────
+function AgencyMatchingSection() {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? DEMO_AGENCIES : DEMO_AGENCIES.slice(0, 4);
+
+  return (
+    <section id="agencies" style={{ background: C.white, borderTop: `1px solid ${C.grey2}`, padding: '120px 32px' }}>
+      <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '600px', marginBottom: '72px' }}>
+          <div style={{
+            display: 'inline-block', fontSize: '11px', fontWeight: 700,
+            letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: C.black, background: C.yellow,
+            padding: '3px 10px', borderRadius: '4px', marginBottom: '20px',
           }}>AI Matching Engine</div>
-          <h2 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: '12px', color: C.text }}>
-            Smart Agency Matching
+          <h2 style={{
+            fontSize: '42px', fontWeight: 800, letterSpacing: '-0.035em',
+            color: C.black, lineHeight: 1.1, marginBottom: '16px',
+          }}>
+            Every agency scored.<br/>Only the best get your listing.
           </h2>
-          <p style={{ color: C.textMd, fontSize: '15px' }}>
-            Every agency is scored on 12+ parameters before receiving your listing
+          <p style={{ fontSize: '16px', color: C.ink, lineHeight: 1.7 }}>
+            12+ parameters. Historical performance. Semantic AI ranking.
+            Your property reaches agencies with the highest probability of closing.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '32px' }}>
-          {displayAgencies.map((agency) => (
-            <div key={agency.id} style={{
-              background: C.bg,
-              border: `1px solid ${agency.isRealEmail ? '#FDD0A8' : C.border}`,
-              borderRadius: '14px', padding: '24px',
-              boxShadow: agency.isRealEmail ? '0 4px 20px rgba(249,115,22,0.08)' : '0 2px 6px rgba(30,40,80,0.04)',
-              transition: 'all 0.25s'
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: '16px', marginBottom: '40px',
+        }}>
+          {visible.map((ag) => (
+            <div key={ag.id} style={{
+              background: ag.isRealEmail ? C.yellowL : C.offwhite,
+              border: `1.5px solid ${ag.isRealEmail ? C.yellow : C.grey2}`,
+              borderRadius: '12px', padding: '22px',
+              boxShadow: ag.isRealEmail ? '0 4px 20px rgba(245,196,0,0.12)' : 'none',
+              transition: 'transform 0.22s, box-shadow 0.22s',
             }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(30,40,80,0.1)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = agency.isRealEmail ? '0 4px 20px rgba(249,115,22,0.08)' : '0 2px 6px rgba(30,40,80,0.04)'; }}>
-              {agency.isRealEmail && (
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 28px rgba(10,10,10,0.1)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.transform = 'none';
+                (e.currentTarget as HTMLElement).style.boxShadow = ag.isRealEmail ? '0 4px 20px rgba(245,196,0,0.12)' : 'none';
+              }}
+            >
+              {ag.isRealEmail && (
                 <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '5px',
-                  background: '#FFF3E8', border: '1px solid #FDD0A8',
-                  color: '#C2410C', padding: '3px 10px', borderRadius: '99px',
-                  fontSize: '11px', fontWeight: 600, marginBottom: '14px'
-                }}>★ Real email</div>
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  background: C.yellow, color: C.black,
+                  padding: '2px 10px', borderRadius: '4px',
+                  fontSize: '10px', fontWeight: 700,
+                  letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '12px',
+                }}>★ Demo partner</div>
               )}
-              <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{
+                display: 'flex', alignItems: 'flex-start',
+                justifyContent: 'space-between', marginBottom: '12px',
+              }}>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '3px', color: C.text }}>
-                    {agency.flag} {agency.name}
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: C.black, marginBottom: '3px' }}>
+                    {ag.flag} {ag.name}
                   </div>
-                  <div style={{ fontSize: '12px', color: C.textMd }}>{agency.city}, {agency.country}</div>
+                  <div style={{ fontSize: '12px', color: C.mid }}>{ag.city}, {ag.country}</div>
                 </div>
                 <div style={{
-                  background: agency.isRealEmail ? C.orange : C.surface2,
-                  color: agency.isRealEmail ? 'white' : C.textMd,
-                  padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 700
-                }}>
-                  {agency.score}/100
-                </div>
+                  background: ag.isRealEmail ? C.black : C.grey,
+                  color: ag.isRealEmail ? C.yellow : C.ink,
+                  padding: '3px 10px', borderRadius: '5px',
+                  fontSize: '12px', fontWeight: 800,
+                }}>{ag.score}/100</div>
               </div>
-              <div style={{ height: '4px', background: C.border, borderRadius: '99px', marginBottom: '14px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${agency.score}%`, background: agency.isRealEmail ? C.orange : C.borderStr, borderRadius: '99px' }}/>
+              <div style={{
+                height: '3px', background: C.grey2, borderRadius: '99px',
+                marginBottom: '12px', overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%', width: `${ag.score}%`,
+                  background: ag.isRealEmail ? C.yellow : C.grey,
+                  borderRadius: '99px',
+                }}/>
               </div>
-              <div style={{ fontSize: '12px', color: C.textMd, marginBottom: '14px', paddingBottom: '14px', borderBottom: `1px solid ${C.border}` }}>
-                {agency.specialization}
-              </div>
-              <div style={{ display: 'flex', gap: '20px', fontSize: '12px', color: C.textMd }}>
-                <div><span style={{ color: C.text, fontWeight: 600 }}>{agency.deals_30d}</span> deals/mo</div>
-                <div><span style={{ color: C.text, fontWeight: 600 }}>{agency.response_rate}%</span> response</div>
+              <div style={{
+                fontSize: '12px', color: C.mid, marginBottom: '12px',
+                paddingBottom: '12px', borderBottom: `1px solid ${C.grey2}`,
+              }}>{ag.specialization}</div>
+              <div style={{ display: 'flex', gap: '20px', fontSize: '12px', color: C.mid }}>
+                <span><strong style={{ color: C.black }}>{ag.deals_30d}</strong> deals/mo</span>
+                <span><strong style={{ color: C.black }}>{ag.response_rate}%</strong> response</span>
               </div>
             </div>
           ))}
@@ -109,19 +315,23 @@ function AgencyMatchingSection() {
 
         {!showAll && (
           <div style={{ textAlign: 'center' }}>
-            <button
-              onClick={() => setShowAll(true)}
-              style={{
-                padding: '12px 28px', background: 'transparent',
-                border: `2px solid ${C.orange}`, color: C.orange,
-                borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.2s'
+            <button onClick={() => setShowAll(true)} style={{
+              padding: '11px 28px',
+              background: 'transparent',
+              border: `1.5px solid ${C.grey2}`,
+              color: C.ink, borderRadius: '8px',
+              fontSize: '13px', fontWeight: 600,
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = C.black;
+                (e.currentTarget as HTMLElement).style.color = C.black;
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.orange; (e.currentTarget as HTMLElement).style.color = 'white'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = C.orange; }}
-            >
-              Show all 10 matched agencies
-            </button>
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = C.grey2;
+                (e.currentTarget as HTMLElement).style.color = C.ink;
+              }}
+            >Show all {DEMO_AGENCIES.length} agencies</button>
           </div>
         )}
       </div>
@@ -129,380 +339,550 @@ function AgencyMatchingSection() {
   );
 }
 
+// ─── Main page ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
+  const [vis, setVis] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 48);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+    const t = setTimeout(() => setVis(true), 60);
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { clearTimeout(t); window.removeEventListener('scroll', onScroll); };
   }, []);
 
   return (
-    <div style={{ background: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+    <div style={{
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      color: C.black, background: C.white,
+    }}>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes floatY {
+          0%,100% { transform: translateY(0); }
+          50%      { transform: translateY(-8px); }
+        }
+        .vis-1 { animation: fadeUp 0.65s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+        .vis-2 { animation: fadeUp 0.65s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+        .vis-3 { animation: fadeUp 0.65s cubic-bezier(0.16,1,0.3,1) 0.28s both; }
+        .vis-4 { animation: fadeUp 0.65s cubic-bezier(0.16,1,0.3,1) 0.42s both; }
+        .float-card { animation: floatY 5s ease-in-out 0.8s infinite; }
+      `}</style>
 
-      {/* Demo Banner */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'linear-gradient(90deg, #EA580C 0%, #F97316 60%, #FB923C 100%)',
-        color: 'white', padding: '7px 24px', textAlign: 'center',
-        fontSize: '12px', fontWeight: 600, letterSpacing: '0.05em'
-      }}>
-        🚀 DEMO MODE — experience the full AI distribution flow below
-      </div>
-
-      {/* Navbar */}
+      {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
       <nav style={{
-        position: 'fixed', top: 30, left: 0, right: 0, zIndex: 50,
-        background: scrolled ? 'rgba(244,246,250,0.95)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(14px)' : 'none',
-        borderBottom: scrolled ? `1px solid ${C.border}` : 'none',
-        transition: 'all 0.3s ease',
-        padding: '0 32px'
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+        background: scrolled ? 'rgba(255,255,255,0.94)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(20px)' : 'none',
+        borderBottom: scrolled ? `1px solid ${C.grey2}` : 'none',
+        transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
       }}>
         <div style={{
-          maxWidth: '1280px', margin: '0 auto',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px'
+          maxWidth: '1280px', margin: '0 auto', padding: '0 32px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: '60px',
         }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <svg viewBox="0 0 32 32" fill="none" width="26" height="26">
-              <defs>
-                <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#F97316"/>
-                  <stop offset="100%" stopColor="#EA580C"/>
-                </linearGradient>
-              </defs>
-              <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="url(#lg1)"/>
-              <ellipse cx="16" cy="18" rx="4" ry="4" fill="white" fillOpacity="0.3"/>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '9px', textDecoration: 'none' }}>
+            <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+              <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill={C.black}/>
+              <ellipse cx="16" cy="18" rx="4" ry="4" fill={C.yellow}/>
             </svg>
-            <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.02em', color: C.text }}>PropBlaze</span>
+            <span style={{ fontWeight: 800, fontSize: '14.5px', letterSpacing: '-0.02em', color: C.black }}>PropBlaze</span>
           </Link>
 
-          <div style={{ display: 'flex', gap: '32px', fontSize: '13.5px' }}>
-            {[['#how-it-works','How it works'],['#pricing','Pricing'],['#agencies','For Agencies']].map(([href, label]) => (
-              <a key={href} href={href} style={{ color: C.textMd, textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-                onMouseLeave={e => (e.currentTarget.style.color = C.textMd)}>
-                {label}
-              </a>
+          <div style={{ display: 'flex', gap: '28px', fontSize: '13px' }}>
+            {[['#how-it-works','How it works'],['#pricing','Pricing'],['#agencies','Agencies']].map(([href, label]) => (
+              <a key={href} href={href} style={{
+                color: C.mid, textDecoration: 'none', transition: 'color 0.2s', fontWeight: 500,
+              }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.black)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.mid)}
+              >{label}</a>
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <Link href="/login" style={{
-              padding: '8px 16px', fontSize: '13px', fontWeight: 500,
-              color: C.textMd, textDecoration: 'none', borderRadius: '7px',
-              border: `1px solid ${C.border}`, background: C.surface,
-              transition: 'all 0.2s'
+              padding: '7px 15px', fontSize: '13px', fontWeight: 500,
+              color: C.ink, textDecoration: 'none', borderRadius: '7px',
+              border: `1px solid ${C.grey2}`, background: C.white,
+              transition: 'all 0.2s',
             }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.borderStr; (e.currentTarget as HTMLElement).style.color = C.text; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.color = C.textMd; }}>
-              Sign in
-            </Link>
-            <Link href="/demo" style={{
-              padding: '8px 20px', fontSize: '13px', fontWeight: 600,
-              background: C.orange, color: 'white', borderRadius: '7px',
-              textDecoration: 'none', boxShadow: '0 2px 12px rgba(249,115,22,0.2)',
-              transition: 'all 0.2s'
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.black; (e.currentTarget as HTMLElement).style.color = C.black; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.grey2; (e.currentTarget as HTMLElement).style.color = C.ink; }}
+            >Sign in</Link>
+            <Link href="/login" style={{
+              padding: '7px 18px', fontSize: '13px', fontWeight: 700,
+              background: C.yellow, color: C.black,
+              borderRadius: '7px', textDecoration: 'none',
+              boxShadow: '0 2px 12px rgba(245,196,0,0.28)',
+              transition: 'all 0.2s',
             }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.orangeHov; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = C.orange; }}>
-              Start free
-            </Link>
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = C.yellowH;
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 18px rgba(245,196,0,0.4)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = C.yellow;
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(245,196,0,0.28)';
+              }}
+            >Start free</Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section style={{ paddingTop: '160px', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
+      {/* ── HERO ──────────────────────────────────────────────────────────── */}
+      <section style={{
+        background: C.white,
+        paddingTop: '120px', paddingBottom: '0',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {/* Content row */}
         <div style={{
-          position: 'absolute', top: '-10%', right: '-5%',
-          width: '600px', height: '600px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 65%)',
-          pointerEvents: 'none'
-        }}/>
-        <div style={{
-          position: 'absolute', bottom: '0', left: '0',
-          width: '400px', height: '400px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }}/>
-
-        <div style={{
-          maxWidth: '1280px', margin: '0 auto', padding: '0 32px',
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '72px', alignItems: 'center',
-          position: 'relative', zIndex: 1
+          maxWidth: '1280px', margin: '0 auto', padding: '0 32px 80px',
+          display: 'grid', gridTemplateColumns: '1.05fr 0.95fr',
+          gap: '72px', alignItems: 'center',
         }}>
-          <div>
-            {/* Pill badge */}
+          {/* Left — headline */}
+          <div className={vis ? 'vis-1' : ''} style={{ opacity: vis ? 1 : 0 }}>
+            {/* Eyebrow */}
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '7px',
-              padding: '5px 12px', borderRadius: '99px',
-              background: '#FFF3E8', border: '1px solid #FDD0A8',
-              color: '#C2410C', fontSize: '12px', fontWeight: 600,
-              letterSpacing: '0.03em', marginBottom: '28px'
+              marginBottom: '28px',
             }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: C.orange, display: 'inline-block' }}/>
-              AI-Powered Property Distribution
+              <div style={{
+                background: C.yellow, color: C.black,
+                padding: '4px 12px', borderRadius: '4px',
+                fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}>
+                AI Property Distribution
+              </div>
+              <div style={{ fontSize: '12px', color: C.muted }}>
+                31 EU markets · 847+ agencies
+              </div>
             </div>
 
+            {/* Headline */}
             <h1 style={{
-              fontSize: '50px', fontWeight: 800, letterSpacing: '-0.04em',
-              lineHeight: 1.08, marginBottom: '22px', color: C.text
+              fontSize: '78px', fontWeight: 900,
+              letterSpacing: '-0.05em', lineHeight: 0.97,
+              color: C.black, marginBottom: '28px',
             }}>
-              Sell smarter.<br/>
-              <span style={{ color: C.orange }}>Close faster.</span>
+              Your<br/>
+              property.<br/>
+              Every<br/>
+              <span style={{
+                background: C.yellow,
+                padding: '0 6px 4px',
+                display: 'inline-block',
+                lineHeight: 1.05,
+              }}>agency.</span>
             </h1>
+
+            {/* Sub */}
             <p style={{
-              fontSize: '17px', color: C.textMd, lineHeight: 1.65,
-              marginBottom: '36px', maxWidth: '440px'
+              fontSize: '17px', color: C.ink, lineHeight: 1.7,
+              marginBottom: '36px', maxWidth: '440px',
             }}>
-              AI-powered distribution to verified agencies across 31 EU markets. Matched offers within 24 hours.
+              AI-powered distribution to verified real estate agencies across Europe. Professional offer packs. First responses within 24 hours.
             </p>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <Link href="/demo" style={{
-                padding: '13px 28px', background: C.orange, color: 'white',
-                borderRadius: '8px', textDecoration: 'none', fontWeight: 600, fontSize: '14px',
-                boxShadow: '0 4px 20px rgba(249,115,22,0.22)', transition: 'all 0.2s'
+
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '44px' }}>
+              <Link href="/login" style={{
+                padding: '13px 26px',
+                background: C.black, color: C.yellow,
+                borderRadius: '8px', textDecoration: 'none',
+                fontWeight: 700, fontSize: '14px',
+                transition: 'all 0.22s',
+                display: 'inline-flex', alignItems: 'center', gap: '7px',
               }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.orangeHov; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = C.orange; }}>
-                Try live demo →
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.background = C.black2;
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(10,10,10,0.2)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.background = C.black;
+                  (e.currentTarget as HTMLElement).style.transform = 'none';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                }}
+              >
+                Launch free demo
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <path d="M2.5 6.5H10.5M10.5 6.5L7 3M10.5 6.5L7 10" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </Link>
               <a href="#how-it-works" style={{
-                padding: '13px 24px',
-                border: `1px solid ${C.border}`,
-                borderRadius: '8px', textDecoration: 'none', fontWeight: 500,
-                fontSize: '14px', color: C.textMd, background: C.surface,
-                transition: 'all 0.2s'
+                padding: '13px 22px',
+                border: `1.5px solid ${C.grey2}`,
+                borderRadius: '8px', textDecoration: 'none',
+                fontWeight: 500, fontSize: '14px',
+                color: C.ink, transition: 'all 0.22s',
               }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.borderStr; (e.currentTarget as HTMLElement).style.color = C.text; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.color = C.textMd; }}>
-                How it works
-              </a>
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = C.black;
+                  (e.currentTarget as HTMLElement).style.color = C.black;
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = C.grey2;
+                  (e.currentTarget as HTMLElement).style.color = C.ink;
+                }}
+              >How it works ↓</a>
             </div>
 
-            {/* Social proof */}
+            {/* Proof strip */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '12px',
-              marginTop: '32px', paddingTop: '28px', borderTop: `1px solid ${C.border}`
+              paddingTop: '24px', borderTop: `1px solid ${C.grey2}`,
             }}>
               <div style={{ display: 'flex' }}>
-                {['🇩🇪','🇷🇸','🇭🇷','🇸🇰'].map((f,i) => (
+                {['🇩🇪','🇷🇸','🇭🇷','🇦🇹','🇸🇮'].map((f, i) => (
                   <div key={i} style={{
                     width: '28px', height: '28px', borderRadius: '50%',
-                    background: C.surface2, border: `2px solid ${C.bg}`,
-                    marginLeft: i === 0 ? 0 : -8, display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', fontSize: '14px'
+                    background: C.grey, border: `2px solid ${C.white}`,
+                    marginLeft: i === 0 ? 0 : -9,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '13px',
                   }}>{f}</div>
                 ))}
               </div>
-              <div style={{ fontSize: '13px', color: C.textMd }}>
-                <strong style={{ color: C.text }}>847+</strong> verified agencies in 31 EU markets
-              </div>
+              <p style={{ fontSize: '13px', color: C.mid }}>
+                <strong style={{ color: C.black }}>847+</strong> agencies ·{' '}
+                <strong style={{ color: C.black }}>31</strong> markets ·{' '}
+                <strong style={{ color: C.black }}>94%</strong> accuracy
+              </p>
             </div>
           </div>
 
-          {/* Hero card — live agency matching preview */}
-          <div style={{
-            background: C.surface, border: `1px solid ${C.border}`,
-            borderRadius: '16px', padding: '24px',
-            boxShadow: '0 8px 32px rgba(30,40,80,0.1), 0 0 0 1px rgba(30,40,80,0.04)'
-          }}>
-            {/* Card header */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: '20px', paddingBottom: '16px', borderBottom: `1px solid ${C.border}`
-            }}>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: C.text }}>Apartment · Belgrade</div>
-                <div style={{ fontSize: '12px', color: C.textMd, marginTop: '2px' }}>€285,000 · 78m² · 3 bed</div>
-              </div>
-              <div style={{
-                background: '#ECFDF5', border: '1px solid #A7F0C4', color: '#16A34A',
-                padding: '4px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 600
-              }}>
-                ✓ AI matched
-              </div>
-            </div>
-
-            <div style={{ fontSize: '11px', fontWeight: 600, color: C.textMd, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>
-              Top matched agencies
-            </div>
-
-            {DEMO_AGENCIES.map((ag, i) => (
-              <div key={ag.id} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 12px', borderRadius: '9px', marginBottom: '8px',
-                background: i === 0 ? '#FFF3E8' : C.bg,
-                border: `1px solid ${i === 0 ? '#FDD0A8' : C.border}`
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{
-                    width: '30px', height: '30px', borderRadius: '7px',
-                    background: i === 0 ? '#FEE4C4' : C.surface2,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px'
-                  }}>{ag.flag}</div>
-                  <div>
-                    <div style={{ fontSize: '12.5px', fontWeight: 600, color: C.text }}>{ag.name}</div>
-                    <div style={{ fontSize: '11px', color: C.textMd }}>{ag.city}</div>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{
-                    fontSize: '13px', fontWeight: 700,
-                    color: i === 0 ? C.orange : C.textMd
-                  }}>{ag.score}/100</div>
-                  <div style={{ fontSize: '10px', color: C.textSm }}>match score</div>
-                </div>
-              </div>
-            ))}
-
-            <div style={{
-              marginTop: '16px', paddingTop: '14px', borderTop: `1px solid ${C.border}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-            }}>
-              <div style={{ fontSize: '12px', color: C.textMd }}>Wave 1 sending now</div>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {[0,1,2].map(i => (
-                  <div key={i} style={{
-                    width: i === 0 ? '20px' : '6px', height: '6px', borderRadius: '99px',
-                    background: i === 0 ? C.orange : C.border,
-                    transition: 'width 0.3s'
-                  }}/>
-                ))}
-              </div>
-            </div>
+          {/* Right — product card */}
+          <div className={vis ? 'vis-2 float-card' : ''} style={{ opacity: vis ? 1 : 0 }}>
+            <HeroCard />
           </div>
+        </div>
+
+        {/* City illustration strip */}
+        <div style={{
+          borderTop: `1px solid ${C.grey2}`,
+          background: C.offwhite,
+          overflow: 'hidden',
+          maxHeight: '200px',
+        }}>
+          <CityLineArt />
         </div>
       </section>
 
-      {/* Stats Bar */}
+      {/* ── STATS BAR ─────────────────────────────────────────────────────── */}
       <section style={{
-        background: C.surface,
-        borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`,
-        padding: '36px 32px'
+        background: C.black,
+        padding: '48px 32px',
       }}>
         <div style={{
-          maxWidth: '1280px', margin: '0 auto',
-          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', textAlign: 'center'
+          maxWidth: '1180px', margin: '0 auto',
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+          textAlign: 'center',
         }}>
           {[
-            { val: '847+', label: 'Verified Agencies' },
-            { val: '31', label: 'EU Markets' },
-            { val: '94%', label: 'Match Accuracy' },
-            { val: '24h', label: 'First Response' },
+            { val: '847+', label: 'Verified agencies' },
+            { val: '31',   label: 'EU markets' },
+            { val: '94%',  label: 'Match accuracy' },
+            { val: '<24h', label: 'First response' },
           ].map((s, i) => (
-            <div key={i}>
-              <div style={{ fontSize: '26px', fontWeight: 700, color: C.orange, letterSpacing: '-0.02em' }}>{s.val}</div>
-              <div style={{ fontSize: '12px', color: C.textMd, marginTop: '5px' }}>{s.label}</div>
+            <div key={i} style={{
+              padding: '16px 24px',
+              borderRight: i < 3 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+            }}>
+              <div style={{
+                fontSize: '38px', fontWeight: 900,
+                letterSpacing: '-0.04em', color: C.yellow,
+                lineHeight: 1, marginBottom: '6px',
+              }}>{s.val}</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" style={{ padding: '96px 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
+      <section id="how-it-works" style={{ background: C.offwhite, padding: '120px 32px' }}>
+        <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '520px', marginBottom: '80px' }}>
             <div style={{
-              display: 'inline-block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
-              textTransform: 'uppercase', color: C.orange, marginBottom: '10px'
-            }}>Simple Process</div>
-            <h2 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '-0.03em', color: C.text }}>
-              How It Works
-            </h2>
+              display: 'inline-block', fontSize: '11px', fontWeight: 700,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              background: C.yellow, color: C.black,
+              padding: '3px 10px', borderRadius: '4px', marginBottom: '20px',
+            }}>How it works</div>
+            <h2 style={{
+              fontSize: '42px', fontWeight: 900, letterSpacing: '-0.04em',
+              color: C.black, lineHeight: 1.1, marginBottom: '16px',
+            }}>Three steps.<br/>Fully automated.</h2>
+            <p style={{ fontSize: '16px', color: C.ink, lineHeight: 1.7 }}>
+              From property upload to agency responses — the entire workflow runs on your behalf, in the background.
+            </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {[
-              { num: '01', icon: '📋', title: 'Upload Property', desc: 'Share property details — location, price, features. Takes under 5 minutes.' },
-              { num: '02', icon: '🤖', title: 'AI Analyzes & Matches', desc: 'Our engine scores 800+ agencies and selects the top 10–30 best fits for your property.' },
-              { num: '03', icon: '📬', title: 'Offers Flow In', desc: 'Matched agencies receive your listing and pitch back within 24 hours on average.' }
+              {
+                num: '01',
+                title: 'Upload your property',
+                desc: 'Location, price, photos. AI generates a professional offer pack in every language. Under 10 minutes total.',
+              },
+              {
+                num: '02',
+                title: 'AI scores & selects',
+                desc: 'The engine scores 800+ agencies on 12+ parameters — location, buyer profile, response rate, historical performance.',
+              },
+              {
+                num: '03',
+                title: 'Agencies pitch you',
+                desc: 'Matched agencies receive your listing and pitch back. Every reply forwarded directly to you. You choose.',
+              },
             ].map((step, i) => (
               <div key={i} style={{
-                background: C.surface, border: `1px solid ${C.border}`,
-                borderRadius: '14px', padding: '28px',
-                boxShadow: '0 2px 8px rgba(30,40,80,0.05)',
-                transition: 'all 0.25s'
+                background: C.white,
+                border: `1.5px solid ${C.grey2}`,
+                borderRadius: '14px', padding: '36px 32px',
+                position: 'relative',
+                transition: 'transform 0.22s, box-shadow 0.22s',
               }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(30,40,80,0.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(30,40,80,0.05)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(10,10,10,0.1)';
+                  (e.currentTarget as HTMLElement).style.borderColor = C.black;
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.transform = 'none';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                  (e.currentTarget as HTMLElement).style.borderColor = C.grey2;
+                }}
+              >
+                {/* Step number */}
                 <div style={{
-                  display: 'inline-block', padding: '3px 10px', borderRadius: '99px',
-                  background: '#FFF3E8', border: '1px solid #FDD0A8',
-                  color: '#C2410C', fontSize: '11px', fontWeight: 700,
-                  letterSpacing: '0.06em', marginBottom: '16px'
-                }}>STEP {step.num}</div>
-                <div style={{ fontSize: '28px', marginBottom: '14px' }}>{step.icon}</div>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: C.text, marginBottom: '8px' }}>{step.title}</h3>
-                <p style={{ color: C.textMd, fontSize: '13.5px', lineHeight: 1.65 }}>{step.desc}</p>
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: '56px', fontWeight: 900,
+                  letterSpacing: '-0.04em',
+                  color: C.yellow, lineHeight: 1,
+                  marginBottom: '24px',
+                }}>{step.num}</div>
+                <h3 style={{
+                  fontSize: '16px', fontWeight: 700, color: C.black,
+                  marginBottom: '10px', lineHeight: 1.35,
+                }}>{step.title}</h3>
+                <p style={{ fontSize: '14px', color: C.ink, lineHeight: 1.7 }}>{step.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Agency Matching */}
-      <AgencyMatchingSection />
-
-      {/* Pricing */}
-      <section id="pricing" style={{ padding: '96px 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+      {/* ── FEATURES GRID (dark) ─────────────────────────────────────────── */}
+      <section style={{
+        background: C.black,
+        padding: '120px 32px',
+      }}>
+        <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '72px' }}>
             <div style={{
-              display: 'inline-block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
-              textTransform: 'uppercase', color: C.orange, marginBottom: '10px'
-            }}>Pricing</div>
-            <h2 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '-0.03em', color: C.text, marginBottom: '10px' }}>
-              Simple, transparent pricing
+              display: 'inline-block', fontSize: '11px', fontWeight: 700,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              background: C.yellow, color: C.black,
+              padding: '3px 10px', borderRadius: '4px', marginBottom: '20px',
+            }}>Platform</div>
+            <h2 style={{
+              fontSize: '42px', fontWeight: 900,
+              letterSpacing: '-0.04em', color: C.white, lineHeight: 1.1,
+            }}>
+              Built for the way real estate<br/>actually works.
             </h2>
-            <p style={{ color: C.textMd, fontSize: '15px' }}>No setup fees. No hidden costs. Cancel anytime.</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(255,255,255,0.07)', borderRadius: '16px', overflow: 'hidden' }}>
             {[
-              { name: 'Starter', price: 'Free', desc: 'Perfect for single properties', features: ['1 active property', 'Email distribution', 'Basic analytics', 'Community support'] },
-              { name: 'Professional', price: '€29', period: '/mo', desc: 'For active sellers & investors', features: ['Unlimited properties', 'WhatsApp + Email + Telegram', 'AI matching engine', 'Priority support', 'Advanced analytics'] },
-              { name: 'Enterprise', price: 'Custom', desc: 'For agencies & platforms', features: ['White-label solution', 'Dedicated success manager', 'Custom integrations', 'SLA guarantee', 'API access'] }
+              {
+                title: 'AI Offer Packs',
+                tag: 'Auto-generated',
+                desc: 'Polished offer documents in English, Russian, Serbian, and more. Every agency receives localised materials.',
+              },
+              {
+                title: 'Wave Distribution',
+                tag: 'Smart delivery',
+                desc: 'Top 10 agencies first. Waves 2 and 3 follow. Full audit trail — who received what, when.',
+              },
+              {
+                title: 'Unified Inbox',
+                tag: 'Email + WhatsApp + TG',
+                desc: 'Every agency response arrives in your PropBlaze inbox and forwards to your email. Nothing slips through.',
+              },
+              {
+                title: 'Owner Approval',
+                tag: 'You stay in control',
+                desc: 'Review every matched agency list before distribution starts. Approve, remove, reorder — full control.',
+              },
+              {
+                title: 'Mark as Sold',
+                tag: 'Auto-stop billing',
+                desc: 'One click when you close the deal. Distribution stops, billing pauses. No wasted charges.',
+              },
+              {
+                title: 'GDPR Compliant',
+                tag: 'EU data protection',
+                desc: 'Consent management, encrypted documents, data deletion flows. Ready for every EU market.',
+              },
+            ].map((feat, i) => (
+              <div key={i} style={{
+                background: C.black, padding: '36px 32px',
+                transition: 'background 0.22s',
+              }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#111111'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = C.black}
+              >
+                <div style={{
+                  display: 'inline-block',
+                  fontSize: '10px', fontWeight: 700,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: C.black, background: C.yellow,
+                  padding: '2px 8px', borderRadius: '3px', marginBottom: '16px',
+                }}>{feat.tag}</div>
+                <h3 style={{
+                  fontSize: '16px', fontWeight: 700, color: C.white,
+                  marginBottom: '10px', lineHeight: 1.3,
+                }}>{feat.title}</h3>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+                  {feat.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── AGENCY MATCHING ──────────────────────────────────────────────── */}
+      <AgencyMatchingSection />
+
+      {/* ── PRICING ──────────────────────────────────────────────────────── */}
+      <section id="pricing" style={{ background: C.offwhite, padding: '120px 32px' }}>
+        <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '72px' }}>
+            <div style={{
+              display: 'inline-block', fontSize: '11px', fontWeight: 700,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              background: C.yellow, color: C.black,
+              padding: '3px 10px', borderRadius: '4px', marginBottom: '20px',
+            }}>Pricing</div>
+            <h2 style={{
+              fontSize: '42px', fontWeight: 900,
+              letterSpacing: '-0.04em', color: C.black, lineHeight: 1.1,
+              marginBottom: '12px',
+            }}>Simple. Transparent.</h2>
+            <p style={{ fontSize: '16px', color: C.ink }}>
+              No setup fees. Billing stops automatically when you sell.
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '16px', alignItems: 'start',
+          }}>
+            {[
+              {
+                name: 'Starter', price: 'Free',
+                desc: 'One property, one market.',
+                features: ['1 active property','Email distribution','Basic analytics','Community support'],
+                cta: 'Start free',
+                hi: false,
+              },
+              {
+                name: 'Professional', price: '€29', period: '/mo',
+                desc: 'For serious sellers and investors.',
+                features: ['Unlimited properties','Email + WhatsApp + Telegram','AI matching','Priority support','Advanced analytics','Auto-stop billing on sale'],
+                cta: 'Start 14-day trial',
+                hi: true,
+              },
+              {
+                name: 'Enterprise', price: 'Custom',
+                desc: 'For agencies and platforms.',
+                features: ['White-label','Dedicated manager','Custom API','99.9% SLA'],
+                cta: 'Talk to us',
+                hi: false,
+              },
             ].map((plan, i) => (
               <div key={i} style={{
-                background: C.surface,
-                border: i === 1 ? `2px solid ${C.orange}` : `1px solid ${C.border}`,
-                borderRadius: '16px', padding: '28px 24px',
-                boxShadow: i === 1 ? '0 8px 28px rgba(249,115,22,0.1)' : '0 2px 8px rgba(30,40,80,0.05)',
-                transform: i === 1 ? 'scale(1.03)' : 'none',
-                position: 'relative', transition: 'all 0.3s'
+                background: plan.hi ? C.black : C.white,
+                border: `1.5px solid ${plan.hi ? C.yellow : C.grey2}`,
+                borderRadius: '14px', padding: '32px',
+                position: 'relative',
+                boxShadow: plan.hi ? '0 8px 36px rgba(10,10,10,0.18)' : 'none',
+                transform: plan.hi ? 'scale(1.02)' : 'none',
               }}>
-                {i === 1 && (
+                {plan.hi && (
                   <div style={{
-                    position: 'absolute', top: '-13px', left: '50%', transform: 'translateX(-50%)',
-                    background: C.orange, color: 'white', padding: '4px 16px',
-                    borderRadius: '99px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap'
-                  }}>Most Popular</div>
+                    position: 'absolute', top: '-13px', left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: C.yellow, color: C.black,
+                    padding: '3px 16px', borderRadius: '99px',
+                    fontSize: '10.5px', fontWeight: 800,
+                    letterSpacing: '0.05em', textTransform: 'uppercase',
+                    whiteSpace: 'nowrap',
+                  }}>Most popular</div>
                 )}
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: C.text, marginBottom: '6px' }}>{plan.name}</h3>
-                <div style={{ marginBottom: '6px' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: C.orange, letterSpacing: '-0.03em' }}>{plan.price}</span>
-                  {plan.period && <span style={{ fontSize: '14px', color: C.textMd }}>{plan.period}</span>}
+                <div style={{
+                  fontSize: '11.5px', fontWeight: 700,
+                  color: plan.hi ? 'rgba(255,255,255,0.45)' : C.muted,
+                  letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px',
+                }}>{plan.name}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '6px' }}>
+                  <span style={{
+                    fontSize: '42px', fontWeight: 900,
+                    color: plan.hi ? C.yellow : C.black,
+                    letterSpacing: '-0.04em',
+                  }}>{plan.price}</span>
+                  {plan.period && (
+                    <span style={{
+                      fontSize: '14px',
+                      color: plan.hi ? 'rgba(255,255,255,0.35)' : C.mid,
+                    }}>{plan.period}</span>
+                  )}
                 </div>
-                <p style={{ fontSize: '13px', color: C.textMd, marginBottom: '20px' }}>{plan.desc}</p>
+                <p style={{
+                  fontSize: '13px',
+                  color: plan.hi ? 'rgba(255,255,255,0.45)' : C.mid,
+                  marginBottom: '24px',
+                }}>{plan.desc}</p>
                 <button style={{
-                  width: '100%', padding: '11px',
-                  background: i === 1 ? C.orange : 'transparent',
-                  color: i === 1 ? 'white' : C.text,
-                  border: i === 1 ? 'none' : `1px solid ${C.border}`,
-                  borderRadius: '8px', fontWeight: 600, fontSize: '14px',
-                  cursor: 'pointer', marginBottom: '20px',
-                  boxShadow: i === 1 ? '0 3px 12px rgba(249,115,22,0.2)' : 'none',
-                  transition: 'all 0.2s'
-                }}>Get started</button>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
+                  width: '100%', padding: '12px',
+                  background: plan.hi ? C.yellow : C.black,
+                  color: plan.hi ? C.black : C.white,
+                  border: 'none', borderRadius: '8px',
+                  fontWeight: 700, fontSize: '13.5px',
+                  cursor: 'pointer', marginBottom: '24px',
+                  transition: 'all 0.2s',
+                }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.opacity = '0.85';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.opacity = '1';
+                  }}
+                >{plan.cta}</button>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {plan.features.map((f, j) => (
                     <li key={j} style={{
-                      fontSize: '13px', color: C.textMd, marginBottom: '9px',
-                      display: 'flex', alignItems: 'center', gap: '8px'
+                      fontSize: '13px',
+                      color: plan.hi ? 'rgba(255,255,255,0.6)' : C.ink,
+                      marginBottom: '9px',
+                      display: 'flex', alignItems: 'center', gap: '8px',
                     }}>
-                      <span style={{ color: '#16A34A', fontWeight: 600, flexShrink: 0 }}>✓</span>
+                      <span style={{
+                        color: plan.hi ? C.yellow : C.black,
+                        fontWeight: 800, fontSize: '11px', flexShrink: 0,
+                      }}>✓</span>
                       {f}
                     </li>
                   ))}
@@ -513,63 +893,91 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ── BOTTOM CTA ────────────────────────────────────────────────────── */}
       <section style={{
-        background: C.surface,
-        borderTop: `1px solid ${C.border}`,
-        padding: '96px 32px', textAlign: 'center'
+        background: C.yellow,
+        padding: '120px 32px',
+        textAlign: 'center',
       }}>
-        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '580px', margin: '0 auto' }}>
           <h2 style={{
-            fontSize: '36px', fontWeight: 700, letterSpacing: '-0.03em',
-            marginBottom: '18px', color: C.text
+            fontSize: '56px', fontWeight: 900,
+            letterSpacing: '-0.045em', lineHeight: 1.05,
+            color: C.black, marginBottom: '20px',
           }}>
-            Ready to sell <span style={{ color: C.orange }}>faster</span>?
+            Ready to sell faster?
           </h2>
-          <p style={{ fontSize: '16px', color: C.textMd, marginBottom: '32px' }}>
-            Join 847+ sellers and agencies using PropBlaze across 31 EU markets.
+          <p style={{
+            fontSize: '17px', color: 'rgba(10,10,10,0.65)', lineHeight: 1.7,
+            marginBottom: '40px',
+          }}>
+            Join sellers and agencies across 31 EU markets.<br/>Start free. No credit card required.
           </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-            <Link href="/demo" style={{
-              padding: '13px 28px', background: C.orange, color: 'white',
-              borderRadius: '8px', textDecoration: 'none', fontWeight: 600, fontSize: '14px',
-              boxShadow: '0 4px 20px rgba(249,115,22,0.22)', transition: 'all 0.2s'
-            }}>Try Demo Now</Link>
-            <Link href="/login" style={{
-              padding: '13px 24px', border: `1px solid ${C.border}`,
-              background: C.bg,
-              borderRadius: '8px', textDecoration: 'none', fontWeight: 500,
-              fontSize: '14px', color: C.textMd, transition: 'all 0.2s'
-            }}>Sign In</Link>
-          </div>
-          <p style={{ fontSize: '12px', color: C.textSm, marginTop: '20px' }}>
-            No credit card required · Start free · Upgrade anytime
+          <Link href="/login" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '15px 32px',
+            background: C.black, color: C.yellow,
+            borderRadius: '9px', textDecoration: 'none',
+            fontWeight: 700, fontSize: '15px',
+            boxShadow: '0 6px 24px rgba(10,10,10,0.2)',
+            transition: 'all 0.22s',
+          }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 10px 32px rgba(10,10,10,0.3)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.transform = 'none';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(10,10,10,0.2)';
+            }}
+          >
+            Launch free demo
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M2.5 6.5H10.5M10.5 6.5L7 3M10.5 6.5L7 10" stroke={C.yellow} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+          <p style={{ fontSize: '12px', color: 'rgba(10,10,10,0.5)', marginTop: '16px' }}>
+            No credit card · EU GDPR compliant
           </p>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
       <footer style={{
-        background: C.bg, borderTop: `1px solid ${C.border}`,
-        padding: '36px 32px'
+        background: C.black,
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        padding: '40px 32px',
       }}>
         <div style={{
           maxWidth: '1280px', margin: '0 auto',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          fontSize: '12px', color: C.textSm
+          flexWrap: 'wrap', gap: '20px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
-              <path d="M12 2C12 2 6 8 6 14C6 17.3 8.7 20 12 20C15.3 20 18 17.3 18 14C18 8 12 2 12 2Z" fill="#F97316"/>
+              <path d="M12 2C12 2 6 8 6 14C6 17.3 8.7 20 12 20C15.3 20 18 17.3 18 14C18 8 12 2 12 2Z" fill={C.yellow}/>
             </svg>
-            <span style={{ color: C.textMd, fontWeight: 500 }}>PropBlaze EU</span>
+            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', fontWeight: 500 }}>
+              PropBlaze EU · © 2026
+            </span>
           </div>
-          <div>© 2026 PropBlaze EU. All rights reserved.</div>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <Link href="/privacy" style={{ color: C.textSm, textDecoration: 'none' }}>Privacy Policy</Link>
-            <Link href="/terms" style={{ color: C.textSm, textDecoration: 'none' }}>Terms of Use</Link>
-            <Link href="/gdpr" style={{ color: C.textSm, textDecoration: 'none' }}>GDPR</Link>
-            <a href="mailto:support@propblaze.eu" style={{ color: C.textSm, textDecoration: 'none' }}>Contact</a>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            {[['/privacy','Privacy'],['/terms','Terms'],['/gdpr','GDPR']].map(([href, label]) => (
+              <Link key={href} href={href} style={{
+                color: 'rgba(255,255,255,0.3)', fontSize: '12px',
+                textDecoration: 'none', transition: 'color 0.2s',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+              >{label}</Link>
+            ))}
+            <a href="mailto:support@propblaze.eu" style={{
+              color: 'rgba(255,255,255,0.3)', fontSize: '12px',
+              textDecoration: 'none', transition: 'color 0.2s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+            >support@propblaze.eu</a>
           </div>
         </div>
       </footer>
