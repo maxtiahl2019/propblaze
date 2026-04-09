@@ -46,7 +46,7 @@ export default function PropertiesNewPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [draftSaved, setDraftSaved] = useState(false);
 
-  // Step 1: Basic info — pre-filled for demo speed
+  // Step 1: Basic info â pre-filled for demo speed
   const [property, setProperty] = useState<PropertyData>({
     type: 'Apartment',
     address: 'Knez Mihailova 28',
@@ -60,7 +60,7 @@ export default function PropertiesNewPage() {
     currency: 'EUR',
   });
 
-  // Step 2: AI Description — pre-filled hint
+  // Step 2: AI Description â pre-filled hint
   const [shortDesc, setShortDesc] = useState('Renovated city-centre apartment in Belgrade\'s pedestrian zone. Floor 5, high ceilings, new kitchen. 5 min to Kalemegdan fortress.');
   const [aiPackData, setAIPackData] = useState<AIPackData | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -69,7 +69,7 @@ export default function PropertiesNewPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
-  // Step 4: Distribution
+  // Step 4: Documents, Distribution
   const [isSending, setIsSending] = useState(false);
   const [sendProgress, setSendProgress] = useState(0);
   const [distributionComplete, setDistributionComplete] = useState(false);
@@ -110,10 +110,10 @@ export default function PropertiesNewPage() {
     await new Promise((r) => setTimeout(r, 2000));
 
     const pack: AIPackData = {
-      headline: `Luxury ${property.type} in ${property.city} — Premium ${property.mode === 'sale' ? 'Investment' : 'Rental'} Opportunity`,
-      description: `This stunning ${property.type} in ${property.city}, ${property.country} offers ${property.areaSqm}m² of sophisticated living space. Located in one of the most sought-after areas, this property combines modern comfort with timeless elegance. The open-plan living areas are perfectly designed for contemporary lifestyles, featuring premium finishes throughout. With ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms, this residence is ideal for families and investors alike. The property boasts excellent natural light, high ceilings, and a thoughtfully curated layout that maximizes both functionality and aesthetics.\n\nEach room has been meticulously designed with attention to detail, featuring quality materials and state-of-the-art amenities. The location provides easy access to shopping, dining, cultural venues, and excellent public transportation links. Whether you're looking for a primary residence, vacation home, or investment property, this exceptional offering delivers outstanding value and lifestyle benefits.\n\nThis is a rare opportunity to acquire a premium property in a thriving market. The area has demonstrated strong appreciation and rental demand. Contact us today to schedule an exclusive viewing and discover why this property represents an excellent choice for discerning buyers.`,
+      headline: `Luxury ${property.type} in ${property.city} â Premium ${property.mode === 'sale' ? 'Investment' : 'Rental'} Opportunity`,
+      description: `This stunning ${property.type} in ${property.city}, ${property.country} offers ${property.areaSqm}mÂ² of sophisticated living space. Located in one of the most sought-after areas, this property combines modern comfort with timeless elegance. The open-plan living areas are perfectly designed for contemporary lifestyles, featuring premium finishes throughout. With ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms, this residence is ideal for families and investors alike. The property boasts excellent natural light, high ceilings, and a thoughtfully curated layout that maximizes both functionality and aesthetics.\n\nEach room has been meticulously designed with attention to detail, featuring quality materials and state-of-the-art amenities. The location provides easy access to shopping, dining, cultural venues, and excellent public transportation links. Whether you're looking for a primary residence, vacation home, or investment property, this exceptional offering delivers outstanding value and lifestyle benefits.\n\nThis is a rare opportunity to acquire a premium property in a thriving market. The area has demonstrated strong appreciation and rental demand. Contact us today to schedule an exclusive viewing and discover why this property represents an excellent choice for discerning buyers.`,
       keyFeatures: [
-        `${property.areaSqm}m² of premium living space`,
+        `${property.areaSqm}mÂ² of premium living space`,
         `${property.bedrooms} spacious bedrooms with ensuite bathrooms`,
         `${property.bathrooms} modern bathrooms with luxury finishes`,
         'Open-plan living areas with high ceilings',
@@ -154,7 +154,7 @@ export default function PropertiesNewPage() {
             body: JSON.stringify({
               from: 'PropBlaze Platform <onboarding@resend.dev>',
               to: 'contact@win-winsolution.com',
-              subject: `🏠 New Property Offer: ${property.type} in ${property.city} — PropBlaze AI Match`,
+              subject: `ð  New Property Offer: ${property.type} in ${property.city} â PropBlaze AI Match`,
               html: emailBody,
             }),
           });
@@ -188,7 +188,7 @@ export default function PropertiesNewPage() {
     .description { color: #1A1F2E; font-size: 14px; line-height: 1.6; margin: 20px 0; }
     .features { list-style: none; padding: 0; margin: 20px 0; }
     .features li { padding: 8px 0; color: #1A1F2E; font-size: 14px; }
-    .features li:before { content: "✓ "; color: #16A34A; font-weight: 600; margin-right: 8px; }
+    .features li:before { content: "â "; color: #16A34A; font-weight: 600; margin-right: 8px; }
     .cta-button { display: inline-block; background: #F97316; color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
     .footer { padding: 24px; text-align: center; font-size: 12px; color: #9BA8C0; border-top: 1px solid #DDE2EE; }
   </style>
@@ -204,10 +204,10 @@ export default function PropertiesNewPage() {
       <p>We have an exclusive property offer that matches your specialization perfectly:</p>
 
       <div class="property-card">
-        <h3>${property.type} · ${property.city}</h3>
+        <h3>${property.type} Â· ${property.city}</h3>
         <div class="property-details">
           <div class="detail-item"><strong>${property.price.toLocaleString()} ${property.currency}</strong></div>
-          <div class="detail-item"><strong>${property.areaSqm}m²</strong></div>
+          <div class="detail-item"><strong>${property.areaSqm}mÂ²</strong></div>
           <div class="detail-item"><strong>${property.bedrooms} bed</strong></div>
           <div class="detail-item"><strong>${property.bathrooms} bath</strong></div>
         </div>
@@ -235,7 +235,7 @@ export default function PropertiesNewPage() {
       <p style="color: #6B7A99; font-size: 14px;">${aiPackData.targetBuyerProfile}</p>
 
       <center>
-        <a href="https://propblaze.com/demo" class="cta-button">View Full Offer →</a>
+        <a href="https://propblaze.com/demo" class="cta-button">View Full Offer â</a>
       </center>
     </div>
     <div class="footer">
@@ -275,7 +275,7 @@ export default function PropertiesNewPage() {
               fontSize: '2rem',
             }}
           >
-            ✓
+            â
           </div>
           <h2
             style={{
@@ -326,7 +326,7 @@ export default function PropertiesNewPage() {
               fontSize: '0.8125rem',
             }}
           >
-            💬 Check Messages from Agencies
+            ð¬ Check Messages from Agencies
           </button>
           </div>
         </div>
@@ -372,7 +372,7 @@ export default function PropertiesNewPage() {
                   zIndex: 2,
                 }}
               >
-                {i < currentStep ? '✓' : i + 1}
+                {i < currentStep ? 'â' : i + 1}
               </div>
               {i < 3 && (
                 <div
@@ -485,7 +485,7 @@ export default function PropertiesNewPage() {
               </label>
               <input
                 type="text"
-                placeholder="e.g. Kneza Miloša 123"
+                placeholder="e.g. Kneza MiloÅ¡a 123"
                 value={property.address}
                 onChange={(e) => setProperty({ ...property, address: e.target.value })}
                 style={{
@@ -546,7 +546,7 @@ export default function PropertiesNewPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  Area (m²)
+                  Area (mÂ²)
                 </label>
                 <input
                   type="number"
@@ -658,7 +658,7 @@ export default function PropertiesNewPage() {
         {currentStep === 1 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
-              ✨ AI Packaging
+              â¨ AI Packaging
             </h2>
 
             <div style={{ marginBottom: 20 }}>
@@ -719,10 +719,10 @@ export default function PropertiesNewPage() {
                       animation: 'spin 0.6s linear infinite',
                     }}
                   />
-                  Generating…
+                  Generatingâ¦
                 </>
               ) : (
-                <>✨ Generate AI Pack</>
+                <>â¨ Generate AI Pack</>
               )}
             </button>
 
@@ -794,7 +794,7 @@ export default function PropertiesNewPage() {
                 transition: 'all 0.2s',
               }}
             >
-              <div style={{ fontSize: 28, marginBottom: 8 }}>📸</div>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>ð¸</div>
               <div style={{ fontSize: 13, fontWeight: 600, color: CSS_VARS.text, marginBottom: 4 }}>
                 Drag and drop photos here
               </div>
@@ -841,13 +841,54 @@ export default function PropertiesNewPage() {
                 textDecoration: 'none',
               }}
             >
-              📁 Your Documents Vault
+              ð Your Documents Vault
             </a>
           </div>
         )}
 
-        {/* Step 4: Distribution */}
-        {currentStep === 3 && (
+        {currentStep === 4 && (
+          <div>
+            <div style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f0f0ff', marginBottom: 8 }}>Legal Documents</h2>
+              <p style={{ color: 'rgba(240,240,255,0.55)', fontSize: '0.9rem', lineHeight: 1.6 }}>Upload your title deed and any supporting documents. All files are encrypted and only accessible to you.</p>
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(240,240,255,0.5)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Title Deed *</div>
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(245,194,0,0.3)', borderRadius: 14, padding: '32px 20px', cursor: 'pointer', background: 'rgba(245,194,0,0.04)', gap: 12, transition: 'all 0.2s' }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(245,194,0,0.7)'}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(245,194,0,0.3)'}}>
+                <div style={{ fontSize: 36 }}>📄</div>
+                <div style={{ color: 'rgba(240,240,255,0.7)', fontSize: '0.9rem', textAlign: 'center' }}>Click to upload or drag and drop<br/><span style={{ color: 'rgba(240,240,255,0.4)', fontSize: '0.78rem' }}>PDF, JPG, PNG — max 20 MB</span></div>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} />
+              </label>
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(240,240,255,0.5)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Additional Documents (optional)</div>
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(96,165,250,0.25)', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', background: 'rgba(96,165,250,0.03)', gap: 10, transition: 'all 0.2s' }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(96,165,250,0.5)'}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(96,165,250,0.25)'}}>
+                <div style={{ fontSize: 28 }}>📎</div>
+                <div style={{ color: 'rgba(240,240,255,0.55)', fontSize: '0.85rem', textAlign: 'center' }}>Floor plan, energy certificate, inspection reports<br/><span style={{ color: 'rgba(240,240,255,0.35)', fontSize: '0.76rem' }}>Multiple files, PDF or images</span></div>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style={{ display: 'none' }} />
+              </label>
+            </div>
+            <div style={{ background: 'rgba(59,91,219,0.1)', border: '1px solid rgba(59,91,219,0.25)', borderRadius: 12, padding: '14px 18px', display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 20 }}>
+              <span style={{ fontSize: 18 }}>🔒</span>
+              <div>
+                <div style={{ color: '#93c5fd', fontWeight: 700, fontSize: '0.83rem', marginBottom: 4 }}>Bank-grade encryption</div>
+                <div style={{ color: 'rgba(240,240,255,0.55)', fontSize: '0.8rem', lineHeight: 1.6 }}>All documents are encrypted (AES-256) in EU-region servers. Never shared with agencies without your explicit consent.</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <input type="checkbox" id="doc_consent" style={{ marginTop: 3, accentColor: '#f5c200', width: 16, height: 16, cursor: 'pointer' }} />
+              <label htmlFor="doc_consent" style={{ color: 'rgba(240,240,255,0.6)', fontSize: '0.82rem', lineHeight: 1.6, cursor: 'pointer' }}>I confirm I have the legal right to share these documents and consent to PropBlaze storing them securely for distribution purposes.</label>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Distribution */}
+        {currentStep === 4
+        {currentStep === 4 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
               Distribution to Agencies
@@ -890,7 +931,7 @@ export default function PropertiesNewPage() {
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text }}>
                         {index + 1}. {agency.name}
-                        {agency.isRealEmail && ' ★'}
+                        {agency.isRealEmail && ' â'}
                       </div>
                       <div style={{ fontSize: 11, color: CSS_VARS.textSecondary }}>
                         {agency.city}, {agency.country}
@@ -921,7 +962,7 @@ export default function PropertiesNewPage() {
             {isSending && (
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 8 }}>
-                  Sending to agencies…
+                  Sending to agenciesâ¦
                 </div>
                 <div
                   style={{
@@ -971,7 +1012,7 @@ export default function PropertiesNewPage() {
               animation: 'fadeInOut 0.3s ease',
             }}
           >
-            ✓ Draft saved
+            â Draft saved
           </div>
         )}
       </div>
@@ -999,12 +1040,12 @@ export default function PropertiesNewPage() {
             cursor: 'pointer',
           }}
         >
-          {currentStep === 0 ? '← Cancel' : '← Back'}
+          {currentStep === 0 ? 'â Cancel' : 'â Back'}
         </button>
 
         <button
           onClick={() => {
-            if (currentStep === 3) {
+            if (currentStep === 4) {
               handleSendDistribution();
             } else {
               setCurrentStep(currentStep + 1);
@@ -1026,7 +1067,7 @@ export default function PropertiesNewPage() {
                 : 'none',
           }}
         >
-          {isSending ? 'Sending…' : currentStep === 3 ? '🚀 Launch Distribution' : 'Continue →'}
+          {isSending ? 'Sendingâ¦' : currentStep === 4 ? 'ð Launch Distribution' : 'Continue â'}
         </button>
       </div>
 
