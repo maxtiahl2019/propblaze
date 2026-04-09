@@ -46,22 +46,22 @@ export default function PropertiesNewPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [draftSaved, setDraftSaved] = useState(false);
 
-  // Step 1: Basic info
+  // Step 1: Basic info — pre-filled for demo speed
   const [property, setProperty] = useState<PropertyData>({
     type: 'Apartment',
-    address: '',
-    city: '',
-    country: '',
-    areaSqm: 0,
-    bedrooms: 0,
-    bathrooms: 0,
+    address: 'Knez Mihailova 28',
+    city: 'Belgrade',
+    country: 'Serbia',
+    areaSqm: 75,
+    bedrooms: 2,
+    bathrooms: 1,
     mode: 'sale',
-    price: 0,
+    price: 145000,
     currency: 'EUR',
   });
 
-  // Step 2: AI Description
-  const [shortDesc, setShortDesc] = useState('');
+  // Step 2: AI Description — pre-filled hint
+  const [shortDesc, setShortDesc] = useState('Renovated city-centre apartment in Belgrade\'s pedestrian zone. Floor 5, high ceilings, new kitchen. 5 min to Kalemegdan fortress.');
   const [aiPackData, setAIPackData] = useState<AIPackData | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
@@ -295,8 +295,9 @@ export default function PropertiesNewPage() {
               marginBottom: 24,
             }}
           >
-            Your property has been sent to all 10 matched agencies. Win-Win Solution will receive your listing within minutes.
+            Your property has been sent to all 10 matched agencies. <strong style={{ color: CSS_VARS.text }}>Win-Win Solution</strong> (contact@win-winsolution.com) will receive your listing within minutes. You can track all replies in your dashboard.
           </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
             onClick={() => router.push('/dashboard')}
             style={{
@@ -312,6 +313,22 @@ export default function PropertiesNewPage() {
           >
             Back to Dashboard
           </button>
+          <button
+            onClick={() => router.push('/messenger')}
+            style={{
+              padding: '10px 28px',
+              background: 'transparent',
+              color: CSS_VARS.textSecondary,
+              border: `1px solid ${CSS_VARS.border}`,
+              borderRadius: 8,
+              fontWeight: 500,
+              cursor: 'pointer',
+              fontSize: '0.8125rem',
+            }}
+          >
+            💬 Check Messages from Agencies
+          </button>
+          </div>
         </div>
       </div>
     );

@@ -46,6 +46,11 @@ const NAV = [
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.25"/><path d="M5 11.5V14.5M11 11.5V14.5M3 14.5H13" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
   },
   {
+    href: '/agency-demo',
+    label: '👔 Agency View',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.25"/><path d="M2.5 13C2.5 10.515 4.962 8.5 8 8.5C11.038 8.5 13.5 10.515 13.5 13" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+  },
+  {
     href: '/billing',
     label: 'Billing',
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.25"/><path d="M1 6.5H15" stroke="currentColor" strokeWidth="1.25"/><rect x="3" y="9" width="3" height="1.5" rx="0.75" fill="currentColor" fillOpacity="0.5"/></svg>,

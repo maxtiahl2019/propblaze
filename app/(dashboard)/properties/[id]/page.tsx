@@ -3,16 +3,68 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CampaignStats } from '@/components/property/CampaignStats';
-import { DistributionReport } from '@/components/property/DistributionReport';
-import { LeadsPanel } from '@/components/property/LeadsPanel';
-import { MarkAsSoldModal } from '@/components/property/MarkAsSoldModal';
 import { Badge } from '@/components/ui/Badge';
 import { Property, DistributionCampaign, Lead } from '@/lib/types';
 import api from '@/lib/api';
+import { DEMO_MODE } from '@/store/auth';
 import clsx from 'clsx';
 
 type Tab = 'overview' | 'distribution' | 'leads' | 'billing';
+
+// ─── Demo data for property detail ───────────────────────────────────────────
+const DEMO_PROPERTY_MAP: Record<string, Partial<Property> & { [k: string]: any }> = {
+  'demo-1': {
+    id: 'demo-1', user_id: 'demo-user-001',
+    property_type: 'villa' as any, address: 'Jadranska bb 14', city: 'Budva', country: 'Montenegro',
+    region: 'Coastal', asking_price: 485000, currency: 'EUR',
+    status: 'in_distribution' as any, area_sqm: 210, bedrooms: 4, bathrooms: 3,
+    description: 'Luxury sea-view villa with private pool and terrace. Premium finishes throughout. 180° Adriatic views. Gated community with 24/7 security.',
+    created_at: '2026-03-01T10:00:00Z', updated_at: '2026-04-01T12:00:00Z',
+  },
+  'demo-2': {
+    id: 'demo-2', user_id: 'demo-user-001',
+    property_type: 'apartment' as any, address: 'Knez Mihailova 28', city: 'Belgrade', country: 'Serbia',
+    region: 'Central', asking_price: 127000, currency: 'EUR',
+    status: 'active' as any, area_sqm: 68, bedrooms: 2, bathrooms: 1,
+    description: 'City-centre apartment, fully renovated 2022. High ceilings, original parquet floors, new kitchen. 2 min walk from Kalemegdan fortress.',
+    created_at: '2026-03-18T09:00:00Z', updated_at: '2026-04-05T14:00:00Z',
+  },
+  'demo-3': {
+    id: 'demo-3', user_id: 'demo-user-001',
+    property_type: 'land' as any, address: 'Zlatibor Highway, plot 44', city: 'Zlatibor', country: 'Serbia',
+    region: 'Mountain', asking_price: 68000, currency: 'EUR',
+    status: 'awaiting_approval' as any, area_sqm: 1800, bedrooms: 0, bathrooms: 0,
+    description: 'Mountain building plot with full planning permission for a 4-unit residential complex. Utilities on site. Panoramic views.',
+    created_at: '2026-04-02T11:00:00Z', updated_at: '2026-04-07T09:00:00Z',
+  },
+};
+
+const DEMO_CAMPAIGN_MAP: Record<string, any> = {
+  'demo-1': {
+    id: 'camp-demo-1', property_id: 'demo-1', status: 'active',
+    wave_current: 1, wave_total: 3, agencies_total: 18, agencies_replied: 4,
+    created_at: '2026-04-01T08:00:00Z',
+  },
+  'demo-2': {
+    id: 'camp-demo-2', property_id: 'demo-2', status: 'active',
+    wave_current: 1, wave_total: 3, agencies_total: 12, agencies_replied: 2,
+    created_at: '2026-04-05T10:00:00Z',
+  },
+  'demo-3': null,
+};
+
+const DEMO_LEADS_MAP: Record<string, any[]> = {
+  'demo-1': [
+    { id: 'l1', agency_name: 'Engel & Völkers', contact_person: 'Klaus Weber', email: 'k.weber@ev.de', status: 'interested', response_date: '2 hours ago', message: 'Have 3 qualified buyers interested in this range. Can arrange viewing this week.' },
+    { id: 'l2', agency_name: "Sotheby's MNE", contact_person: 'Marina Popović', email: 'm.popovic@sothebys.com', status: 'viewing', response_date: '5 hours ago', message: 'HNWI client very interested. Requesting exclusive viewing + all documents.' },
+    { id: 'l3', agency_name: 'Savills Intl', contact_person: 'James Clarke', email: 'j.clarke@savills.com', status: 'new', response_date: '1 day ago', message: 'Received listing. Forwarding to our Balkans desk for review.' },
+  ],
+  'demo-2': [
+    { id: 'l4', agency_name: 'Win-Win Solution', contact_person: 'Nikola Jovanović', email: 'contact@win-winsolution.com', status: 'interested', response_date: '3 hours ago', message: 'Central Belgrade apartment is perfect for our buyers. Ready to schedule viewing next week.' },
+    { id: 'l5', agency_name: 'Knight Frank Serbia', contact_person: 'Ana Simić', email: 'a.simic@knightfrank.rs', status: 'new', response_date: '6 hours ago', message: 'Reviewing. Our Belgrade team will follow up.' },
+  ],
+  'demo-3': [],
+};
 
 const STATUS_CONFIG: Record<string, { label: string; variant: string; desc: string }> = {
   draft:                { label: 'Draft',              variant: 'default', desc: 'Complete your listing to continue' },
@@ -45,6 +97,16 @@ function PropertyDetailPageInner() {
   }, [searchParams]);
 
   const loadData = useCallback(async () => {
+    // ── DEMO MODE: serve local data, no backend needed ──────────────────────
+    if (DEMO_MODE || id in DEMO_PROPERTY_MAP) {
+      const demoId = id in DEMO_PROPERTY_MAP ? id : 'demo-1';
+      setProperty(DEMO_PROPERTY_MAP[demoId] as Property);
+      setCampaign(DEMO_CAMPAIGN_MAP[demoId]);
+      setLeads(DEMO_LEADS_MAP[demoId] || []);
+      setLoading(false);
+      return;
+    }
+    // ── Real API ─────────────────────────────────────────────────────────────
     try {
       const [propRes, campaignRes, leadsRes] = await Promise.all([
         api.get(`/properties/${id}`),

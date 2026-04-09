@@ -9,7 +9,7 @@ import { Property, PropertyStatus } from '@/lib/types';
 // ─── Demo data ────────────────────────────────────────────────────────────────
 const DEMO_PROPERTIES: Partial<Property>[] = [
   {
-    id: 'demo-prop-001',
+    id: 'demo-1',
     user_id: 'demo-user-001',
     property_type: 'villa' as any,
     address: 'Jadranska bb 14',
@@ -26,7 +26,7 @@ const DEMO_PROPERTIES: Partial<Property>[] = [
     description: 'Luxury sea-view villa with pool',
   },
   {
-    id: 'demo-prop-002',
+    id: 'demo-2',
     user_id: 'demo-user-001',
     property_type: 'apartment' as any,
     address: 'Knez Mihailova 28',
@@ -43,7 +43,7 @@ const DEMO_PROPERTIES: Partial<Property>[] = [
     description: 'City centre apartment, recently renovated',
   },
   {
-    id: 'demo-prop-003',
+    id: 'demo-3',
     user_id: 'demo-user-001',
     property_type: 'land' as any,
     address: 'Zlatibor Highway, plot 44',
@@ -63,9 +63,9 @@ const DEMO_PROPERTIES: Partial<Property>[] = [
 
 // per-property mock stats
 const DEMO_STATS: Record<string, { views: number; leads: number; agencies: number; days: number }> = {
-  'demo-prop-001': { views: 1248, leads: 7, agencies: 18, days: 38 },
-  'demo-prop-002': { views: 431,  leads: 3, agencies: 12, days: 21 },
-  'demo-prop-003': { views: 84,   leads: 0, agencies: 0,  days: 6  },
+  'demo-1': { views: 1248, leads: 7, agencies: 18, days: 38 },
+  'demo-2': { views: 431,  leads: 3, agencies: 12, days: 21 },
+  'demo-3': { views: 84,   leads: 0, agencies: 0,  days: 6  },
 };
 
 // ─── Status config ─────────────────────────────────────────────────────────────
