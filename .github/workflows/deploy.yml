@@ -1,13 +1,12 @@
-name: CI Check
+name: Build and Deploy to Netlify
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,10 +15,15 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-      - name: Build check
+      - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
           NEXT_PUBLIC_DEMO_MODE: "true"
           NEXT_PUBLIC_APP_URL: https://propblaze.com
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --dir=out --prod --message "Deploy from GitHub Actions"
+        env:
+          NETLIFY_SITE_ID: 68662dc7-dad6-484e-95fb-c11682739ccc
+          NETLIFY_AUTH_TOKEN: nfp_BjUtUrnhRjqnx63XuxhEJ5spsDpXQyiQb793
