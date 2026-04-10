@@ -525,7 +525,7 @@ export default function HomePage() {
           <div style={{ position:'absolute', top:'40%', right:'5%', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,91,219,0.12) 0%, transparent 70%)', filter:'blur(80px)', animation:'breatheB 18s ease-in-out infinite 3s' }}/>
           <div style={{ position:'absolute', bottom:'10%', left:'5%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(112,72,232,0.09) 0%, transparent 70%)', filter:'blur(80px)', animation:'breatheC 20s ease-in-out infinite 6s' }}/>
           {/* Dot grid */}
-          <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}><svg style={{position:'absolute',width:'100%',height:'100%',opacity:0.065,animation:'droneDrift 32s linear infinite'}} viewBox='0 0 1280 900' preserveAspectRatio='xMidYMid slice'><line x1='0' y1='0' x2='0' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='160' y1='0' x2='160' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='320' y1='0' x2='320' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='480' y1='0' x2='480' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='640' y1='0' x2='640' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='800' y1='0' x2='800' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='960' y1='0' x2='960' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='1120' y1='0' x2='1120' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='120' x2='1280' y2='120' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='240' x2='1280' y2='240' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='360' x2='1280' y2='360' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='480' x2='1280' y2='480' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='600' x2='1280' y2='600' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='720' x2='1280' y2='720' stroke='#fff' strokeWidth='0.5'/><rect x='40' y='20' width='90' height='70' rx='4' fill='rgba(245,194,0,0.55)'/><rect x='290' y='15' width='110' height='85' rx='5' fill='rgba(59,91,219,0.5)'/><rect x='560' y='10' width='95' height='80' rx='4' fill='rgba(245,194,0,0.4)'/><rect x='700' y='25' width='130' height='95' rx='6' fill='rgba(59,91,219,0.45)'/><rect x='200' y='155' width='120' height='90' rx='5' fill='rgba(245,194,0,0.45)'/><rect x='820' y='145' width='140' height='100' rx='6' fill='rgba(59,91,219,0.4)'/><rect x='40' y='290' width='110' height='80' rx='5' fill='rgba(59,91,219,0.35)'/><rect x='510' y='295' width='115' height='85' rx='5' fill='rgba(245,194,0,0.42)'/><rect x='490' y='395' width='155' height='115' rx='8' fill='rgba(245,194,0,0.6)' stroke='rgba(245,194,0,0.85)' strokeWidth='2'/><ellipse cx='618' cy='288' rx='24' ry='17' fill='rgba(96,165,250,0.4)'/><ellipse cx='178' cy='448' rx='30' ry='21' fill='rgba(74,222,128,0.3)'/></svg></div><div style={{position:'absolute',top:86,right:42,opacity:0.2,fontFamily:'monospace',fontSize:'0.62rem',color:'rgba(245,194,0,1)',lineHeight:2,animation:'breatheA 9s ease-in-out infinite',letterSpacing:'0.04em'}}><div>ALT  148m</div><div>LAT  43.8N</div><div>LON  18.4E</div><div>PROPBLAZE</div></div><div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px)', backgroundSize:'48px 48px', opacity:0.6 }}/></div>
+          <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}><svg style={{position:'absolute',width:'100%',height:'100%',opacity:0.065,animation:'droneDrift 32s linear infinite'}} viewBox='0 0 1280 900' preserveAspectRatio='xMidYMid slice'><line x1='0' y1='0' x2='0' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='160' y1='0' x2='160' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='320' y1='0' x2='320' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='480' y1='0' x2='480' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='640' y1='0' x2='640' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='800' y1='0' x2='800' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='960' y1='0' x2='960' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='1120' y1='0' x2='1120' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='120' x2='1280' y2='120' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='240' x2='1280' y2='240' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='360' x2='1280' y2='360' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='480' x2='1280' y2='480' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='600' x2='1280' y2='600' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='720' x2='1280' y2='720' stroke='#fff' strokeWidth='0.5'/><rect x='40' y='20' width='90' height='70' rx='4' fill='rgba(245,194,0,0.55)'/><rect x='290' y='15' width='110' height='85' rx='5' fill='rgba(59,91,219,0.5)'/><rect x='560' y='10' width='95' height='80' rx='4' fill='rgba(245,194,0,0.4)'/><rect x='700' y='25' width='130' height='95' rx='6' fill='rgba(59,91,219,0.45)'/><rect x='200' y='155' width='120' height='90' rx='5' fill='rgba(245,194,0,0.45)'/><rect x='820' y='145' width='140' height='100' rx='6' fill='rgba(59,91,219,0.4)'/><rect x='40' y='290' width='110' height='80' rx='5' fill='rgba(59,91,219,0.35)'/><rect x='510' y='295' width='115' height='85' rx='5' fill='rgba(245,194,0,0.42)'/><rect x='490' y='395' width='155' height='115' rx='8' fill='rgba(245,194,0,0.6)' stroke='rgba(245,194,0,0.85)' strokeWidth='2'/><ellipse cx='618' cy='288' rx='24' ry='17' fill='rgba(96,165,250,0.4)'/><ellipse cx='178' cy='448' rx='30' ry='21' fill='rgba(74,222,128,0.3)'/></svg></div><div style={{position:'absolute',top:86,right:42,opacity:0.2,fontFamily:'monospace',fontSize:'0.62rem',color:'rgba(245,194,0,1)',lineHeight:2,animation:'breatheA 9s ease-in-out infinite',letterSpacing:'0.04em'}}><div>ALT  148m</div><div>LAT  43.8N</div><div>LON  18.4E</div><div>PROPBLAZE</div></div><div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px)', backgroundSize:'48px 48px', opacity:0.6 }}/>
         </div>
 
         {/* Content grid */}
@@ -628,82 +628,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Scroll rem)', fontWeight:900, lineHeight:1.03, letterSpacing:'-0.04em', marginBottom:24 }}>
-              {['Your','property.'].map((w,i) => (
-                <span key={w} style={{ display:'inline-block', marginRight:'0.22em', animation:`wordIn 0.75s cubic-bezier(0.16,1,0.3,1) ${100+i*90}ms both` }}>{w}</span>
-              ))}
-              <br/>
-              {['Every','agency.'].map((w,i) => (
-                <span key={w} style={{ display:'inline-block', marginRight:'0.22em', animation:`wordIn 0.75s cubic-bezier(0.16,1,0.3,1) ${380+i*90}ms both`, background:C.grad1, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>{w}</span>
-              ))}
-              <br/>
-              {['Zero','hassle.'].map((w,i) => (
-                <span key={w} style={{ display:'inline-block', marginRight:'0.22em', animation:`wordIn 0.75s cubic-bezier(0.16,1,0.3,1) ${660+i*90}ms both` }}>{w}</span>
-              ))}
-            </h1>
-
-            {/* Subtext */}
-            <p style={{
-              fontSize:'1.05rem', color:C.white60, lineHeight:1.72, maxWidth:460, marginBottom:36,
-              animation:'floatIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.9s both',
-            }}>
-              Upload your property once. Our AI matches it with the top 10–30 agencies across Europe, sends personalised offers, and forwards every reply directly to you.
-            </p>
-
-            {/* CTAs */}
-            <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:40, animation:'floatIn 0.8s cubic-bezier(0.16,1,0.3,1) 1.1s both' }}>
-              <Link href="/login" style={{
-                display:'inline-flex', alignItems:'center', gap:8, padding:'15px 30px',
-                borderRadius:14, textDecoration:'none', fontWeight:700, fontSize:'0.95rem',
-                background:C.grad1, color:C.bg,
-                boxShadow:'0 0 48px rgba(245,194,0,0.3)',
-                animation:'glowPulse 3s ease 1.8s infinite',
-                transition:'transform 0.2s ease',
-              }}
-              onMouseEnter={e=>(e.currentTarget.style.transform='translateY(-2px) scale(1.02)')}
-              onMouseLeave={e=>(e.currentTarget.style.transform='none')}>
-                List your property
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              </Link>
-              <Link href="/login" style={{
-                display:'inline-flex', alignItems:'center', gap:8, padding:'15px 28px',
-                borderRadius:14, textDecoration:'none', fontWeight:600, fontSize:'0.95rem',
-                color:C.white80, background:C.surface, border:`1px solid ${C.border2}`,
-                backdropFilter:'blur(12px)',
-                transition:'all 0.2s ease',
-              }}
-              onMouseEnter={e=>{ (e.currentTarget as HTMLElement).style.borderColor='rgba(245,194,0,0.3)'; (e.currentTarget as HTMLElement).style.background=C.surface2; }}
-              onMouseLeave={e=>{ (e.currentTarget as HTMLElement).style.borderColor=C.border2; (e.currentTarget as HTMLElement).style.background=C.surface; }}>
-                View live demo
-              </Link>
-            </div>
-
-            {/* Trust stats */}
-            <div style={{
-              display:'flex', alignItems:'center', gap:24, flexWrap:'wrap',
-              animation:'floatIn 0.8s cubic-bezier(0.16,1,0.3,1) 1.3s both',
-            }}>
-              {[
-                { v:'500+', l:'Agencies in DB' },
-                { v:'10 min', l:'Time to publish' },
-                { v:'3 waves', l:'Distribution strategy' },
-              ].map((s,i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  {i > 0 && <div style={{ width:1, height:24, background:C.border }}/>}
-                  <div>
-                    <div style={{ fontSize:'0.95rem', fontWeight:800, color:C.yellow }}>{s.v}</div>
-                    <div style={{ fontSize:'0.62rem', color:C.white40, marginTop:1 }}>{s.l}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Right: deal dashboard ────────────────────────────────────── */}
-          <div style={{ display:'flex', justifyContent:'center', paddingRight:40 }}>
-            <DealDashboard/>
-          </div>
-        </div>
 
         {/* Scroll cue */}
         <div style={{ position:'absolute', bottom:32, left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', alignItems:'center', gap:6, opacity:0.35, animation:'floatIn 1s ease 2s both' }}>
