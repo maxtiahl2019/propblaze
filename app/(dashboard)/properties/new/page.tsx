@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DEMO_AGENCIES } from '@/lib/demo-agencies';
+import { runAPEX, type APEXResult, type APEXAgencyResult, type AgencyChannel } from '@/lib/ai-matching/apex-engine';
+import { DEMO_AGENCY_POOL } from '@/lib/ai-matching/demo-agencies';
 
 const CSS_VARS = {
   bg: '#080810',
@@ -73,10 +74,16 @@ export default function PropertiesNewPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
-  // Step 4: Distribution
+  // Step 4: Distribution + APEX
   const [isSending, setIsSending] = useState(false);
   const [sendProgress, setSendProgress] = useState(0);
   const [distributionComplete, setDistributionComplete] = useState(false);
+  const [apexResult, setApexResult] = useState<APEXResult | null>(null);
+  const [apexLoading, setApexLoading] = useState(false);
+  const [channelTab, setChannelTab] = useState<'all' | AgencyChannel>('all');
+  const [selectedAgencies, setSelectedAgencies] = useState<Set<string>>(new Set());
+  const [expandedAgency, setExpandedAgency] = useState<string | null>(null);
+  const [distMode, setDistMode] = useState<'auto' | 'manual'>('auto');
 
   // Auto-save draft
   useEffect(() => {
@@ -86,6 +93,38 @@ export default function PropertiesNewPage() {
     }, 1000);
     return () => clearTimeout(timer);
   }, [property, shortDesc, photos]);
+
+  // Run APEX when entering Step 4 (index 3)
+  useEffect(() => {
+    if (currentStep === 3 && !apexResult && !apexLoading) {
+      setApexLoading(true);
+      setTimeout(() => {
+        try {
+          const result = runAPEX(
+            {
+              type: property.type,
+              address: property.address,
+              city: property.city,
+              country: property.country,
+              areaSqm: property.areaSqm,
+              bedrooms: property.bedrooms,
+              bathrooms: property.bathrooms,
+              mode: property.mode,
+              price: property.price,
+              currency: property.currency,
+            },
+            DEMO_AGENCY_POOL
+          );
+          setApexResult(result);
+          // Pre-select all agencies in auto mode
+          setSelectedAgencies(new Set(result.results.map(r => r.agency.id)));
+        } catch (e) {
+          console.error('APEX error:', e);
+        }
+        setApexLoading(false);
+      }, 1400); // small delay for UX effect
+    }
+  }, [currentStep]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -140,10 +179,15 @@ export default function PropertiesNewPage() {
     setIsSending(true);
     setSendProgress(0);
 
-    // Simulate distribution to 10 agencies
-    for (let i = 0; i < 10; i++) {
-      await new Promise((r) => setTimeout(r, 300));
-      setSendProgress(Math.round(((i + 1) / 10) * 100));
+    const agenciesToSend = distMode === 'manual'
+      ? (apexResult?.results.filter(r => selectedAgencies.has(r.agency.id)) ?? [])
+      : (apexResult?.results ?? []);
+    const total = Math.max(agenciesToSend.length, 1);
+
+    // Simulate distribution
+    for (let i = 0; i < total; i++) {
+      await new Promise((r) => setTimeout(r, Math.max(100, 1500 / total)));
+      setSendProgress(Math.round(((i + 1) / total) * 100));
 
       // On 9th agency (Win-Win Solution), send real email
       if (i === 8 && aiPackData) {
@@ -188,7 +232,7 @@ export default function PropertiesNewPage() {
         headline: aiPackData?.headline || '',
         photos: photos,
         status: 'in_distribution',
-        agencies_sent: 10,
+        agencies_sent: distMode === 'manual' ? selectedAgencies.size : (apexResult?.results.length ?? 10),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -852,95 +896,291 @@ export default function PropertiesNewPage() {
           </div>
         )}
 
-        {/* Step 4: Distribution */}
+        {/* Step 4: APEX Distribution */}
         {currentStep === 3 && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
-              Distribution to Agencies
-            </h2>
-
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Matched agencies (10)
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, margin: 0 }}>
+                  🎯 APEX Matching Engine
+                </h2>
+                {apexResult && (
+                  <div style={{ fontSize: 11, color: CSS_VARS.textSecondary, marginTop: 4 }}>
+                    Scanned {apexResult.total_scanned} agencies → {apexResult.passed_filter} qualified → {apexResult.results.length} selected
+                  </div>
+                )}
               </div>
-
-              {DEMO_AGENCIES.map((agency, index) => (
-                <div
-                  key={agency.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 14px',
-                    borderRadius: 8,
-                    border: `1px solid ${CSS_VARS.border}`,
-                    marginBottom: 8,
-                    background: agency.isRealEmail ? CSS_VARS.primaryLight : CSS_VARS.surface,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div
-                      style={{
-                        fontSize: 18,
-                        width: 32,
-                        height: 32,
-                        borderRadius: 6,
-                        background: CSS_VARS.surface2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {agency.flag}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text }}>
-                        {index + 1}. {agency.name}
-                        {agency.isRealEmail && ' ★'}
-                      </div>
-                      <div style={{ fontSize: 11, color: CSS_VARS.textSecondary }}>
-                        {agency.city}, {agency.country}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: CSS_VARS.primary }}>
-                      {agency.score}/100
-                    </div>
-                    {agency.isRealEmail && (
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: CSS_VARS.primary,
-                          fontWeight: 600,
-                          marginTop: 2,
-                        }}
-                      >
-                        Real email will be sent
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+              {/* Auto / Manual mode toggle */}
+              <div style={{ display: 'flex', gap: 4, background: CSS_VARS.surface2, borderRadius: 8, padding: 3 }}>
+                {(['auto', 'manual'] as const).map(m => (
+                  <button key={m} onClick={() => setDistMode(m)} style={{
+                    padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                    fontSize: 11, fontWeight: 700,
+                    background: distMode === m ? CSS_VARS.primary : 'transparent',
+                    color: distMode === m ? '#080810' : CSS_VARS.textTertiary,
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                    transition: 'all 0.15s',
+                  }}>
+                    {m === 'auto' ? '⚡ Auto' : '✋ Manual'}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            {/* Loading state */}
+            {apexLoading && (
+              <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+                <div style={{ width: 40, height: 40, margin: '0 auto 16px', borderRadius: '50%', border: `3px solid ${CSS_VARS.border}`, borderTopColor: CSS_VARS.primary, animation: 'spin 0.7s linear infinite' }} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: CSS_VARS.textSecondary }}>APEX is scanning {DEMO_AGENCY_POOL.length} agencies…</div>
+                <div style={{ fontSize: 11, color: CSS_VARS.textTertiary, marginTop: 6 }}>Analyzing channels, Money Flow Matrix, anti-fatigue filters</div>
+              </div>
+            )}
+
+            {/* APEX Result */}
+            {apexResult && !apexLoading && (
+              <>
+                {/* Property DNA banner */}
+                <div style={{ background: 'rgba(59,91,219,0.08)', border: '1px solid rgba(59,91,219,0.2)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 11, color: '#93A6F7', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', alignSelf: 'center' }}>Property DNA</div>
+                  <div style={{ fontSize: 11, color: CSS_VARS.textSecondary }}>
+                    <span style={{ color: CSS_VARS.text, fontWeight: 600 }}>Band:</span> {apexResult.property_dna.price_band}
+                  </div>
+                  <div style={{ fontSize: 11, color: CSS_VARS.textSecondary }}>
+                    <span style={{ color: CSS_VARS.text, fontWeight: 600 }}>Markets:</span> {apexResult.property_dna.demand_markets.slice(0,4).join(' · ')}
+                  </div>
+                  <div style={{ fontSize: 11, color: CSS_VARS.textSecondary }}>
+                    <span style={{ color: CSS_VARS.text, fontWeight: 600 }}>Buyers:</span> {apexResult.property_dna.buyer_archetypes.slice(0,2).join(', ')}
+                  </div>
+                  {apexResult.warnings.length > 0 && (
+                    <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 600 }}>⚠ {apexResult.warnings[0]}</div>
+                  )}
+                </div>
+
+                {/* Channel tabs */}
+                {(() => {
+                  const tabs: { key: 'all' | AgencyChannel; label: string; color: string; count: number }[] = [
+                    { key: 'all', label: 'All', color: CSS_VARS.primary, count: apexResult.results.length },
+                    { key: 'local', label: '🏠 Local', color: '#22C55E', count: apexResult.channel_breakdown.local.length },
+                    { key: 'cross_border', label: '🌍 Cross-Border', color: '#3B5BDB', count: apexResult.channel_breakdown.cross_border.length },
+                    { key: 'stealth', label: '🕵️ Stealth', color: '#A855F7', count: apexResult.channel_breakdown.stealth.length },
+                  ];
+                  return (
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+                      {tabs.map(t => (
+                        <button key={t.key} onClick={() => setChannelTab(t.key)} style={{
+                          padding: '6px 14px', borderRadius: 20, border: channelTab === t.key ? `2px solid ${t.color}` : `1px solid ${CSS_VARS.border}`,
+                          background: channelTab === t.key ? `${t.color}18` : 'transparent',
+                          color: channelTab === t.key ? t.color : CSS_VARS.textSecondary,
+                          fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                        }}>
+                          {t.label}
+                          <span style={{ background: channelTab === t.key ? t.color : CSS_VARS.surface2, color: channelTab === t.key ? '#fff' : CSS_VARS.textTertiary, borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>
+                            {t.count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Manual mode select-all bar */}
+                {distMode === 'manual' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, padding: '8px 12px', background: CSS_VARS.surface2, borderRadius: 8 }}>
+                    <input type="checkbox"
+                      checked={selectedAgencies.size === apexResult.results.length}
+                      onChange={e => setSelectedAgencies(e.target.checked ? new Set(apexResult.results.map(r => r.agency.id)) : new Set())}
+                      style={{ width: 14, height: 14, cursor: 'pointer', accentColor: CSS_VARS.primary }}
+                    />
+                    <span style={{ fontSize: 12, color: CSS_VARS.textSecondary, fontWeight: 600 }}>
+                      {selectedAgencies.size} / {apexResult.results.length} agencies selected
+                    </span>
+                    <span style={{ marginLeft: 'auto', fontSize: 11, color: CSS_VARS.textTertiary }}>
+                      Uncheck to exclude from distribution
+                    </span>
+                  </div>
+                )}
+
+                {/* Wave sections */}
+                {([1, 2, 3] as const).map(waveNum => {
+                  const allInWave = apexResult.wave_breakdown[`wave${waveNum}` as 'wave1' | 'wave2' | 'wave3'];
+                  const waveAgencies = channelTab === 'all' ? allInWave : allInWave.filter(r => r.channel === channelTab);
+                  if (waveAgencies.length === 0) return null;
+
+                  const waveColors: Record<number, string> = { 1: '#22C55E', 2: '#3B5BDB', 3: '#A855F7' };
+                  const waveLabels: Record<number, string> = { 1: 'Wave 1 — Top Priority', 2: 'Wave 2 — Secondary', 3: 'Wave 3 — Extended' };
+                  const waveTiming = apexResult.send_schedule.find(s => s.wave === waveNum);
+                  const wColor = waveColors[waveNum];
+
+                  return (
+                    <div key={waveNum} style={{ marginBottom: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                        <div style={{ height: 1, flex: 1, background: CSS_VARS.border }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: wColor, background: `${wColor}15`, border: `1px solid ${wColor}35`, padding: '3px 10px', borderRadius: 20, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                            {waveLabels[waveNum]}
+                          </span>
+                          {waveTiming && (
+                            <span style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>
+                              📅 {new Date(waveTiming.send_at).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ height: 1, flex: 1, background: CSS_VARS.border }} />
+                      </div>
+
+                      {waveAgencies.map((r, idx) => {
+                        const isSelected = selectedAgencies.has(r.agency.id);
+                        const isExpanded = expandedAgency === r.agency.id;
+                        const channelColors: Record<AgencyChannel, string> = { local: '#22C55E', cross_border: '#3B5BDB', stealth: '#A855F7' };
+                        const channelLabels: Record<AgencyChannel, string> = { local: '🏠', cross_border: '🌍', stealth: '🕵️' };
+                        const cColor = channelColors[r.channel];
+
+                        return (
+                          <div key={r.agency.id} style={{ marginBottom: 6 }}>
+                            {/* Main row */}
+                            <div
+                              onClick={() => distMode === 'manual'
+                                ? (() => { const s = new Set(selectedAgencies); s.has(r.agency.id) ? s.delete(r.agency.id) : s.add(r.agency.id); setSelectedAgencies(s); })()
+                                : setExpandedAgency(isExpanded ? null : r.agency.id)
+                              }
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+                                border: isSelected && distMode === 'manual' ? `1px solid ${cColor}50` : `1px solid ${CSS_VARS.border}`,
+                                background: isSelected && distMode === 'manual' ? `${cColor}08` : CSS_VARS.surface,
+                                transition: 'all 0.15s',
+                              }}
+                            >
+                              {/* Checkbox in manual mode */}
+                              {distMode === 'manual' && (
+                                <input type="checkbox" checked={isSelected} onChange={() => {}} onClick={e => e.stopPropagation()}
+                                  style={{ width: 14, height: 14, flexShrink: 0, accentColor: cColor, cursor: 'pointer' }}
+                                />
+                              )}
+
+                              {/* Channel badge */}
+                              <span style={{ fontSize: 14, flexShrink: 0 }}>{channelLabels[r.channel]}</span>
+
+                              {/* Name + location */}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  {r.agency.name}
+                                  {r.agency.quality_score >= 92 && (
+                                    <span style={{ fontSize: 9, fontWeight: 700, color: CSS_VARS.primary, background: 'rgba(245,194,0,0.12)', padding: '1px 6px', borderRadius: 10 }}>ELITE</span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>
+                                  {r.agency.country} · {r.agency.languages.slice(0,3).map(l => l.toUpperCase()).join(' / ')} · {r.agency.historical.response_rate}% reply rate
+                                </div>
+                              </div>
+
+                              {/* Score */}
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                <div style={{ fontSize: 16, fontWeight: 800, color: cColor }}>{Math.round(r.apex_score)}</div>
+                                <div style={{ fontSize: 9, color: CSS_VARS.textTertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>score</div>
+                              </div>
+
+                              {/* Expand toggle */}
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                                onClick={e => { e.stopPropagation(); setExpandedAgency(isExpanded ? null : r.agency.id); }}
+                                style={{ color: CSS_VARS.textTertiary, flexShrink: 0, transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', cursor: 'pointer' }}>
+                                <path d="M2.5 4.5L6 7.5L9.5 4.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
+                              </svg>
+                            </div>
+
+                            {/* Expanded profile */}
+                            {isExpanded && (
+                              <div style={{ margin: '0 0 4px 0', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: `1px solid ${CSS_VARS.border}`, borderTop: 'none', borderRadius: '0 0 10px 10px' }}>
+                                {/* Why matched */}
+                                <div style={{ marginBottom: 12 }}>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Why Matched</div>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                    {r.why_matched.map((w, i) => (
+                                      <span key={i} style={{ fontSize: 10, color: cColor, background: `${cColor}12`, border: `1px solid ${cColor}25`, padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>{w}</span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Deal signals */}
+                                {r.deal_signals.length > 0 && (
+                                  <div style={{ marginBottom: 12 }}>
+                                    <div style={{ fontSize: 10, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Active Signals</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                      {r.deal_signals.map((s, i) => (
+                                        <span key={i} style={{ fontSize: 10, color: CSS_VARS.green, background: CSS_VARS.greenDim, padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>⚡ {s}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Score breakdown */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+                                  {[
+                                    { label: 'Local', val: r.local_score, color: '#22C55E' },
+                                    { label: 'Cross-Border', val: r.cross_border_score, color: '#3B5BDB' },
+                                    { label: 'Stealth', val: r.stealth_score, color: '#A855F7' },
+                                  ].map(s => (
+                                    <div key={s.label} style={{ background: CSS_VARS.surface2, borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                                      <div style={{ fontSize: 14, fontWeight: 800, color: s.color }}>{Math.round(s.val)}</div>
+                                      <div style={{ fontSize: 9, color: CSS_VARS.textTertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Meta: specializations, buyer markets, channels */}
+                                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 11, color: CSS_VARS.textSecondary }}>
+                                  <div><span style={{ color: CSS_VARS.textTertiary }}>Specializes: </span>{r.agency.specializations.join(', ')}</div>
+                                  <div><span style={{ color: CSS_VARS.textTertiary }}>Buyer markets: </span>{r.agency.buyer_markets.slice(0,5).join(', ')}</div>
+                                  <div><span style={{ color: CSS_VARS.textTertiary }}>Channels: </span>{r.agency.delivery_channels.join(', ')}</div>
+                                  {r.agency.historical.cross_border_deals_12m > 0 && (
+                                    <div><span style={{ color: CSS_VARS.textTertiary }}>CB deals (12m): </span>{r.agency.historical.cross_border_deals_12m}</div>
+                                  )}
+                                </div>
+
+                                {/* Fatigue warning */}
+                                {r.fatigue_penalty < 0.9 && (
+                                  <div style={{ marginTop: 8, fontSize: 10, color: '#F59E0B', fontWeight: 600 }}>
+                                    ⚠ Anti-fatigue penalty applied ({Math.round((1 - r.fatigue_penalty) * 100)}% reduction — contacted recently)
+                                  </div>
+                                )}
+
+                                {/* Send time */}
+                                <div style={{ marginTop: 8, fontSize: 10, color: CSS_VARS.textTertiary }}>
+                                  📅 Scheduled: {new Date(r.send_at).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} (agency local time)
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {/* Distribution progress bar */}
             {isSending && (
               <div style={{ marginBottom: 24, padding: '20px 24px', background: 'rgba(245,194,0,0.04)', border: '1px solid rgba(245,194,0,0.2)', borderRadius: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', fontWeight: 700, color: CSS_VARS.primary }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: CSS_VARS.primary, animation: 'pulse 1s infinite' }} />
-                    Distributing to agencies…
+                    Distributing via APEX channels…
                   </div>
                   <div style={{ fontSize: '0.82rem', fontWeight: 800, color: CSS_VARS.primary }}>{sendProgress}%</div>
                 </div>
                 <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
                   <div style={{
                     height: '100%', width: `${sendProgress}%`,
-                    background: 'linear-gradient(90deg, #F5C200, #FF8C00)',
-                    boxShadow: '0 0 10px rgba(245,194,0,0.5)',
+                    background: 'linear-gradient(90deg, #22C55E, #3B5BDB, #A855F7)',
+                    boxShadow: '0 0 10px rgba(59,91,219,0.5)',
                     transition: 'width 0.3s ease',
                     borderRadius: 99,
                   }} />
+                </div>
+                <div style={{ marginTop: 8, fontSize: 10, color: CSS_VARS.textTertiary }}>
+                  Local → Cross-Border → Stealth channels
                 </div>
               </div>
             )}
@@ -977,7 +1217,7 @@ export default function PropertiesNewPage() {
               setCurrentStep(currentStep + 1);
             }
           }}
-          disabled={!canProceed() || isSending}
+          disabled={!canProceed() || isSending || (currentStep === 3 && apexLoading)}
           style={{
             padding: '13px 32px',
             background: canProceed() && !isSending ? CSS_VARS.primary : CSS_VARS.surface2,
@@ -1000,7 +1240,9 @@ export default function PropertiesNewPage() {
           ) : currentStep === 3 ? (
             <>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Launch Distribution
+              {apexResult
+                ? `🚀 Launch — ${distMode === 'manual' ? selectedAgencies.size : apexResult.results.length} Agencies`
+                : 'Launch Distribution'}
             </>
           ) : 'Continue →'}
         </button>
