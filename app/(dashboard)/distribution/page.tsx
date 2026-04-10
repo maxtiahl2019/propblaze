@@ -157,10 +157,13 @@ export default function DistributionPage() {
                           </p>
                           <p className="text-xs text-gray-500 mt-1">Started {w.start_date}</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
+                          <span style={{ fontSize: 12, color: w.responses > 0 ? '#16a34a' : '#6b7280', fontWeight: 600 }}>
+                            {w.responses > 0 ? `${w.responses} replied` : w.sent > 0 ? 'Awaiting replies' : 'Pending'}
+                          </span>
                           {w.sent > 0 && (
-                            <Link href={`/properties/${campaign.property_id}`}>
-                              <Button variant="secondary" size="sm">View Results</Button>
+                            <Link href="/messenger">
+                              <Button variant="secondary" size="sm">View Replies →</Button>
                             </Link>
                           )}
                         </div>

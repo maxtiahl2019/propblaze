@@ -5,19 +5,23 @@ import { useRouter } from 'next/navigation';
 import { DEMO_AGENCIES } from '@/lib/demo-agencies';
 
 const CSS_VARS = {
-  bg: '#F4F6FA',
-  surface: '#FFFFFF',
-  surface2: '#EEF1F7',
-  border: '#DDE2EE',
-  text: '#1A1F2E',
-  textSecondary: '#6B7A99',
-  textTertiary: '#9BA8C0',
-  primary: '#F97316',
-  primaryHover: '#EA580C',
-  primaryLight: '#FFF3E8',
-  green: '#16A34A',
-  red: '#DC2626',
-  blue: '#2563EB',
+  bg: '#080810',
+  surface: 'rgba(255,255,255,0.04)',
+  surface2: 'rgba(255,255,255,0.07)',
+  surface3: 'rgba(255,255,255,0.10)',
+  border: 'rgba(255,255,255,0.09)',
+  border2: 'rgba(255,255,255,0.16)',
+  text: '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.65)',
+  textTertiary: 'rgba(255,255,255,0.35)',
+  primary: '#F5C200',
+  primaryHover: '#E0B000',
+  primaryLight: 'rgba(245,194,0,0.12)',
+  green: '#22C55E',
+  greenDim: 'rgba(34,197,94,0.12)',
+  red: '#EF4444',
+  blue: '#3B5BDB',
+  inputBg: '#0E0E1C',
 };
 
 interface PropertyData {
@@ -165,6 +169,35 @@ export default function PropertiesNewPage() {
     }
 
     setIsSending(false);
+
+    // Save property to localStorage so My Properties page shows it
+    try {
+      const wizardProp = {
+        id: `wizard-${Date.now()}`,
+        user_id: 'current-user',
+        property_type: property.type.toLowerCase(),
+        address: property.address || 'Added via wizard',
+        city: property.city,
+        country: property.country,
+        asking_price: property.price,
+        currency: property.currency,
+        area_sqm: property.areaSqm,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        description: aiPackData?.description || shortDesc,
+        headline: aiPackData?.headline || '',
+        photos: photos,
+        status: 'in_distribution',
+        agencies_sent: 10,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      const existing = JSON.parse(localStorage.getItem('pb_wizard_props') || '[]');
+      localStorage.setItem('pb_wizard_props', JSON.stringify([wizardProp, ...existing]));
+    } catch (e) {
+      // localStorage not available
+    }
+
     setDistributionComplete(true);
   };
 
@@ -250,32 +283,16 @@ export default function PropertiesNewPage() {
 
   if (distributionComplete) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: CSS_VARS.bg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
-        }}
-      >
-        <div style={{ textAlign: 'center', maxWidth: 400 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              background: 'rgba(22, 163, 74, 0.12)',
-              border: '1px solid rgba(22, 163, 74, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 20px',
-              fontSize: '2rem',
-            }}
-          >
-            ✓
+      <div style={{ minHeight: '100vh', background: CSS_VARS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter',system-ui,sans-serif" }}>
+        <div style={{ textAlign: 'center', maxWidth: 440 }}>
+          <div style={{
+            width: 80, height: 80, borderRadius: '50%',
+            background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 28px',
+            boxShadow: '0 0 40px rgba(34,197,94,0.2)',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M6 16L13 23L26 9" stroke="#22C55E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <h2
             style={{
@@ -334,85 +351,70 @@ export default function PropertiesNewPage() {
     );
   }
 
+  const STEPS = ['Property Details', 'AI Packaging', 'Photos', 'Launch'];
+
   return (
-    <div style={{ minHeight: '100vh', background: CSS_VARS.bg, padding: '32px 20px' }}>
-      {/* Progress bar */}
-      <div style={{ maxWidth: 760, margin: '0 auto 40px' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginBottom: 20,
-            position: 'relative',
-          }}
-        >
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  background:
-                    i < currentStep
-                      ? CSS_VARS.green
-                      : i === currentStep
-                        ? CSS_VARS.primary
-                        : CSS_VARS.surface2,
-                  border:
-                    i <= currentStep
-                      ? 'none'
-                      : `2px solid ${CSS_VARS.border}`,
-                  color: i <= currentStep ? 'white' : CSS_VARS.textTertiary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 600,
-                  fontSize: 16,
-                  zIndex: 2,
-                }}
-              >
-                {i < currentStep ? '✓' : i + 1}
-              </div>
-              {i < 3 && (
-                <div
-                  style={{
-                    flex: 1,
-                    height: 2,
-                    background:
-                      i < currentStep ? CSS_VARS.green : CSS_VARS.border,
-                    margin: '0 12px',
-                  }}
-                />
-              )}
-            </div>
-          ))}
+    <div style={{ minHeight: '100vh', background: CSS_VARS.bg, padding: '40px 24px 100px', fontFamily: "'Inter',system-ui,sans-serif", color: CSS_VARS.text }}>
+
+      {/* Header */}
+      <div style={{ maxWidth: 800, margin: '0 auto 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: CSS_VARS.primary, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+            New Listing
+          </div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: CSS_VARS.text, margin: 0, letterSpacing: '-0.02em' }}>
+            Add Property
+          </h1>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontSize: 12,
-            color: CSS_VARS.textSecondary,
-          }}
-        >
-          <div>Basics</div>
-          <div>AI Pack</div>
-          <div>Photos</div>
-          <div>Launch</div>
+        {draftSaved && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.7rem', fontWeight: 700, color: CSS_VARS.green }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Draft saved
+          </div>
+        )}
+      </div>
+
+      {/* Step indicator */}
+      <div style={{ maxWidth: 800, margin: '0 auto 32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+          {STEPS.map((label, i) => (
+            <React.Fragment key={i}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 12, marginBottom: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: 13,
+                  background: i < currentStep ? CSS_VARS.green : i === currentStep ? CSS_VARS.primary : CSS_VARS.surface2,
+                  color: i < currentStep ? '#0A1A0A' : i === currentStep ? '#0A0A00' : CSS_VARS.textTertiary,
+                  border: i === currentStep ? `2px solid ${CSS_VARS.primary}` : 'none',
+                  boxShadow: i === currentStep ? `0 0 20px rgba(245,194,0,0.35)` : 'none',
+                  transition: 'all 0.3s',
+                }}>
+                  {i < currentStep ? (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7L6 11L12 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  ) : (i + 1)}
+                </div>
+                <div style={{ fontSize: '0.65rem', fontWeight: i === currentStep ? 700 : 500, color: i === currentStep ? CSS_VARS.primary : CSS_VARS.textTertiary, textAlign: 'center', whiteSpace: 'nowrap' }}>{label}</div>
+              </div>
+              {i < STEPS.length - 1 && (
+                <div style={{ flex: 2, height: 2, marginBottom: 24, background: i < currentStep ? CSS_VARS.green : CSS_VARS.border, borderRadius: 2, transition: 'background 0.4s' }} />
+              )}
+            </React.Fragment>
+          ))}
         </div>
       </div>
 
       {/* Main card */}
       <div
         style={{
-          maxWidth: 760,
+          maxWidth: 800,
           margin: '0 auto',
           background: CSS_VARS.surface,
           border: `1px solid ${CSS_VARS.border}`,
-          borderRadius: 16,
-          padding: 32,
-          boxShadow: '0 4px 16px rgba(26, 31, 46, 0.06)',
+          borderRadius: 20,
+          padding: '32px 36px',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
         }}
       >
         {/* Step 1: Property Basics */}
@@ -727,10 +729,14 @@ export default function PropertiesNewPage() {
             </button>
 
             {aiPackData && (
-              <div style={{ background: CSS_VARS.surface2, borderRadius: 12, padding: 20 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: CSS_VARS.text, marginBottom: 12 }}>
-                  Preview
-                </h3>
+              <div style={{ background: 'rgba(245,194,0,0.04)', border: '1px solid rgba(245,194,0,0.18)', borderRadius: 16, padding: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#F5C200,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.5 5.5H13.5L9.5 8L11 12.5L7 10L3 12.5L4.5 8L0.5 5.5H5.5L7 1Z" fill="#080810"/></svg>
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: CSS_VARS.primary, margin: 0 }}>AI Pack Generated</h3>
+                  <div style={{ marginLeft: 'auto', fontSize: '0.65rem', fontWeight: 700, color: CSS_VARS.green, padding: '3px 10px', background: CSS_VARS.greenDim, borderRadius: 100 }}>Ready</div>
+                </div>
                 <div style={{ fontSize: 13, color: CSS_VARS.text, lineHeight: 1.6 }}>
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>Headline</div>
@@ -919,84 +925,45 @@ export default function PropertiesNewPage() {
             </div>
 
             {isSending && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 8 }}>
-                  Sending to agencies…
+              <div style={{ marginBottom: 24, padding: '20px 24px', background: 'rgba(245,194,0,0.04)', border: '1px solid rgba(245,194,0,0.2)', borderRadius: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', fontWeight: 700, color: CSS_VARS.primary }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: CSS_VARS.primary, animation: 'pulse 1s infinite' }} />
+                    Distributing to agencies…
+                  </div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: CSS_VARS.primary }}>{sendProgress}%</div>
                 </div>
-                <div
-                  style={{
-                    height: 6,
-                    background: CSS_VARS.surface2,
+                <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', width: `${sendProgress}%`,
+                    background: 'linear-gradient(90deg, #F5C200, #FF8C00)',
+                    boxShadow: '0 0 10px rgba(245,194,0,0.5)',
+                    transition: 'width 0.3s ease',
                     borderRadius: 99,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '100%',
-                      width: `${sendProgress}%`,
-                      background: CSS_VARS.primary,
-                      transition: 'width 0.3s',
-                    }}
-                  />
-                </div>
-                <div
-                  style={{
-                    marginTop: 8,
-                    fontSize: 11,
-                    color: CSS_VARS.textSecondary,
-                  }}
-                >
-                  {sendProgress}% complete
+                  }} />
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Save draft indicator */}
-        {draftSaved && (
-          <div
-            style={{
-              position: 'fixed',
-              bottom: 24,
-              left: 24,
-              background: CSS_VARS.green,
-              color: 'white',
-              padding: '10px 16px',
-              borderRadius: 8,
-              fontSize: 12,
-              fontWeight: 600,
-              boxShadow: '0 4px 12px rgba(22, 163, 74, 0.2)',
-              animation: 'fadeInOut 0.3s ease',
-            }}
-          >
-            ✓ Draft saved
-          </div>
-        )}
+        {/* Draft saved indicator moved to header */}
       </div>
 
       {/* Navigation buttons */}
-      <div
-        style={{
-          maxWidth: 760,
-          margin: '20px auto 0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 12,
-        }}
-      >
+      <div style={{ maxWidth: 800, margin: '20px auto 0', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
         <button
           onClick={() => (currentStep > 0 ? setCurrentStep(currentStep - 1) : router.push('/dashboard'))}
           style={{
-            padding: '12px 24px',
-            background: CSS_VARS.surface,
+            padding: '13px 24px',
+            background: 'transparent',
             border: `1px solid ${CSS_VARS.border}`,
-            borderRadius: 8,
-            fontSize: 13,
+            borderRadius: 12,
+            fontSize: 14,
             fontWeight: 600,
             color: CSS_VARS.textSecondary,
             cursor: 'pointer',
+            transition: 'all 0.2s',
           }}
         >
           {currentStep === 0 ? '← Cancel' : '← Back'}
@@ -1012,33 +979,48 @@ export default function PropertiesNewPage() {
           }}
           disabled={!canProceed() || isSending}
           style={{
-            padding: '12px 28px',
+            padding: '13px 32px',
             background: canProceed() && !isSending ? CSS_VARS.primary : CSS_VARS.surface2,
             border: 'none',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
-            color: canProceed() && !isSending ? 'white' : CSS_VARS.textTertiary,
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 700,
+            color: canProceed() && !isSending ? '#080810' : CSS_VARS.textTertiary,
             cursor: canProceed() && !isSending ? 'pointer' : 'not-allowed',
-            boxShadow:
-              canProceed() && !isSending
-                ? `0 4px 12px rgba(249, 115, 22, 0.2)`
-                : 'none',
+            boxShadow: canProceed() && !isSending ? '0 0 24px rgba(245,194,0,0.3)' : 'none',
+            transition: 'all 0.2s',
+            display: 'flex', alignItems: 'center', gap: 8,
           }}
         >
-          {isSending ? 'Sending…' : currentStep === 3 ? '🚀 Launch Distribution' : 'Continue →'}
+          {isSending ? (
+            <>
+              <div style={{ width: 14, height: 14, border: '2px solid rgba(0,0,0,0.3)', borderTopColor: '#080810', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+              Sending to agencies…
+            </>
+          ) : currentStep === 3 ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Launch Distribution
+            </>
+          ) : 'Continue →'}
         </button>
       </div>
 
       <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInOut { 0%,100% { opacity: 0; transform: translateY(6px); } 50% { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        input, select, textarea {
+          background: #0E0E1C !important;
+          color: #FFFFFF !important;
+          -webkit-text-fill-color: #FFFFFF;
+          color-scheme: dark;
         }
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateY(10px); }
-          50% { opacity: 1; }
-          100% { opacity: 0; transform: translateY(-10px); }
-        }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.32) !important; -webkit-text-fill-color: rgba(255,255,255,0.32) !important; }
+        option { background: #0E0E1C !important; color: #FFFFFF !important; }
+        input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
       `}</style>
     </div>
   );

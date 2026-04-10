@@ -113,12 +113,22 @@ export default function PropertiesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'price' | 'status'>('date');
+  const [localProps, setLocalProps] = useState<Partial<Property>[]>([]);
 
   useEffect(() => {
     if (!DEMO_MODE) store.fetchProperties();
+    // Always read wizard-created properties from localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem('pb_wizard_props') || '[]');
+      setLocalProps(stored);
+    } catch (e) {
+      setLocalProps([]);
+    }
   }, []);
 
-  const rawList: Partial<Property>[] = DEMO_MODE ? DEMO_PROPERTIES : store.properties;
+  const baseList: Partial<Property>[] = DEMO_MODE ? DEMO_PROPERTIES : store.properties;
+  // Merge localStorage wizard properties with base list (wizard props first)
+  const rawList: Partial<Property>[] = [...localProps, ...baseList.filter(p => !localProps.find(lp => lp.id === p.id))];
   const isLoading = DEMO_MODE ? false : store.isLoading;
 
   const filtered = rawList
@@ -134,8 +144,8 @@ export default function PropertiesPage() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
 
-  const totalLeads = rawList.reduce((sum, p) => sum + (DEMO_MODE ? (DEMO_STATS[p.id ?? '']?.leads ?? 0) : 0), 0);
-  const totalViews = rawList.reduce((sum, p) => sum + (DEMO_MODE ? (DEMO_STATS[p.id ?? '']?.views ?? 0) : 0), 0);
+  const totalLeads = rawList.reduce((sum, p) => sum + (DEMO_STATS[p.id ?? '']?.leads ?? 0), 0);
+  const totalViews = rawList.reduce((sum, p) => sum + (DEMO_STATS[p.id ?? '']?.views ?? 0), 0);
   const activeCount = rawList.filter(p => ['active', 'in_distribution', 'distributing', 'distributed'].includes(p.status ?? '')).length;
 
   return (
