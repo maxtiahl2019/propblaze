@@ -464,11 +464,11 @@ export default function DashboardPage() {
         @keyframes floatUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
       `}</style>
 
-      <div style={{ maxWidth:1280, margin:'0 auto', padding:'28px 28px 120px' }}>
+      <div style={{ maxWidth:1280, margin:'0 auto', padding:'clamp(16px,4vw,28px) clamp(16px,4vw,28px) 100px' }}>
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <Stagger delay={0}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:32 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:32, flexWrap:'wrap', gap:16 }}>
             <div>
               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
                 <LiveDot />
@@ -533,7 +533,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Main Grid ────────────────────────────────────────────────────── */}
-        <div style={{ display:'grid', gridTemplateColumns:'360px 1fr', gap:20, alignItems:'start' }}>
+        <div className="dash-main-grid" style={{ display:'grid', gridTemplateColumns:'min(360px, calc(100% - 20px)) 1fr', gap:20, alignItems:'start' }}>
 
           {/* ─ Left column: properties ─ */}
           <Stagger delay={200}>

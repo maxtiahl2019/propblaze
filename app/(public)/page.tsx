@@ -517,7 +517,7 @@ export default function HomePage() {
       <section style={{
         position:'relative', minHeight:'100vh', overflow:'hidden',
         display:'flex', alignItems:'center',
-        padding:'100px max(40px,calc(50vw - 640px)) 80px',
+        padding:'clamp(80px,10vh,120px) max(16px,calc(50vw - 640px)) clamp(60px,8vh,80px)',
       }}>
         {/* YouTube Hero Video Background */}
         <div style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
@@ -546,7 +546,7 @@ export default function HomePage() {
         }}>
 
           {/* ── Left: copy ──────────────────────────────────────────────── */}
-          <div style={{ maxWidth:580 }}>
+          <div style={{ maxWidth:'min(580px,100%)' }}>
             {/* Badge */}
             <div style={{
               display:'inline-flex', alignItems:'center', gap:8,

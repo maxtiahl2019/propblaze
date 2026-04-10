@@ -139,7 +139,7 @@ export default function PropertiesPage() {
   const activeCount = rawList.filter(p => ['active', 'in_distribution', 'distributing', 'distributed'].includes(p.status ?? '')).length;
 
   return (
-    <div style={{ padding: '28px 32px', minHeight: '100vh', background: '#080809', color: 'white' }}>
+    <div style={{ padding: 'clamp(16px,4vw,32px)', minHeight: '100vh', background: '#080809', color: 'white' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
@@ -164,7 +164,7 @@ export default function PropertiesPage() {
       </div>
 
       {/* KPI row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12, marginBottom: 20 }}>
         {[
           { label: 'Total Properties', value: rawList.length, icon: '🏠', color: '#c0392b' },
           { label: 'Active Campaigns', value: activeCount, icon: '📡', color: '#4ade80' },
@@ -188,7 +188,7 @@ export default function PropertiesPage() {
         borderRadius: 12, padding: '12px 16px', marginBottom: 16,
         display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' as const,
       }}>
-        <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
+        <div style={{ flex: 1, minWidth: 'min(200px,100%)', position: 'relative' }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }}>
             <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.25"/>
             <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>

@@ -143,7 +143,7 @@ export default function PropBlazeAssistant() {
         onClick={() => { setOpen(o => !o); setPulse(false) }}
         aria-label="Open PropBlaze AI Assistant"
         className={`
-          fixed bottom-6 right-6 z-[9999]
+          fixed bottom-6 right-6 z-[9999] sm:bottom-6 max-[767px]:bottom-[88px]
           w-14 h-14 rounded-full shadow-2xl
           flex items-center justify-center
           transition-all duration-300
@@ -172,7 +172,7 @@ export default function PropBlazeAssistant() {
       {/* ── Chat Panel ── */}
       {open && (
         <div
-          className="fixed bottom-24 right-6 z-[9998] flex flex-col"
+          className="fixed bottom-24 right-6 z-[9998] flex flex-col max-[767px]:bottom-[160px] max-[767px]:right-3 max-[767px]:left-3"
           style={{
             width: 'min(380px, calc(100vw - 24px))',
             height: 'min(560px, calc(100vh - 120px))',

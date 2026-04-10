@@ -462,3 +462,83 @@ h5 { font-size: 0.875rem; font-weight: 600; }
   background-size: 200% auto;
   animation: shimmer 2.5s linear infinite;
 }
+
+/* ─── Mobile Responsive (≤767px) ────────────────────────────────── */
+@media (max-width: 767px) {
+
+  /* ── Safe zones ── */
+  html { font-size: 15px; }
+
+  /* ── Bottom nav safe clearance for all dashboard pages ── */
+  .mobile-page-content {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ── Stat/metric cards ── */
+  .stat-card {
+    padding: 0.875rem 1rem;
+  }
+  .stat-value { font-size: 1.5rem; }
+
+  /* ── Tables → horizontal scroll ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ── Modals ── */
+  .modal { max-width: 100%; margin: 0; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; left: 0; right: 0; max-height: 90vh; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
+
+  /* ── Typography floor ── */
+  * { min-font-size: 12px; }
+}
+
+/* ─── Dashboard Mobile Overrides ────────────────────────────────── */
+@media (max-width: 767px) {
+
+  /* Dashboard main grid: stack on mobile */
+  .dash-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hero public page: hide dashboard mockup on mobile */
+  .hero-dashboard-mockup {
+    display: none !important;
+  }
+
+  /* Hero CTA buttons: full width on mobile */
+  .hero-cta-wrap {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .hero-cta-wrap a, .hero-cta-wrap button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 14px 20px !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* Features grid: 1 column on mobile */
+  .features-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Property detail tab bar: horizontal scroll */
+  .property-tab-bar {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .property-tab-bar::-webkit-scrollbar { display: none !important; }
+
+  /* Generic page padding: safe on mobile */
+  .page-pad {
+    padding: 16px 16px 100px !important;
+  }
+
+  /* Font floors — no tiny text on mobile */
+  [style*="fontSize:'0.6rem'"],
+  [style*='fontSize:"0.6rem"'],
+  [style*="fontSize:'0.65rem'"],
+  [style*='fontSize:"0.65rem"'] {
+    font-size: 0.75rem !important;
+  }
+}
