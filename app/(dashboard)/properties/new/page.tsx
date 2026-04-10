@@ -848,7 +848,7 @@ export default function PropertiesNewPage() {
 
         {currentStep === 4 && (<div style={{padding:0}}><h2 style={{fontSize:"1.4rem",fontWeight:800,color:"#f0f0ff",marginBottom:8}}>Legal Documents</h2><p style={{color:"rgba(240,240,255,0.55)",fontSize:"0.9rem",lineHeight:1.6,marginBottom:24}}>Upload title deed and supporting documents. Files are encrypted and only visible to you.</p><div style={{marginBottom:20}}><div style={{fontSize:"0.78rem",fontWeight:700,color:"rgba(240,240,255,0.5)",textTransform:"uppercase",marginBottom:10}}>Title Deed *</div><label style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px",border:"2px dashed rgba(245,194,0,0.3)",borderRadius:14,cursor:"pointer",gap:10}}><span style={{fontSize:36}}>📄</span><span style={{color:"rgba(240,240,255,0.7)"}}>Click or drag PDF / JPG / PNG</span><input type="file" accept=".pdf,.jpg,.png" style={{display:"none"}}/></label></div><div style={{background:"rgba(59,91,219,0.1)",border:"1px solid rgba(59,91,219,0.25)",borderRadius:12,padding:"14px 18px",display:"flex",gap:12,marginBottom:16}}><span>🔒</span><div><div style={{color:"#93c5fd",fontWeight:700,fontSize:"0.83rem"}}>Bank-grade encryption</div><div style={{color:"rgba(240,240,255,0.55)",fontSize:"0.8rem"}}>AES-256, EU servers. Never shared without consent.</div></div></div></div>)}
         {/* Step 5: Distribution */}
-        {currentStep === 4currentStep === 4 && (
+        {currentStep === 4 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
               Distribution to Agencies
