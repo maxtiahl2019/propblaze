@@ -1,4 +1,3 @@
-export const dynamic = "force-static";
 /**
  * POST /api/send-email
  * Unified email sender via Resend API

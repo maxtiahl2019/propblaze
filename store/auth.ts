@@ -110,18 +110,31 @@ export const useAuth = create<AuthStore>()(
         set({ isLoading: true, error: null });
 
         if (isSupabaseConfigured) {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://propblaze.com';
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
               data: { full_name, role },
+              emailRedirectTo: `${appUrl}/auth/confirm`,
             },
           });
           if (error) {
             set({ error: error.message, isLoading: false });
             throw error;
           }
-          // Write user profile to DB
+
+          // Email confirmation required — session will be null until confirmed
+          const needsConfirmation = !data.session && data.user && !data.user.email_confirmed_at;
+
+          if (needsConfirmation) {
+            // Don't set isAuthenticated — user must confirm email first
+            set({ isLoading: false, error: null });
+            // Signal to the UI that confirmation is pending
+            throw Object.assign(new Error('CHECK_EMAIL'), { code: 'CHECK_EMAIL', email });
+          }
+
+          // Auto-confirmed (email confirmation disabled in Supabase settings)
           if (data.user) {
             await upsertUserProfile({
               user_id: data.user.id,

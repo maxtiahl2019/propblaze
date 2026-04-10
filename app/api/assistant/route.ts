@@ -1,4 +1,3 @@
-export const dynamic = "force-static";
 import { NextRequest, NextResponse } from 'next/server'
 
 const SYSTEM_PROMPT = `You are Blaze, the AI assistant for PropBlaze — an AI-powered property distribution platform for property owners in Europe.

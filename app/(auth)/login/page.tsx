@@ -26,7 +26,10 @@ const C = {
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
-  const { login, isLoading, error, isAuthenticated } = useAuth();
+  const { login, isLoading, error, isAuthenticated, clearError } = useAuth();
+
+  // Clear stale errors when page mounts
+  useEffect(() => { clearError(); }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,25 +42,26 @@ export default function LoginPage() {
     setTimeout(() => setVisible(true), 60);
   }, []);
 
-  // Only auto-redirect if already authenticated (not in demo mode — let user see login page)
+  // Auto-redirect only if there's a real Supabase session
   useEffect(() => {
-    if (!DEMO_MODE && (isAuthenticated || sessionStatus === 'authenticated')) {
-      router.replace('/dashboard');
-    }
-  }, [isAuthenticated, sessionStatus, router]);
+    if (DEMO_MODE) return;
+    import('@/lib/supabase').then(({ supabase, isSupabaseConfigured }) => {
+      if (!isSupabaseConfigured) return;
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) router.replace('/dashboard');
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGoogle = async () => {
-    setGoogleLoading(true);
-    try {
-      await signIn('google', { callbackUrl: '/dashboard' });
-    } catch {
-      setGoogleLoading(false);
-    }
+    // Google OAuth not configured — show message instead of crashing
+    alert('Google sign-in coming soon. Please use email/password or Demo mode.');
   };
 
   const handleDemoLogin = () => {
     if (typeof window !== 'undefined') {
-      // Write correct Zustand persist format (wrapped in "state")
+      // Write Zustand persist format so store hydrates immediately
       localStorage.setItem('propblaze-auth', JSON.stringify({
         state: {
           isAuthenticated: true,
@@ -66,8 +70,10 @@ export default function LoginPage() {
         },
         version: 0,
       }));
+      // Full page reload so Zustand reads fresh from localStorage
+      // and dashboard layout sees the demo token without Supabase check
+      window.location.href = '/dashboard';
     }
-    router.push('/dashboard');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,17 +85,18 @@ export default function LoginPage() {
     setErrors({});
 
     if (DEMO_MODE) {
-      // In demo mode, any email/password logs you into demo
       handleDemoLogin();
       return;
     }
 
     try {
-      const result = await signIn('credentials', { email, password, redirect: false });
-      if (result?.ok) { router.replace('/dashboard'); return; }
+      // Use Supabase auth directly via the auth store
       await login(email, password);
       router.replace('/dashboard');
-    } catch {}
+    } catch (err: any) {
+      // Error is already set in auth store, but show fallback
+      console.error('[login]', err);
+    }
   };
 
   return (

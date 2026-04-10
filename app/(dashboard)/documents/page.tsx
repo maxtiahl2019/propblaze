@@ -1,603 +1,277 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
-interface UploadedFile {
-  name: string;
-  uploadedAt: string;
+const D = {
+  bg: '#080810', bg2: '#0D0D1A', surface: 'rgba(255,255,255,0.05)',
+  surface2: 'rgba(255,255,255,0.09)', border: 'rgba(255,255,255,0.09)',
+  border2: 'rgba(255,255,255,0.18)', yellow: '#F5C200', green: '#22C55E',
+  red: '#EF4444', blue: '#3B5BDB', white: '#FFFFFF',
+  w80: 'rgba(255,255,255,0.80)', w60: 'rgba(255,255,255,0.60)',
+  w40: 'rgba(255,255,255,0.40)', w20: 'rgba(255,255,255,0.20)',
+};
+
+type DocStatus = 'uploaded' | 'missing' | 'pending';
+
+interface DocItem {
+  id: string; label: string; required: boolean;
+  status: DocStatus; fileName?: string; uploadedAt?: string; aiHint: string;
 }
 
-interface DocumentState {
-  [key: string]: UploadedFile | null;
+const INITIAL_DOCS: DocItem[] = [
+  { id: 'title_deed', label: 'Title Deed / Ownership Certificate', required: true, status: 'uploaded',
+    fileName: 'title_deed_belgrade_apt.pdf', uploadedAt: '2 days ago',
+    aiHint: 'Most critical document. Agencies verify ownership before contacting buyers.' },
+  { id: 'floor_plan', label: 'Floor Plan', required: false, status: 'missing',
+    aiHint: 'Increases agency interest by 40%. Photograph the original — AI enhances it automatically.' },
+  { id: 'building_permit', label: 'Building Permit', required: false, status: 'missing',
+    aiHint: 'Required for new-builds and renovations. Buyers request this frequently.' },
+  { id: 'energy_cert', label: 'Energy Certificate', required: false, status: 'missing',
+    aiHint: 'EU law requires this for most sales. Upload now to avoid delays.' },
+  { id: 'passport', label: 'Passport / ID (redacted)', required: true, status: 'uploaded',
+    fileName: 'passport_redacted.pdf', uploadedAt: '2 days ago',
+    aiHint: 'Encrypted, never shared with agencies — only used for owner verification.' },
+  { id: 'proof_address', label: 'Proof of Address', required: false, status: 'missing',
+    aiHint: 'Utility bill or bank statement from the last 3 months is sufficient.' },
+];
+
+function StatusChip({ status }: { status: DocStatus }) {
+  const cfg = {
+    uploaded: { label: 'Verified ✓', bg: 'rgba(34,197,94,0.15)', color: '#22C55E', border: 'rgba(34,197,94,0.3)' },
+    pending:  { label: 'Reviewing…', bg: 'rgba(245,194,0,0.12)', color: '#F5C200', border: 'rgba(245,194,0,0.3)' },
+    missing:  { label: 'Missing',    bg: 'rgba(239,68,68,0.12)',  color: '#EF4444', border: 'rgba(239,68,68,0.25)' },
+  }[status];
+  return (
+    <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: '0.7rem', fontWeight: 700,
+      background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`, whiteSpace: 'nowrap' }}>
+      {cfg.label}
+    </span>
+  );
+}
+
+function DocCard({ doc, onUpload, onCamera }: {
+  doc: DocItem;
+  onUpload: (id: string, file: File) => void;
+  onCamera: (id: string, file: File) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const fileRef   = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>, mode: 'file'|'camera') => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (mode === 'camera') onCamera(doc.id, f);
+    else onUpload(doc.id, f);
+    e.target.value = '';
+  };
+
+  const borderColor = doc.status === 'uploaded' ? D.green
+    : doc.status === 'pending' ? D.yellow
+    : doc.required ? D.red : 'rgba(255,255,255,0.15)';
+
+  return (
+    <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderLeft: `3px solid ${borderColor}`,
+      borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+        onClick={() => setExpanded(e => !e)}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+          background: doc.status === 'uploaded' ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)',
+          border: `1px solid ${doc.status === 'uploaded' ? 'rgba(34,197,94,0.3)' : D.border}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+          {doc.status === 'uploaded' ? '✅' : doc.required ? '📋' : '📄'}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '0.875rem', fontWeight: 600, color: D.w80, marginBottom: 2 }}>
+            {doc.label}
+            {doc.required && <span style={{ color: D.red, marginLeft: 4, fontSize: '0.75rem' }}>*</span>}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: D.w40 }}>
+            {doc.status === 'uploaded' ? `${doc.fileName} · ${doc.uploadedAt}` : 'Tap to upload or photograph'}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+          <StatusChip status={doc.status} />
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+            style={{ color: D.w40, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+            <path d="M3 6L8 10L13 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      {expanded && (
+        <div style={{ borderTop: `1px solid ${D.border}`, padding: '14px 16px' }}>
+          {/* AI hint */}
+          <div style={{ background: 'rgba(245,194,0,0.06)', border: '1px solid rgba(245,194,0,0.18)',
+            borderRadius: 10, padding: '10px 14px', marginBottom: 14,
+            display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>🤖</span>
+            <p style={{ fontSize: '0.8rem', color: 'rgba(245,194,0,0.85)', lineHeight: 1.5, margin: 0 }}>
+              {doc.aiHint}
+            </p>
+          </div>
+
+          {doc.status === 'uploaded' ? (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ flex: 1, padding: '10px 14px', borderRadius: 10,
+                background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                fontSize: '0.8rem', color: D.green, fontWeight: 600 }}>✓ {doc.fileName}</div>
+              <button onClick={() => fileRef.current?.click()} style={{ padding: '10px 14px',
+                borderRadius: 10, border: `1px solid ${D.border}`, background: D.surface2,
+                color: D.w60, fontSize: '0.8rem', cursor: 'pointer' }}>Replace</button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* PRIMARY: Camera — biggest button on mobile */}
+              <button onClick={() => cameraRef.current?.click()} style={{
+                width: '100%', padding: '18px 16px', borderRadius: 14,
+                background: 'linear-gradient(135deg,#F5C200,#FF8C00)',
+                border: 'none', color: '#080810', fontWeight: 800, fontSize: '1rem',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                <span style={{ fontSize: 24 }}>📷</span>
+                Photograph Document
+              </button>
+              {/* SECONDARY: file */}
+              <button onClick={() => fileRef.current?.click()} style={{
+                width: '100%', padding: '14px 16px', borderRadius: 12,
+                background: 'transparent', border: `1px solid ${D.border2}`,
+                color: D.w80, fontWeight: 600, fontSize: '0.875rem',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                <span style={{ fontSize: 20 }}>📁</span>
+                Upload from Files / Gallery
+              </button>
+            </div>
+          )}
+
+          {/* Hidden camera input — triggers native camera on mobile */}
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment"
+            style={{ display: 'none' }} onChange={e => handleFile(e, 'camera')} />
+          {/* Hidden file input */}
+          <input ref={fileRef} type="file" accept="image/*,application/pdf,.pdf"
+            style={{ display: 'none' }} onChange={e => handleFile(e, 'file')} />
+
+          {doc.status === 'missing' && (
+            <p style={{ fontSize: '0.72rem', color: D.w40, marginTop: 10, lineHeight: 1.5 }}>
+              🔒 AES-256 encrypted · EU servers · Never shared without your approval
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function DocumentsPage() {
-  const [ownershipDocs, setOwnershipDocs] = useState<DocumentState>({
-    'title_deed': { name: 'title_deed_belgrade_apt.pdf', uploadedAt: '2 days ago' },
-    'floor_plan': null,
-    'building_permit': null,
-    'energy_cert': null,
-  });
+  const [docs, setDocs] = useState<DocItem[]>(INITIAL_DOCS);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const [identityDocs, setIdentityDocs] = useState<DocumentState>({
-    'passport': { name: 'passport_redacted.pdf', uploadedAt: '2 days ago' },
-    'proof_address': null,
-  });
-
-  const [agreementData, setAgreementData] = useState({
-    fullName: 'Aleksandar Petrović',
-    passportId: 'PA123456',
-    address: 'Knez Mihailova 24, Belgrade, Serbia',
-    email: 'alex.petrovic@email.com',
-    phone: '+381 63 123 4567',
-    propertyAddress: 'Knez Mihailova 24, Belgrade, RS',
-    propertyType: 'Apartment',
-    listedPrice: '€340,000',
-    commissionRate: '3%',
-    duration: '90 days',
-  });
-
-  const [showToast, setShowToast] = useState(false);
-
-  const docCategories = [
-    { key: 'title_deed', label: 'Title Deed / Ownership Certificate', required: true },
-    { key: 'floor_plan', label: 'Property Floor Plan', required: false },
-    { key: 'building_permit', label: 'Building Permit', required: false },
-    { key: 'energy_cert', label: 'Energy Certificate', required: false },
-  ];
-
-  const idCategories = [
-    { key: 'passport', label: 'Passport / National ID', required: true },
-    { key: 'proof_address', label: 'Proof of Address', required: false },
-  ];
-
-  const handleDocumentUpload = (docKey: string, section: 'ownership' | 'identity') => {
-    const mockFileName = `document_${Date.now()}.pdf`;
-    if (section === 'ownership') {
-      setOwnershipDocs(prev => ({
-        ...prev,
-        [docKey]: { name: mockFileName, uploadedAt: 'Just now' }
-      }));
-    } else {
-      setIdentityDocs(prev => ({
-        ...prev,
-        [docKey]: { name: mockFileName, uploadedAt: 'Just now' }
-      }));
-    }
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
   };
 
-  const handleDocumentRemove = (docKey: string, section: 'ownership' | 'identity') => {
-    if (section === 'ownership') {
-      setOwnershipDocs(prev => ({ ...prev, [docKey]: null }));
-    } else {
-      setIdentityDocs(prev => ({ ...prev, [docKey]: null }));
-    }
+  const handleUpload = (id: string, file: File) => {
+    setDocs(prev => prev.map(d => d.id === id
+      ? { ...d, status: 'pending', fileName: file.name, uploadedAt: 'Just now' } : d));
+    showToast('📤 Uploading and encrypting…');
+    setTimeout(() => {
+      setDocs(prev => prev.map(d => d.id === id ? { ...d, status: 'uploaded' } : d));
+      showToast('✅ Document verified and saved');
+    }, 2000);
   };
 
-  const handleGenerateAgreement = () => {
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 4000);
+  const handleCamera = (id: string, file: File) => {
+    showToast('📷 Enhancing photo quality…');
+    setTimeout(() => handleUpload(id, file), 800);
   };
 
-  const handleAgreementChange = (field: string, value: string) => {
-    setAgreementData(prev => ({ ...prev, [field]: value }));
-  };
+  const required = docs.filter(d => d.required);
+  const optional = docs.filter(d => !d.required);
+  const uploaded = docs.filter(d => d.required && d.status === 'uploaded').length;
+  const pct = Math.round((uploaded / required.length) * 100);
 
   return (
-    <div style={{ padding: '32px', background: 'var(--bg)', minHeight: '100vh' }}>
-      {/* Toast notification */}
-      {showToast && (
-        <div style={{
-          position: 'fixed',
-          bottom: 32,
-          right: 32,
-          background: 'var(--green)',
-          color: 'white',
-          padding: '12px 16px',
-          borderRadius: 8,
-          fontSize: '0.875rem',
-          fontWeight: 500,
-          boxShadow: 'var(--shadow-md)',
-          zIndex: 1000,
-          animation: 'slideUp 0.3s ease-out',
-        }}>
-          ✓ Agreement generated and saved to your vault
+    <div style={{ background: D.bg, minHeight: '100vh', color: D.white, fontFamily: "'Inter',system-ui,sans-serif" }}>
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
+          background: '#1a1a2e', border: `1px solid ${D.border2}`, borderRadius: 12,
+          padding: '12px 20px', fontSize: '0.875rem', fontWeight: 600, color: D.white,
+          zIndex: 9999, whiteSpace: 'nowrap', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          {toast}
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{
-          fontSize: '2rem',
-          fontWeight: 700,
-          color: 'var(--text)',
-          marginBottom: 8,
-        }}>
-          📁 Document Vault
-        </h1>
-        <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)' }}>
-          Upload and store your ownership documents securely. These will be used for commission agreements.
-        </p>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, color: D.white, letterSpacing: '-0.02em', marginBottom: 6 }}>
+            🗂️ Documents
+          </h1>
+          <p style={{ fontSize: '0.875rem', color: D.w60, lineHeight: 1.5 }}>
+            Photograph or upload documents. All files are encrypted and stored on EU servers.
+          </p>
+        </div>
+
+        {/* Progress card */}
+        <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 16, padding: '16px 20px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div>
+              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: D.white }}>Document Readiness</div>
+              <div style={{ fontSize: '0.75rem', color: D.w40, marginTop: 2 }}>{uploaded}/{required.length} required uploaded</div>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: pct === 100 ? D.green : D.yellow }}>{pct}%</div>
+          </div>
+          <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, transition: 'width 0.5s ease',
+              background: pct === 100 ? D.green : 'linear-gradient(90deg,#F5C200,#FF8C00)' }} />
+          </div>
+          {pct < 100 && (
+            <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(245,194,0,0.07)', border: '1px solid rgba(245,194,0,0.15)',
+              fontSize: '0.8rem', color: 'rgba(245,194,0,0.9)', display: 'flex', gap: 8 }}>
+              <span>🤖</span>
+              <span>Upload missing required documents to unlock AI distribution</span>
+            </div>
+          )}
+        </div>
+
+        {/* Required */}
+        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+          Required
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+          {required.map(doc => <DocCard key={doc.id} doc={doc} onUpload={handleUpload} onCamera={handleCamera} />)}
+        </div>
+
+        {/* Optional */}
+        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+          Optional — Boost match score
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+          {optional.map(doc => <DocCard key={doc.id} doc={doc} onUpload={handleUpload} onCamera={handleCamera} />)}
+        </div>
+
+        {/* AI assistant tip */}
+        <div style={{ padding: '16px 20px', borderRadius: 14,
+          background: 'rgba(59,91,219,0.08)', border: '1px solid rgba(59,91,219,0.2)' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>🤖</span>
+            <div>
+              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#93c5fd', marginBottom: 4 }}>
+                AI Document Assistant
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'rgba(147,197,253,0.75)', lineHeight: 1.6, margin: 0 }}>
+                On mobile, tap <strong style={{ color: '#93c5fd' }}>Photograph Document</strong> — no scanning app needed.
+                Point at any document, AI auto-enhances contrast and readability before encrypting.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ height: 40 }} />
       </div>
-
-      {/* Main sections container */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
-        {/* Section A: Ownership Documents */}
-        <div>
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 12,
-            padding: 24,
-          }}>
-            <h2 style={{
-              fontSize: '1rem',
-              fontWeight: 600,
-              color: 'var(--text)',
-              marginBottom: 20,
-            }}>
-              Ownership Documents
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {docCategories.map(cat => (
-                <div key={cat.key}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: 8,
-                    gap: 4,
-                  }}>
-                    <label style={{
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: 'var(--text)',
-                    }}>
-                      {cat.label}
-                    </label>
-                    {cat.required && (
-                      <span style={{ color: 'var(--red)', fontWeight: 700 }}>*</span>
-                    )}
-                  </div>
-
-                  {ownershipDocs[cat.key] ? (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 14px',
-                      background: 'var(--green-light)',
-                      border: `1px solid var(--green)`,
-                      borderRadius: 8,
-                      gap: 12,
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ color: 'var(--green)', fontSize: '1.25rem' }}>✓</span>
-                        <div>
-                          <p style={{
-                            fontSize: '0.8125rem',
-                            fontWeight: 500,
-                            color: 'var(--text)',
-                            margin: 0,
-                          }}>
-                            {ownershipDocs[cat.key]?.name}
-                          </p>
-                          <p style={{
-                            fontSize: '0.75rem',
-                            color: 'var(--text-tertiary)',
-                            margin: '2px 0 0 0',
-                          }}>
-                            Uploaded {ownershipDocs[cat.key]?.uploadedAt}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleDocumentRemove(cat.key, 'ownership')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text-tertiary)',
-                          fontSize: '0.875rem',
-                          padding: 4,
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleDocumentUpload(cat.key, 'ownership')}
-                      style={{
-                        width: '100%',
-                        padding: '24px',
-                        border: `2px dashed var(--border)`,
-                        borderRadius: 8,
-                        background: 'var(--surface-2)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 8,
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = 'var(--primary)';
-                        (e.currentTarget as HTMLElement).style.background = 'var(--primary-light)';
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-                        (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)';
-                      }}
-                    >
-                      <span style={{ fontSize: '1.5rem' }}>📄</span>
-                      <p style={{
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        color: 'var(--text)',
-                        margin: 0,
-                      }}>
-                        Click to upload or drag & drop
-                      </p>
-                      <p style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-tertiary)',
-                        margin: 0,
-                      }}>
-                        PDF, JPG, PNG
-                      </p>
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Section B: Personal Identity Documents */}
-        <div>
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 12,
-            padding: 24,
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 20,
-            }}>
-              <h2 style={{
-                fontSize: '1rem',
-                fontWeight: 600,
-                color: 'var(--text)',
-                margin: 0,
-              }}>
-                🔒 Personal Identity Documents
-              </h2>
-            </div>
-
-            <p style={{
-              fontSize: '0.8125rem',
-              color: 'var(--text-secondary)',
-              marginBottom: 20,
-              padding: '12px 12px',
-              background: 'var(--primary-light)',
-              borderRadius: 8,
-              borderLeft: `3px solid var(--primary)`,
-              margin: '0 0 20px 0',
-            }}>
-              <strong>🔐 Encrypted & Private:</strong> These documents are ONLY shared with agencies after you sign the commission agreement.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {idCategories.map(cat => (
-                <div key={cat.key}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: 8,
-                    gap: 4,
-                  }}>
-                    <label style={{
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: 'var(--text)',
-                    }}>
-                      {cat.label}
-                    </label>
-                    {cat.required && (
-                      <span style={{ color: 'var(--red)', fontWeight: 700 }}>*</span>
-                    )}
-                  </div>
-
-                  {identityDocs[cat.key] ? (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 14px',
-                      background: 'var(--green-light)',
-                      border: `1px solid var(--green)`,
-                      borderRadius: 8,
-                      gap: 12,
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ color: 'var(--green)', fontSize: '1.25rem' }}>✓</span>
-                        <div>
-                          <p style={{
-                            fontSize: '0.8125rem',
-                            fontWeight: 500,
-                            color: 'var(--text)',
-                            margin: 0,
-                          }}>
-                            {identityDocs[cat.key]?.name}
-                          </p>
-                          <p style={{
-                            fontSize: '0.75rem',
-                            color: 'var(--text-tertiary)',
-                            margin: '2px 0 0 0',
-                          }}>
-                            Uploaded {identityDocs[cat.key]?.uploadedAt}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleDocumentRemove(cat.key, 'identity')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text-tertiary)',
-                          fontSize: '0.875rem',
-                          padding: 4,
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleDocumentUpload(cat.key, 'identity')}
-                      style={{
-                        width: '100%',
-                        padding: '24px',
-                        border: `2px dashed var(--border)`,
-                        borderRadius: 8,
-                        background: 'var(--surface-2)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 8,
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = 'var(--primary)';
-                        (e.currentTarget as HTMLElement).style.background = 'var(--primary-light)';
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-                        (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)';
-                      }}
-                    >
-                      <span style={{ fontSize: '1.5rem' }}>📋</span>
-                      <p style={{
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        color: 'var(--text)',
-                        margin: 0,
-                      }}>
-                        Click to upload or drag & drop
-                      </p>
-                      <p style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-tertiary)',
-                        margin: 0,
-                      }}>
-                        PDF, JPG, PNG
-                      </p>
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Section C: Commission Agreement Data */}
-      <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: 24,
-      }}>
-        <h2 style={{
-          fontSize: '1rem',
-          fontWeight: 600,
-          color: 'var(--text)',
-          marginBottom: 24,
-        }}>
-          Commission Agreement — Auto-filled from your documents
-        </h2>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 24,
-          marginBottom: 24,
-        }}>
-          {/* Personal Information */}
-          <div>
-            <h3 style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--text)',
-              marginBottom: 16,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'var(--text-tertiary)',
-            }}>
-              Personal Information
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {['fullName', 'passportId', 'address', 'email', 'phone'].map(field => (
-                <div key={field}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--text-tertiary)',
-                    marginBottom: 4,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}>
-                    {field === 'fullName' ? 'Owner Full Name' :
-                     field === 'passportId' ? 'Passport/ID Number' :
-                     field === 'address' ? 'Address' :
-                     field === 'email' ? 'Email' :
-                     'Phone'}
-                  </label>
-                  <input
-                    type="text"
-                    value={agreementData[field as keyof typeof agreementData]}
-                    onChange={e => handleAgreementChange(field, e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '0.875rem',
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      background: 'var(--surface)',
-                      color: 'var(--text)',
-                      fontFamily: 'inherit',
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Property Information */}
-          <div>
-            <h3 style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--text)',
-              marginBottom: 16,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: 'var(--text-tertiary)',
-            }}>
-              Property & Agreement
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {['propertyAddress', 'propertyType', 'listedPrice', 'commissionRate', 'duration'].map(field => (
-                <div key={field}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--text-tertiary)',
-                    marginBottom: 4,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}>
-                    {field === 'propertyAddress' ? 'Property Address' :
-                     field === 'propertyType' ? 'Property Type' :
-                     field === 'listedPrice' ? 'Listed Price' :
-                     field === 'commissionRate' ? 'Commission Rate' :
-                     'Agreement Duration'}
-                  </label>
-                  <input
-                    type="text"
-                    value={agreementData[field as keyof typeof agreementData]}
-                    onChange={e => handleAgreementChange(field, e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '0.875rem',
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      background: 'var(--surface)',
-                      color: 'var(--text)',
-                      fontFamily: 'inherit',
-                    }}
-                  />
-                  {field === 'commissionRate' && (
-                    <p style={{
-                      fontSize: '0.75rem',
-                      color: 'var(--text-tertiary)',
-                      marginTop: 4,
-                      margin: '4px 0 0 0',
-                    }}>
-                      Standard platform rate
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Action buttons and status */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 24,
-          borderTop: '1px solid var(--border)',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            fontSize: '0.875rem',
-            color: 'var(--green)',
-            fontWeight: 500,
-          }}>
-            <span>✓</span>
-            Agreement sent to Win-Win Solution agency
-          </div>
-          <button
-            onClick={handleGenerateAgreement}
-            style={{
-              padding: '10px 16px',
-              background: 'var(--primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.opacity = '0.9';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.opacity = '1';
-            }}
-          >
-            📄 Generate Commission Agreement PDF
-          </button>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

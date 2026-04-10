@@ -92,10 +92,15 @@ function RoleCard({ role, active, onClick }: { role: Role; active: boolean; onCl
 
 // ─── Owner registration form ───────────────────────────────────────────────────
 function OwnerForm({ onDone }: { onDone: () => void }) {
-  const { register, isLoading, error } = useAuth();
+  const { register, isLoading, error, clearError } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', phone: '', country: 'Montenegro', password: '', confirm: '' });
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [showPw, setShowPw] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+
+  // Clear any stale login/auth errors from previous page when form mounts
+  useEffect(() => { clearError(); }, []);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -115,9 +120,45 @@ function OwnerForm({ onDone }: { onDone: () => void }) {
     if (DEMO_MODE) { onDone(); return; }
     try {
       await register(form.email, form.password, form.name);
-      onDone();
-    } catch {}
+      onDone(); // auto-confirmed
+    } catch (err: any) {
+      if (err?.code === 'CHECK_EMAIL') {
+        setRegisteredEmail(form.email);
+        setCheckEmail(true);
+      }
+      // other errors shown via auth store `error` state
+    }
   };
+
+  // ── Email confirmation pending screen ──────────────────────────────────────
+  if (checkEmail) {
+    return (
+      <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>📬</div>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', marginBottom: 10, letterSpacing: '-0.02em' }}>
+          Check your email
+        </h2>
+        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, marginBottom: 24, maxWidth: 320, margin: '0 auto 24px' }}>
+          We sent a confirmation link to <strong style={{ color: '#F5C200' }}>{registeredEmail}</strong>.
+          Click the link in the email to activate your account.
+        </p>
+        <div style={{
+          background: 'rgba(245,194,0,0.08)', border: '1px solid rgba(245,194,0,0.2)',
+          borderRadius: 14, padding: '16px 20px', marginBottom: 20,
+          fontSize: '0.8rem', color: 'rgba(245,194,0,0.8)', lineHeight: 1.6,
+        }}>
+          💡 After clicking the link you'll be taken straight to your dashboard
+        </div>
+        <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+          Didn't receive it? Check spam or{' '}
+          <button onClick={() => setCheckEmail(false)} style={{
+            background: 'none', border: 'none', color: '#F5C200', cursor: 'pointer',
+            fontSize: '0.75rem', padding: 0, textDecoration: 'underline',
+          }}>try again</button>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit}>

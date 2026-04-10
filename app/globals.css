@@ -462,3 +462,78 @@ h5 { font-size: 0.875rem; font-weight: 600; }
   background-size: 200% auto;
   animation: shimmer 2.5s linear infinite;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE — all responsive rules. Pure CSS, no JS.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Desktop only: show sidebar, hide mobile nav ── */
+.sidebar-wrap        { display: block; }
+.mobile-bottom-nav   { display: none !important; }
+.demo-banner-short   { display: none; }
+.demo-banner-full    { display: inline; }
+.demo-banner         { font-size: 0.68rem; padding: 5px 16px; }
+
+/* ── Mobile (≤767px) ── */
+@media (max-width: 767px) {
+
+  /* Navigation */
+  .sidebar-wrap        { display: none !important; }
+  .mobile-bottom-nav   { display: flex !important; }
+
+  /* Demo banner */
+  .demo-banner         { font-size: 0.6rem; padding: 4px 12px; }
+  .demo-banner-full    { display: none; }
+  .demo-banner-short   { display: inline; }
+
+  /* Main content: add bottom padding for nav bar */
+  .dash-main {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Dashboard main 2-col grid → single column */
+  .dash-main-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Homepage hero: hide right panel mockup */
+  .hero-right-panel { display: none !important; }
+
+  /* Homepage hero: full-width copy */
+  .hero-copy { max-width: 100% !important; }
+
+  /* CTA buttons: full width stacked */
+  .hero-cta-wrap {
+    flex-direction: column !important;
+  }
+  .hero-cta-wrap a, .hero-cta-wrap button {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 52px !important;
+  }
+
+  /* Tables → horizontal scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Stat cards: smaller on mobile */
+  .stat-value { font-size: 1.5rem; }
+
+  /* Modals → bottom sheet */
+  .modal {
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 85vh !important;
+  }
+  .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+
+  /* Font size floor — no text below 11px on mobile */
+  body { font-size: 0.9375rem; }
+  small, .text-xs { font-size: 0.75rem !important; }
+}

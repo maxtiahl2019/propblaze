@@ -1,58 +1,69 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth, DEMO_MODE } from '@/store/auth';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+    const verify = async () => {
+      // 1. Env-level demo mode — allow through
+      if (DEMO_MODE) { setVerified(true); return; }
 
-  if (!isAuthenticated) {
+      // 2. Demo token in localStorage — allow through (Enter Demo button)
+      try {
+        const stored = localStorage.getItem('propblaze-auth');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.state?.token === 'demo-token') {
+            setVerified(true);
+            return;
+          }
+        }
+      } catch {}
+
+      // 3. Supabase: verify there's a real live session
+      if (isSupabaseConfigured) {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          logout();           // clear stale localStorage
+          router.replace('/login');
+          return;
+        }
+        setVerified(true);
+        return;
+      }
+
+      // 4. Fallback (no Supabase): redirect to login always
+      router.replace('/login');
+    };
+    verify();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!verified) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'var(--bg)',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              background: 'var(--blue)',
-              borderRadius: 9,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 1.5L2 7.5V16.5H6.5V12H11.5V16.5H16V7.5L9 1.5Z" fill="white" fillOpacity="0.9"/>
-            </svg>
-          </div>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Loading…</p>
+      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#080810' }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.75rem' }}>
+          <div style={{ width:36, height:36, border:'3px solid rgba(245,194,0,0.2)', borderTopColor:'#F5C200', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
+          <p style={{ fontSize:'0.8125rem', color:'rgba(255,255,255,0.5)' }}>Checking session…</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
   }
 
-  // ── Dark sidebar CSS variable overrides (2027 design system) ──────────────
   const darkSidebarVars = {
     '--bg-sidebar':     '#0D0D1A',
     '--surface':        'rgba(255,255,255,0.05)',
@@ -73,27 +84,35 @@ export default function DashboardLayout({
   } as React.CSSProperties;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#080810', flexDirection: 'column' }}>
+    <div style={{ display:'flex', minHeight:'100vh', background:'#080810', flexDirection:'column' }}>
+      {/* Demo banner */}
       {DEMO_MODE && (
         <div style={{
-          background: 'linear-gradient(90deg, #F5C200, #E07B00)',
-          color: '#080810', fontSize: '0.68rem', fontWeight: 700,
-          textAlign: 'center', padding: '5px 16px', letterSpacing: '0.04em',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}>
+          background:'linear-gradient(90deg,#F5C200,#E07B00)',
+          color:'#080810', fontWeight:700, textAlign:'center',
+          letterSpacing:'0.04em', display:'flex', alignItems:'center',
+          justifyContent:'center', gap:6,
+        }} className="demo-banner">
           <span>🚀</span>
-          <span>DEMO MODE — PropBlaze · AI Property Distribution Preview</span>
-          <span style={{ opacity: 0.6 }}>· demo@propblaze.eu</span>
+          <span className="demo-banner-full">DEMO MODE — PropBlaze · AI Property Distribution Preview</span>
+          <span className="demo-banner-short">DEMO MODE · PropBlaze</span>
         </div>
       )}
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <div style={darkSidebarVars}>
+
+      <div style={{ display:'flex', flex:1, minHeight:0 }}>
+        {/* Sidebar — hidden on mobile via CSS */}
+        <div style={darkSidebarVars} className="sidebar-wrap">
           <Sidebar />
         </div>
-        <main style={{ flex: 1, minWidth: 0, overflow: 'auto', background: '#080810' }}>
+
+        {/* Main content */}
+        <main className="dash-main" style={{ flex:1, minWidth:0, overflow:'auto', background:'#080810' }}>
           {children}
         </main>
       </div>
+
+      {/* Bottom nav — shown on mobile via CSS */}
+      <MobileBottomNav />
     </div>
   );
 }

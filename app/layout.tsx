@@ -10,6 +10,13 @@ const geistMono = { variable: '--font-geist-mono' }
 const BASE_URL = process.env.NEXT_PUBLIC_DOMAIN || 'https://propblaze.com'
 
 // ─── SEO Metadata ────────────────────────────────────────────────────────────
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#080810',
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {

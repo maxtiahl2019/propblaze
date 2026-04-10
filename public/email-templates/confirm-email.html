@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confirm your PropBlaze account</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #07070F; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrapper { background: #07070F; padding: 40px 20px; min-height: 100vh; }
+    .container { max-width: 560px; margin: 0 auto; }
+    .logo-row { text-align: center; margin-bottom: 32px; }
+    .logo-icon { display: inline-block; width: 48px; height: 48px; background: linear-gradient(135deg, #F5C200, #FF6B00); border-radius: 14px; line-height: 48px; font-size: 24px; text-align: center; }
+    .logo-text { display: inline-block; font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.04em; vertical-align: middle; margin-left: 10px; }
+    .logo-sub { display: block; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 2px; }
+    .card { background: #0D0D1A; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; }
+    .card-hero { background: linear-gradient(135deg, #0F0F20 0%, #1A1400 50%, #0F0F20 100%); padding: 40px 40px 32px; text-align: center; border-bottom: 1px solid rgba(245,194,0,0.1); }
+    .hero-badge { display: inline-block; background: rgba(245,194,0,0.12); border: 1px solid rgba(245,194,0,0.25); border-radius: 99px; padding: 5px 14px; font-size: 11px; font-weight: 700; color: #F5C200; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 20px; }
+    .hero-icon { font-size: 52px; margin-bottom: 16px; display: block; }
+    .hero-title { font-size: 26px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.03em; margin-bottom: 10px; line-height: 1.2; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.65; max-width: 380px; margin: 0 auto; }
+    .card-body { padding: 36px 40px; }
+    .confirm-btn { display: block; background: linear-gradient(135deg, #F5C200 0%, #E07B00 100%); color: #1A1400; text-decoration: none; text-align: center; padding: 16px 32px; border-radius: 14px; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 24px; border: none; cursor: pointer; }
+    .expire-note { text-align: center; font-size: 12px; color: rgba(255,255,255,0.3); margin-bottom: 28px; }
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 28px 0; }
+    .steps-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+    .step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .step-num { width: 24px; height: 24px; border-radius: 99px; background: rgba(245,194,0,0.12); border: 1px solid rgba(245,194,0,0.2); font-size: 11px; font-weight: 800; color: #F5C200; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step-text { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+    .step-text strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+    .stat-row { display: flex; gap: 10px; margin-top: 28px; }
+    .stat-box { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px 12px; text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 800; color: #F5C200; }
+    .stat-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+    .card-footer { background: rgba(0,0,0,0.3); padding: 20px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
+    .footer-text { font-size: 12px; color: rgba(255,255,255,0.2); line-height: 1.7; }
+    .footer-link { color: rgba(245,194,0,0.5); text-decoration: none; }
+    .safe-link { word-break: break-all; font-size: 11px; color: rgba(255,255,255,0.2); margin-top: 16px; display: block; }
+    @media (max-width: 560px) {
+      .card-hero, .card-body, .card-footer { padding-left: 24px; padding-right: 24px; }
+      .stat-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="container">
+
+    <!-- Logo -->
+    <div class="logo-row">
+      <span class="logo-icon">🔥</span>
+      <span class="logo-text">
+        PropBlaze
+        <span class="logo-sub">AI Platform</span>
+      </span>
+    </div>
+
+    <div class="card">
+      <!-- Hero -->
+      <div class="card-hero">
+        <div class="hero-badge">✉️ Email Confirmation</div>
+        <span class="hero-icon">🎉</span>
+        <h1 class="hero-title">You're almost in.<br/>Confirm your email.</h1>
+        <p class="hero-sub">
+          One click and your account is active. You'll be able to list your property and let AI find the best agencies across Europe — in minutes.
+        </p>
+      </div>
+
+      <!-- Body -->
+      <div class="card-body">
+
+        <!-- CTA Button -->
+        <a href="{{ .ConfirmationURL }}" class="confirm-btn">
+          ✅ Confirm my email &amp; open dashboard →
+        </a>
+        <p class="expire-note">This link expires in 24 hours &nbsp;·&nbsp; Single use only</p>
+
+        <div class="divider"></div>
+
+        <!-- What happens next -->
+        <div class="steps-title">What happens next</div>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Click the button above</strong> — your account is activated instantly.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Add your property</strong> — photos, price, location. Takes 5 minutes.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>AI selects agencies</strong> — we match to 10–30 best-fit agencies from our EU database.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text"><strong>You approve &amp; distribute</strong> — review the offer, approve, and agencies receive your property pitch.</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="stat-val">847+</div>
+            <div class="stat-label">Agencies</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">31</div>
+            <div class="stat-label">EU markets</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">24h</div>
+            <div class="stat-label">To first lead</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="card-footer">
+        <p class="footer-text">
+          You're receiving this because you signed up at
+          <a href="https://propblaze.com" class="footer-link">propblaze.com</a>.<br/>
+          If you didn't create an account, you can safely ignore this email.<br/>
+          &copy; 2026 PropBlaze · AI Property Distribution Platform
+        </p>
+        <span class="safe-link">If the button doesn't work, paste this link into your browser:<br/>{{ .ConfirmationURL }}</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

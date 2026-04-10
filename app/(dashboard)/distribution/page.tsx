@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/LangContext';
 
 interface Campaign {
   id: string;
@@ -49,14 +50,15 @@ const DEMO_CAMPAIGNS: Campaign[] = [
 ];
 
 export default function DistributionPage() {
+  const { t } = useTranslation();
   const [campaigns] = useState<Campaign[]>(DEMO_CAMPAIGNS);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Distribution Campaigns</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{t('distribution.title')}</h1>
         <p className="text-gray-600 mt-1">
-          Manage and monitor your property distribution to agencies
+          {t('distribution.subtitle')}
         </p>
       </div>
 
@@ -72,7 +74,7 @@ export default function DistributionPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-gray-600">Total Emails Sent</p>
+            <p className="text-sm text-gray-600">{t('distribution.total_sent')}</p>
             <p className="text-2xl font-bold text-blue-600 mt-1">
               {campaigns.reduce((sum, c) => sum + c.metrics.total_sent, 0)}
             </p>
@@ -88,7 +90,7 @@ export default function DistributionPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-gray-600">Viewings Scheduled</p>
+            <p className="text-sm text-gray-600">{t('distribution.total_viewings')}</p>
             <p className="text-2xl font-bold text-purple-600 mt-1">
               {campaigns.reduce((sum, c) => sum + c.metrics.total_viewings, 0)}
             </p>
@@ -126,11 +128,11 @@ export default function DistributionPage() {
               {/* Campaign metrics */}
               <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="text-xs text-gray-600">Total Sent</p>
+                  <p className="text-xs text-gray-600">{t('distribution.sent')}</p>
                   <p className="text-xl font-bold text-gray-900 mt-1">{campaign.metrics.total_sent}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Responses</p>
+                  <p className="text-xs text-gray-600">{t('distribution.responses')}</p>
                   <p className="text-xl font-bold text-blue-600 mt-1">{campaign.metrics.total_responses}</p>
                 </div>
                 <div>
@@ -138,20 +140,20 @@ export default function DistributionPage() {
                   <p className="text-xl font-bold text-green-600 mt-1">{campaign.metrics.response_rate.toFixed(1)}%</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Viewings</p>
+                  <p className="text-xs text-gray-600">{t('distribution.viewings')}</p>
                   <p className="text-xl font-bold text-purple-600 mt-1">{campaign.metrics.total_viewings}</p>
                 </div>
               </div>
 
               {/* Waves */}
               <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Distribution Waves</h4>
+                <h4 className="font-semibold text-gray-900 mb-3">{t('distribution.wave')}s</h4>
                 <div className="space-y-2">
                   {campaign.waves.map(w => (
                     <div key={w.wave} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">Wave {w.wave}</p>
+                          <p className="font-medium text-gray-900">{t('distribution.wave')} {w.wave}</p>
                           <p className="text-sm text-gray-600 mt-1">
                             {w.agencies_count} agencies · {w.sent} sent · {w.responses} responses · {w.viewings} viewings
                           </p>
@@ -180,9 +182,9 @@ export default function DistributionPage() {
       {campaigns.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-gray-600 mb-4">No campaigns yet. Create your first property to start distributing.</p>
+            <p className="text-gray-600 mb-4">{t('distribution.no_campaigns_desc')}</p>
             <Link href="/properties/new">
-              <Button variant="primary">Add Property</Button>
+              <Button variant="primary">{t('distribution.list_property')}</Button>
             </Link>
           </CardContent>
         </Card>

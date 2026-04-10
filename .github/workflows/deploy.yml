@@ -1,4 +1,4 @@
-name: Build & Deploy to Netlify
+name: Build and Deploy to Netlify
 
 on:
   push:
@@ -8,27 +8,20 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-
       - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
-          NEXT_PUBLIC_DEMO_MODE: true
+          NEXT_PUBLIC_DEMO_MODE: "true"
           NEXT_PUBLIC_APP_URL: https://propblaze.com
-
       - name: Deploy to Netlify
         run: npx netlify-cli deploy --dir=out --prod --message "Deploy from GitHub Actions"
         env:
