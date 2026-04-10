@@ -519,11 +519,21 @@ export default function HomePage() {
         display:'flex', alignItems:'center',
         padding:'100px max(40px,calc(50vw - 640px)) 80px',
       }}>
-        {/* Ambient orbs */}
-        <div style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0 }}>
-          <div style={{ position:'absolute', top:'8%', left:'18%', width:700, height:700, borderRadius:'50%', background:'radial-gradient(circle, rgba(245,194,0,0.10) 0%, transparent 70%)', filter:'blur(80px)', animation:'breatheA 14s ease-in-out infinite' }}/>
-          <div style={{ position:'absolute', top:'40%', right:'5%', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,91,219,0.12) 0%, transparent 70%)', filter:'blur(80px)', animation:'breatheB 18s ease-in-out infinite 3s' }}/>
-          <div style={{ position:'absolute', bottom:'10%', left:'5%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(112,72,232,0.09) 0%, transparent 70%)', filter:'blur(80px)', animation:'breatheC 20s ease-in-out infinite 6s' }}/>
+        {/* YouTube Hero Video Background */}
+        <div style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
+          <iframe
+            src="https://www.youtube.com/embed/UBdgfwoZpNE?autoplay=1&mute=1&loop=1&playlist=UBdgfwoZpNE&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1"
+            style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'177.78vh', height:'100vh', minWidth:'100%', minHeight:'56.25vw', border:'none', pointerEvents:'none' }}
+            allow="autoplay; encrypted-media"
+            title=""
+            aria-hidden="true"
+          />
+          {/* Cinematic dark overlay */}
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(5,5,15,0.70) 0%, rgba(5,5,15,0.52) 50%, rgba(5,5,15,0.70) 100%)' }}/>
+          {/* Vignette */}
+          <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.60) 100%)' }}/>
+          {/* Subtle gold tint overlay at bottom */}
+          <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'30%', background:'linear-gradient(to top, rgba(5,5,15,0.8) 0%, transparent 100%)' }}/>
           {/* Dot grid */}
           <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}><svg style={{position:'absolute',width:'100%',height:'100%',opacity:0.065,animation:'droneDrift 32s linear infinite'}} viewBox='0 0 1280 900' preserveAspectRatio='xMidYMid slice'><line x1='0' y1='0' x2='0' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='160' y1='0' x2='160' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='320' y1='0' x2='320' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='480' y1='0' x2='480' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='640' y1='0' x2='640' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='800' y1='0' x2='800' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='960' y1='0' x2='960' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='1120' y1='0' x2='1120' y2='900' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='120' x2='1280' y2='120' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='240' x2='1280' y2='240' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='360' x2='1280' y2='360' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='480' x2='1280' y2='480' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='600' x2='1280' y2='600' stroke='#fff' strokeWidth='0.5'/><line x1='0' y1='720' x2='1280' y2='720' stroke='#fff' strokeWidth='0.5'/><rect x='40' y='20' width='90' height='70' rx='4' fill='rgba(245,194,0,0.55)'/><rect x='290' y='15' width='110' height='85' rx='5' fill='rgba(59,91,219,0.5)'/><rect x='560' y='10' width='95' height='80' rx='4' fill='rgba(245,194,0,0.4)'/><rect x='700' y='25' width='130' height='95' rx='6' fill='rgba(59,91,219,0.45)'/><rect x='200' y='155' width='120' height='90' rx='5' fill='rgba(245,194,0,0.45)'/><rect x='820' y='145' width='140' height='100' rx='6' fill='rgba(59,91,219,0.4)'/><rect x='40' y='290' width='110' height='80' rx='5' fill='rgba(59,91,219,0.35)'/><rect x='510' y='295' width='115' height='85' rx='5' fill='rgba(245,194,0,0.42)'/><rect x='490' y='395' width='155' height='115' rx='8' fill='rgba(245,194,0,0.6)' stroke='rgba(245,194,0,0.85)' strokeWidth='2'/><ellipse cx='618' cy='288' rx='24' ry='17' fill='rgba(96,165,250,0.4)'/><ellipse cx='178' cy='448' rx='30' ry='21' fill='rgba(74,222,128,0.3)'/></svg></div><div style={{position:'absolute',top:86,right:42,opacity:0.2,fontFamily:'monospace',fontSize:'0.62rem',color:'rgba(245,194,0,1)',lineHeight:2,animation:'breatheA 9s ease-in-out infinite',letterSpacing:'0.04em'}}><div>ALT  148m</div><div>LAT  43.8N</div><div>LON  18.4E</div><div>PROPBLAZE</div></div><div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px)', backgroundSize:'48px 48px', opacity:0.6 }}/>
         </div>
