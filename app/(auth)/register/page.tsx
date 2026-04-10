@@ -92,12 +92,15 @@ function RoleCard({ role, active, onClick }: { role: Role; active: boolean; onCl
 
 // ─── Owner registration form ───────────────────────────────────────────────────
 function OwnerForm({ onDone }: { onDone: () => void }) {
-  const { register, isLoading, error } = useAuth();
+  const { register, isLoading, error, clearError } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', phone: '', country: 'Montenegro', password: '', confirm: '' });
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [showPw, setShowPw] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+
+  // Clear any stale login/auth errors from previous page when form mounts
+  useEffect(() => { clearError(); }, []);
 
   const validate = () => {
     const e: Record<string, string> = {};

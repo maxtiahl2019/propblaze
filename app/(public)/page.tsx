@@ -506,6 +506,18 @@ function Navbar() {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
+  // ── Catch Supabase email-confirmation hash tokens on root URL ──────────────
+  // When Supabase Site URL is set to root (e.g. localhost:3000 or propblaze.com),
+  // it lands here instead of /auth/confirm. We forward automatically.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      // Preserve full hash and redirect to the confirm handler page
+      window.location.replace(`/auth/confirm${hash}`);
+    }
+  }, []);
+
   return (
     <div style={{ background:C.bg, minHeight:'100vh', color:C.white, fontFamily:"'Inter',system-ui,sans-serif", overflowX:'hidden' }}>
       <GlobalStyles/>

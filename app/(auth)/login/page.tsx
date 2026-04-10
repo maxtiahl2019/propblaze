@@ -26,7 +26,10 @@ const C = {
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
-  const { login, isLoading, error, isAuthenticated } = useAuth();
+  const { login, isLoading, error, isAuthenticated, clearError } = useAuth();
+
+  // Clear stale errors when page mounts
+  useEffect(() => { clearError(); }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
