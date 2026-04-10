@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // output: 'export' removed — SSR mode enables API routes on Netlify
+  // @netlify/plugin-nextjs handles server-side rendering automatically
   trailingSlash: true,
   reactStrictMode: true,
   eslint: {

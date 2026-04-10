@@ -1,4 +1,3 @@
-export const dynamic = "force-static";
 /**
  * POST /api/match-agencies
  *

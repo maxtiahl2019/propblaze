@@ -67,6 +67,7 @@ export default function PropertiesNewPage() {
 
   // Step 3: Photos
   const [photos, setPhotos] = useState<string[]>([]);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
@@ -103,6 +104,29 @@ export default function PropertiesNewPage() {
     recognition.start();
   };
 
+  // ── Photo upload ─────────────────────────────────────────────────────────
+  const handlePhotoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsUploadingPhoto(true);
+    const uploaded: string[] = [];
+    for (const file of Array.from(files)) {
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('bucket', 'property-photos');
+        fd.append('path', `prop-${Date.now()}`);
+        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.url) uploaded.push(data.url);
+        else uploaded.push(URL.createObjectURL(file)); // local preview fallback
+      } catch {
+        uploaded.push(URL.createObjectURL(file)); // offline fallback
+      }
+    }
+    setPhotos(prev => [...prev, ...uploaded]);
+    setIsUploadingPhoto(false);
+  };
+
   return () => clearTimeout(timer);
   }, [property, shortDesc, photos]);
 
@@ -131,29 +155,45 @@ export default function PropertiesNewPage() {
 
   const handleGenerateAI = async () => {
     setIsGeneratingAI(true);
-    // Simulate AI generation (2 seconds)
-    await new Promise((r) => setTimeout(r, 2000));
-
-    const pack: AIPackData = {
-      headline: `Luxury ${property.type} in ${property.city} — Premium ${property.mode === 'sale' ? 'Investment' : 'Rental'} Opportunity`,
-      description: `This stunning ${property.type} in ${property.city}, ${property.country} offers ${property.areaSqm}m² of sophisticated living space. Located in one of the most sought-after areas, this property combines modern comfort with timeless elegance. The open-plan living areas are perfectly designed for contemporary lifestyles, featuring premium finishes throughout. With ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms, this residence is ideal for families and investors alike. The property boasts excellent natural light, high ceilings, and a thoughtfully curated layout that maximizes both functionality and aesthetics.\n\nEach room has been meticulously designed with attention to detail, featuring quality materials and state-of-the-art amenities. The location provides easy access to shopping, dining, cultural venues, and excellent public transportation links. Whether you're looking for a primary residence, vacation home, or investment property, this exceptional offering delivers outstanding value and lifestyle benefits.\n\nThis is a rare opportunity to acquire a premium property in a thriving market. The area has demonstrated strong appreciation and rental demand. Contact us today to schedule an exclusive viewing and discover why this property represents an excellent choice for discerning buyers.`,
-      keyFeatures: [
-        `${property.areaSqm}m² of premium living space`,
-        `${property.bedrooms} spacious bedrooms with ensuite bathrooms`,
-        `${property.bathrooms} modern bathrooms with luxury finishes`,
-        'Open-plan living areas with high ceilings',
-        'Modern kitchen with integrated appliances',
-        `Prime location in ${property.city}`,
-      ],
-      investmentHighlights: [
-        'Strong property appreciation in the area',
-        'High rental yield potential and demand',
-        'Excellent location with infrastructure development',
-      ],
-      targetBuyerProfile: 'HNW investors, European expats, families seeking premium residences',
-    };
-
-    setAIPackData(pack);
+    try {
+      const res = await fetch('/api/generate-pack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property, shortDesc: property.description }),
+      });
+      const data = await res.json();
+      if (data && (data.headline || data.description)) {
+        setAIPackData({
+          headline: data.headline || '',
+          description: data.description || '',
+          keyFeatures: data.keyFeatures || [],
+          investmentHighlights: data.investmentHighlights || [],
+          targetBuyerProfile: data.targetBuyerProfile || '',
+          agencyEmailSubject: data.agencyEmailSubject || '',
+        });
+      } else {
+        throw new Error('Empty response');
+      }
+    } catch (err) {
+      console.error('[handleGenerateAI] error:', err);
+      // Fallback — local template so user is never stuck
+      setAIPackData({
+        headline: `${property.type.charAt(0).toUpperCase() + property.type.slice(1)} in ${property.city} — ${property.mode === 'sale' ? 'Investment' : 'Rental'} Opportunity`,
+        description: `Premium ${property.type} offering ${property.areaSqm}m² in ${property.city}, ${property.country}. ${property.bedrooms} beds, ${property.bathrooms} baths. Exceptional location with strong appreciation potential.`,
+        keyFeatures: [
+          `${property.areaSqm}m² of premium living space`,
+          `${property.bedrooms} bedrooms, ${property.bathrooms} bathrooms`,
+          `Prime location in ${property.city}`,
+          'Modern finishes throughout',
+        ],
+        investmentHighlights: [
+          'Strong appreciation potential',
+          'High rental demand in area',
+        ],
+        targetBuyerProfile: 'European investors and expats seeking premium property',
+        agencyEmailSubject: '',
+      });
+    }
     setIsGeneratingAI(false);
   };
 
@@ -161,32 +201,38 @@ export default function PropertiesNewPage() {
     setIsSending(true);
     setSendProgress(0);
 
-    // Simulate distribution to 10 agencies
-    for (let i = 0; i < 10; i++) {
-      await new Promise((r) => setTimeout(r, 300));
-      setSendProgress(Math.round(((i + 1) / 10) * 100));
+    // Animate progress while API runs
+    let tick = 0;
+    const progressInterval = setInterval(() => {
+      tick += 1;
+      // Ramp up to 85% while waiting, leave last 15% for completion
+      setSendProgress(Math.min(85, Math.round((tick / 20) * 85)));
+    }, 400);
 
-      // On 9th agency (Win-Win Solution), send real email
-      if (i === 8 && aiPackData) {
-        try {
-          const emailBody = generateEmailHTML();
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer re_K7ZtSKPE_EvUtEnCFCMoRCH1JjY2EgmMd',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              from: 'PropBlaze Platform <onboarding@resend.dev>',
-              to: 'contact@win-winsolution.com',
-              subject: `🏡 New Property Offer: ${property.type} in ${property.city} — PropBlaze AI Match`,
-              html: emailBody,
-            }),
-          });
-        } catch (error) {
-          console.error('Email send failed:', error);
-        }
-      }
+    try {
+      const ownerEmail =
+        (typeof window !== 'undefined' ? (window as any).__PROPBLAZE_OWNER_EMAIL : null) ||
+        'contact@win-winsolution.com';
+
+      const res = await fetch('/api/distribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          property,
+          aiPack: aiPackData,
+          ownerEmail,
+          wave: 1,
+        }),
+      });
+
+      const data = await res.json();
+      clearInterval(progressInterval);
+      setSendProgress(100);
+      console.log('[distribute] result:', data);
+    } catch (err) {
+      console.error('[handleSendDistribution] error:', err);
+      clearInterval(progressInterval);
+      setSendProgress(100);
     }
 
     setIsSending(false);
@@ -851,7 +897,7 @@ export default function PropertiesNewPage() {
                   Tap to open camera — take multiple shots
                 </div>
               </div>
-              <input type="file" accept="image/*" capture="environment" multiple style={{ display: 'none' }} />
+              <input type="file" accept="image/*" capture="environment" multiple style={{ display: 'none' }} onChange={e => handlePhotoUpload(e.target.files)} />
             </label>
 
             {/* Secondary: gallery */}
@@ -862,9 +908,9 @@ export default function PropertiesNewPage() {
             }}>
               <span style={{ fontSize: 22 }}>🖼️</span>
               <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
-                Choose from Gallery / Files
+                {isUploadingPhoto ? 'Uploading...' : 'Choose from Gallery / Files'}
               </span>
-              <input type="file" accept="image/*" multiple style={{ display: 'none' }} />
+              <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handlePhotoUpload(e.target.files)} />
             </label>
 
             {/* AI tip */}
@@ -921,7 +967,7 @@ export default function PropertiesNewPage() {
                   <div style={{ fontSize: '1rem', fontWeight: 700, color: '#F5C200', marginBottom: 3 }}>Photograph Document</div>
                   <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>AI enhances contrast automatically</div>
                 </div>
-                <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} />
+                <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => handlePhotoUpload(e.target.files)} />
               </label>
               <label style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -930,7 +976,7 @@ export default function PropertiesNewPage() {
               }}>
                 <span style={{ fontSize: 20 }}>📁</span>
                 <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Upload PDF from Files</span>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} />
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={e => handlePhotoUpload(e.target.files)} />
               </label>
             </div>
 
@@ -955,7 +1001,7 @@ export default function PropertiesNewPage() {
                     <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{doc.hint}</div>
                   </div>
                   <span style={{ fontSize: '0.75rem', color: '#F5C200', fontWeight: 600 }}>+ Add</span>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png,image/*" style={{ display: 'none' }} />
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png,image/*" style={{ display: 'none' }} onChange={e => handlePhotoUpload(e.target.files)} />
                 </label>
               ))}
             </div>
