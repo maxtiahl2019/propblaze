@@ -50,22 +50,22 @@ export default function PropertiesNewPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [draftSaved, setDraftSaved] = useState(false);
 
-  // Step 1: Basic info — pre-filled for demo speed
+  // Step 1: Basic info
   const [property, setProperty] = useState<PropertyData>({
     type: 'Apartment',
-    address: 'Knez Mihailova 28',
-    city: 'Belgrade',
-    country: 'Serbia',
-    areaSqm: 75,
-    bedrooms: 2,
+    address: '',
+    city: '',
+    country: '',
+    areaSqm: 0,
+    bedrooms: 1,
     bathrooms: 1,
     mode: 'sale',
-    price: 145000,
+    price: 0,
     currency: 'EUR',
   });
 
-  // Step 2: AI Description — pre-filled hint
-  const [shortDesc, setShortDesc] = useState('Renovated city-centre apartment in Belgrade\'s pedestrian zone. Floor 5, high ceilings, new kitchen. 5 min to Kalemegdan fortress.');
+  // Step 2: AI Description
+  const [shortDesc, setShortDesc] = useState('');
   const [aiPackData, setAIPackData] = useState<AIPackData | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
