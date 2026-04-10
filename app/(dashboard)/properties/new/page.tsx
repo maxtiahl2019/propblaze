@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { runAPEX, type APEXResult, type APEXAgencyResult, type AgencyChannel } from '@/lib/ai-matching/apex-engine';
 import { DEMO_AGENCY_POOL } from '@/lib/ai-matching/demo-agencies';
+// DEMO_AGENCY_POOL contains real agency data — in production replaced by /api/agencies
 
 const CSS_VARS = {
   bg: '#080810',

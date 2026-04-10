@@ -11,7 +11,7 @@
  */
 
 import type { Agency } from './engine'
-import { DEMO_AGENCY_POOL } from './demo-agencies'
+import { DEMO_AGENCY_POOL, type RealAgency } from './demo-agencies'
 
 // ─── Input from wizard ─────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ export interface WizardProperty {
 export type AgencyChannel = 'local' | 'cross_border' | 'stealth'
 
 export interface APEXAgencyResult {
-  agency: Agency & { website?: string; email?: string; city?: string; flag?: string }
+  agency: RealAgency
   channel: AgencyChannel
   apex_score: number         // 0–100 final
   local_score: number
@@ -519,7 +519,7 @@ function buildDealSignals(agency: Agency, dna: PropertyDNA): string[] {
 
 // ─── MAIN APEX RUN ────────────────────────────────────────────────────────────
 
-export function runAPEX(prop: WizardProperty, agencies: Agency[] = DEMO_AGENCY_POOL): APEXResult {
+export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGENCY_POOL): APEXResult {
   const dna = buildPropertyDNA(prop)
   const warnings: string[] = []
 
