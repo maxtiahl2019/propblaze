@@ -74,6 +74,16 @@ export default function PropertiesNewPage() {
   // Step 3: Photos
   const [photos, setPhotos] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Step 4: Documents
+  interface DocFile { name: string; size: number; url: string; type: string }
+  const [titleDeed, setTitleDeed] = useState<DocFile | null>(null);
+  const [idDocument, setIdDocument] = useState<DocFile | null>(null);
+  const [otherDocs, setOtherDocs] = useState<DocFile[]>([]);
+  const titleDeedRef = React.useRef<HTMLInputElement>(null);
+  const idDocRef = React.useRef<HTMLInputElement>(null);
+  const otherDocRef = React.useRef<HTMLInputElement>(null);
 
   // Step 4: Distribution + APEX
   const [isSending, setIsSending] = useState(false);
@@ -95,9 +105,9 @@ export default function PropertiesNewPage() {
     return () => clearTimeout(timer);
   }, [property, shortDesc, photos]);
 
-  // Run APEX when entering Step 4 (index 3)
+  // Run APEX when entering Step 5 (index 4 = Launch)
   useEffect(() => {
-    if (currentStep === 3 && !apexResult && !apexLoading) {
+    if (currentStep === 4 && !apexResult && !apexLoading) {
       setApexLoading(true);
       setTimeout(() => {
         try {
@@ -140,9 +150,11 @@ export default function PropertiesNewPage() {
       case 1:
         return !!(shortDesc.length >= 10 && aiPackData);
       case 2:
-        return true;
+        return true;   // Photos optional
       case 3:
-        return true;
+        return true;   // Documents optional
+      case 4:
+        return true;   // Launch
       default:
         return false;
     }
@@ -396,7 +408,7 @@ export default function PropertiesNewPage() {
     );
   }
 
-  const STEPS = ['Property Details', 'AI Packaging', 'Photos', 'Launch'];
+  const STEPS = ['Property Details', 'AI Packaging', 'Photos', 'Documents', 'Launch'];
 
   return (
     <div style={{ minHeight: '100vh', background: CSS_VARS.bg, padding: '40px 24px 100px', fontFamily: "'Inter',system-ui,sans-serif", color: CSS_VARS.text }}>
@@ -826,79 +838,218 @@ export default function PropertiesNewPage() {
         {/* Step 3: Photos */}
         {currentStep === 2 && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
-              Photos & Documents
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
+              📸 Property Photos
             </h2>
+            <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 24 }}>
+              Добавьте фотографии — агентства получат их вместе с оффером. Этот шаг необязателен.
+            </p>
 
+            {/* Hidden file input */}
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                files.slice(0, 20 - photos.length).forEach(file => {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    if (ev.target?.result) {
+                      setPhotos(prev => [...prev, ev.target!.result as string].slice(0, 20));
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                });
+                e.target.value = '';
+              }}
+            />
+
+            {/* Drop zone */}
             <div
-              onDragEnter={() => setDragActive(true)}
+              onClick={() => photoInputRef.current?.click()}
+              onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
-              onDrop={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                files.slice(0, 20 - photos.length).forEach(file => {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    if (ev.target?.result) {
+                      setPhotos(prev => [...prev, ev.target!.result as string].slice(0, 20));
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                });
+              }}
               style={{
                 border: `2px dashed ${dragActive ? CSS_VARS.primary : CSS_VARS.border}`,
-                borderRadius: 12,
-                padding: 40,
-                textAlign: 'center',
+                borderRadius: 12, padding: '32px 24px', textAlign: 'center',
                 background: dragActive ? CSS_VARS.primaryLight : CSS_VARS.surface2,
-                marginBottom: 24,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
+                marginBottom: 20, cursor: 'pointer', transition: 'all 0.2s',
               }}
             >
-              <div style={{ fontSize: 28, marginBottom: 8 }}>📸</div>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
               <div style={{ fontSize: 13, fontWeight: 600, color: CSS_VARS.text, marginBottom: 4 }}>
-                Drag and drop photos here
+                Нажмите или перетащите фото сюда
               </div>
               <div style={{ fontSize: 12, color: CSS_VARS.textSecondary }}>
-                Up to 20 photos (JPG, PNG)
+                До 20 фото (JPG, PNG) · {photos.length}/20 загружено
               </div>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 12 }}>
-                Sample Photos
+            {/* Uploaded thumbnails */}
+            {photos.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+                  Загружено ({photos.length})
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                  {photos.map((src, i) => (
+                    <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', border: `1px solid ${CSS_VARS.border}` }}>
+                      <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button
+                        onClick={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                        style={{
+                          position: 'absolute', top: 4, right: 4, width: 20, height: 20,
+                          borderRadius: '50%', background: 'rgba(0,0,0,0.7)', border: 'none',
+                          color: 'white', fontSize: 12, cursor: 'pointer', display: 'flex',
+                          alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+                        }}
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    style={{
-                      aspectRatio: '1',
-                      background: CSS_VARS.surface2,
-                      borderRadius: 8,
-                      border: `1px solid ${CSS_VARS.border}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: CSS_VARS.textTertiary,
-                      fontSize: 12,
-                    }}
-                  >
-                    Sample Photo {i}
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
 
-            <a
-              href="/documents"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                color: CSS_VARS.primary,
-                textDecoration: 'none',
-              }}
-            >
-              📁 Your Documents Vault
-            </a>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(245,194,0,0.06)', border: '1px solid rgba(245,194,0,0.15)', borderRadius: 8, fontSize: 12, color: CSS_VARS.textSecondary }}>
+              <span>💡</span>
+              <span>Документы (право собственности, паспорт) — на следующем шаге</span>
+            </div>
           </div>
         )}
 
-        {/* Step 4: APEX Distribution */}
+        {/* Step 4: Documents */}
         {currentStep === 3 && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
+              📄 Документы
+            </h2>
+            <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 24 }}>
+              Загрузите подтверждающие документы. Они <strong style={{ color: CSS_VARS.text }}>не отправляются</strong> агентствам автоматически — только по вашему запросу.
+            </p>
+
+            {/* Hidden file inputs */}
+            <input ref={titleDeedRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) { const url = URL.createObjectURL(f); setTitleDeed({ name: f.name, size: f.size, url, type: f.type }); }
+                e.target.value = '';
+              }} />
+            <input ref={idDocRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) { const url = URL.createObjectURL(f); setIdDocument({ name: f.name, size: f.size, url, type: f.type }); }
+                e.target.value = '';
+              }} />
+            <input ref={otherDocRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple style={{ display: 'none' }}
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                setOtherDocs(prev => [...prev, ...files.map(f => ({ name: f.name, size: f.size, url: URL.createObjectURL(f), type: f.type }))]);
+                e.target.value = '';
+              }} />
+
+            {/* Title Deed */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
+                🏠 Право собственности (Title Deed)
+                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.green, fontWeight: 600 }}>рекомендуется</span>
+              </div>
+              {titleDeed ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: CSS_VARS.greenDim, border: `1px solid rgba(34,197,94,0.3)`, borderRadius: 10 }}>
+                  <span style={{ fontSize: 20 }}>{titleDeed.type === 'application/pdf' ? '📄' : '🖼️'}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titleDeed.name}</div>
+                    <div style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>{(titleDeed.size / 1024).toFixed(0)} KB</div>
+                  </div>
+                  <button onClick={() => setTitleDeed(null)} style={{ background: 'none', border: 'none', color: CSS_VARS.textTertiary, cursor: 'pointer', fontSize: 16 }}>×</button>
+                </div>
+              ) : (
+                <button onClick={() => titleDeedRef.current?.click()} style={{
+                  width: '100%', padding: '14px', border: `2px dashed ${CSS_VARS.border}`, borderRadius: 10,
+                  background: CSS_VARS.surface2, color: CSS_VARS.textSecondary, fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  <span>⬆️</span> Загрузить PDF или фото документа
+                </button>
+              )}
+            </div>
+
+            {/* ID Document */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
+                🪪 Удостоверение личности / Паспорт
+                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.textTertiary, fontWeight: 500 }}>необязательно</span>
+              </div>
+              {idDocument ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: CSS_VARS.greenDim, border: `1px solid rgba(34,197,94,0.3)`, borderRadius: 10 }}>
+                  <span style={{ fontSize: 20 }}>{idDocument.type === 'application/pdf' ? '📄' : '🖼️'}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{idDocument.name}</div>
+                    <div style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>{(idDocument.size / 1024).toFixed(0)} KB</div>
+                  </div>
+                  <button onClick={() => setIdDocument(null)} style={{ background: 'none', border: 'none', color: CSS_VARS.textTertiary, cursor: 'pointer', fontSize: 16 }}>×</button>
+                </div>
+              ) : (
+                <button onClick={() => idDocRef.current?.click()} style={{
+                  width: '100%', padding: '14px', border: `2px dashed ${CSS_VARS.border}`, borderRadius: 10,
+                  background: CSS_VARS.surface2, color: CSS_VARS.textSecondary, fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  <span>⬆️</span> Загрузить паспорт / ID
+                </button>
+              )}
+            </div>
+
+            {/* Other documents */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
+                📁 Другие документы
+                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.textTertiary, fontWeight: 500 }}>необязательно</span>
+              </div>
+              {otherDocs.map((doc, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: CSS_VARS.surface2, border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, marginBottom: 6 }}>
+                  <span>📄</span>
+                  <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.name}</div>
+                  <span style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>{(doc.size / 1024).toFixed(0)} KB</span>
+                  <button onClick={() => setOtherDocs(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', color: CSS_VARS.textTertiary, cursor: 'pointer', fontSize: 16 }}>×</button>
+                </div>
+              ))}
+              <button onClick={() => otherDocRef.current?.click()} style={{
+                width: '100%', padding: '10px', border: `1px dashed ${CSS_VARS.border}`, borderRadius: 8,
+                background: 'transparent', color: CSS_VARS.textTertiary, fontSize: 12, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}>
+                + Добавить документ
+              </button>
+            </div>
+
+            {/* Privacy note */}
+            <div style={{ padding: '12px 14px', background: 'rgba(59,91,219,0.08)', border: '1px solid rgba(59,91,219,0.2)', borderRadius: 10, fontSize: 11, color: CSS_VARS.textSecondary, display: 'flex', gap: 8 }}>
+              <span>🔒</span>
+              <span>Документы хранятся зашифрованными и <strong style={{ color: CSS_VARS.text }}>не передаются агентствам</strong> без вашего явного согласия. GDPR-compliant.</span>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: APEX Distribution */}
+        {currentStep === 4 && (
           <div>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
@@ -1212,13 +1363,13 @@ export default function PropertiesNewPage() {
 
         <button
           onClick={() => {
-            if (currentStep === 3) {
+            if (currentStep === 4) {
               handleSendDistribution();
             } else {
               setCurrentStep(currentStep + 1);
             }
           }}
-          disabled={!canProceed() || isSending || (currentStep === 3 && apexLoading)}
+          disabled={!canProceed() || isSending || (currentStep === 4 && apexLoading)}
           style={{
             padding: '13px 32px',
             background: canProceed() && !isSending ? CSS_VARS.primary : CSS_VARS.surface2,
@@ -1238,7 +1389,7 @@ export default function PropertiesNewPage() {
               <div style={{ width: 14, height: 14, border: '2px solid rgba(0,0,0,0.3)', borderTopColor: '#080810', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
               Sending to agencies…
             </>
-          ) : currentStep === 3 ? (
+          ) : currentStep === 4 ? (
             <>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {apexResult
