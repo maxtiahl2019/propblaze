@@ -18,10 +18,22 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const verify = async () => {
-      // Demo mode — allow through
+      // 1. Env-level demo mode — allow through
       if (DEMO_MODE) { setVerified(true); return; }
 
-      // Supabase: verify there's a real live session
+      // 2. Demo token in localStorage — allow through (Enter Demo button)
+      try {
+        const stored = localStorage.getItem('propblaze-auth');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.state?.token === 'demo-token') {
+            setVerified(true);
+            return;
+          }
+        }
+      } catch {}
+
+      // 3. Supabase: verify there's a real live session
       if (isSupabaseConfigured) {
         const { data } = await supabase.auth.getSession();
         if (!data.session) {
@@ -33,7 +45,7 @@ export default function DashboardLayout({
         return;
       }
 
-      // Fallback (no Supabase): redirect to login always
+      // 4. Fallback (no Supabase): redirect to login always
       router.replace('/login');
     };
     verify();

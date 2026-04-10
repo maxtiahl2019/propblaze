@@ -61,7 +61,7 @@ export default function LoginPage() {
 
   const handleDemoLogin = () => {
     if (typeof window !== 'undefined') {
-      // Write correct Zustand persist format (wrapped in "state")
+      // Write Zustand persist format so store hydrates immediately
       localStorage.setItem('propblaze-auth', JSON.stringify({
         state: {
           isAuthenticated: true,
@@ -70,8 +70,10 @@ export default function LoginPage() {
         },
         version: 0,
       }));
+      // Full page reload so Zustand reads fresh from localStorage
+      // and dashboard layout sees the demo token without Supabase check
+      window.location.href = '/dashboard';
     }
-    router.push('/dashboard');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
