@@ -531,25 +531,15 @@ export default function HomePage() {
         display:'flex', alignItems:'center',
         padding:'clamp(80px,10vh,120px) max(16px,calc(50vw - 640px)) clamp(60px,8vh,80px)',
       }}>
-        {/* Local Hero Video Background */}
+        {/* Hero Video Background */}
         <div style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
+          <iframe
+            src="https://www.youtube.com/embed/UBdgfwoZpNE?autoplay=1&mute=1&loop=1&playlist=UBdgfwoZpNE&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1"
+            style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'177.78vh', height:'100vh', minWidth:'100%', minHeight:'56.25vw', border:'none', pointerEvents:'none' }}
+            allow="autoplay; encrypted-media"
+            title=""
             aria-hidden="true"
-            style={{
-              position:'absolute', top:'50%', left:'50%',
-              transform:'translate(-50%,-50%)',
-              width:'177.78vh', height:'100vh',
-              minWidth:'100%', minHeight:'56.25vw',
-              objectFit:'cover', pointerEvents:'none',
-            }}
-          >
-            <source src="/hero-bg.mp4" type="video/mp4" />
-          </video>
+          />
           {/* Cinematic dark overlay */}
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(5,5,15,0.70) 0%, rgba(5,5,15,0.52) 50%, rgba(5,5,15,0.70) 100%)' }}/>
           {/* Vignette */}
