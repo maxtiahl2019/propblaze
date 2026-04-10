@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 
 const D = {
-  bg: '#080810', surface: 'rgba(255,255,255,0.05)', surface2: 'rgba(255,255,255,0.09)',
-  border: 'rgba(255,255,255,0.09)', border2: 'rgba(255,255,255,0.18)',
+  bg: '#10101E', surface: 'rgba(255,255,255,0.07)', surface2: 'rgba(255,255,255,0.12)',
+  border: 'rgba(255,255,255,0.10)', border2: 'rgba(255,255,255,0.22)',
   yellow: '#F5C200', green: '#22C55E', red: '#EF4444', blue: '#3B5BDB',
   white: '#FFFFFF',
-  w80: 'rgba(255,255,255,0.80)', w60: 'rgba(255,255,255,0.60)',
-  w40: 'rgba(255,255,255,0.40)', w20: 'rgba(255,255,255,0.20)',
+  w80: 'rgba(255,255,255,0.88)', w60: 'rgba(255,255,255,0.68)',
+  w40: 'rgba(255,255,255,0.48)', w20: 'rgba(255,255,255,0.28)',
 };
 
 const PLANS = [
