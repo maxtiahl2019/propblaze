@@ -1,21 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth, DEMO_MODE } from '@/store/auth';
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-  return isMobile;
-}
 
 export default function DashboardLayout({
   children,
@@ -24,7 +13,6 @@ export default function DashboardLayout({
 }) {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -34,38 +22,19 @@ export default function DashboardLayout({
 
   if (!isAuthenticated) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#080810',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              background: '#3B5BDB',
-              borderRadius: 9,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#080810' }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.75rem' }}>
+          <div style={{ width:36, height:36, background:'#3B5BDB', borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M9 1.5L2 7.5V16.5H6.5V12H11.5V16.5H16V7.5L9 1.5Z" fill="white" fillOpacity="0.9"/>
             </svg>
           </div>
-          <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)' }}>Loading…</p>
+          <p style={{ fontSize:'0.8125rem', color:'rgba(255,255,255,0.5)' }}>Loading…</p>
         </div>
       </div>
     );
   }
 
-  // ── Dark sidebar CSS variable overrides ──────────────────────────────────
   const darkSidebarVars = {
     '--bg-sidebar':     '#0D0D1A',
     '--surface':        'rgba(255,255,255,0.05)',
@@ -86,51 +55,35 @@ export default function DashboardLayout({
   } as React.CSSProperties;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#080810', flexDirection: 'column' }}>
-      {/* Demo banner — compact on mobile */}
+    <div style={{ display:'flex', minHeight:'100vh', background:'#080810', flexDirection:'column' }}>
+      {/* Demo banner */}
       {DEMO_MODE && (
         <div style={{
-          background: 'linear-gradient(90deg, #F5C200, #E07B00)',
-          color: '#080810',
-          fontSize: isMobile ? '0.6rem' : '0.68rem',
-          fontWeight: 700,
-          textAlign: 'center',
-          padding: isMobile ? '4px 12px' : '5px 16px',
-          letterSpacing: '0.04em',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-        }}>
+          background:'linear-gradient(90deg,#F5C200,#E07B00)',
+          color:'#080810', fontWeight:700, textAlign:'center',
+          letterSpacing:'0.04em', display:'flex', alignItems:'center',
+          justifyContent:'center', gap:6,
+        }} className="demo-banner">
           <span>🚀</span>
-          <span>{isMobile ? 'DEMO MODE · PropBlaze' : 'DEMO MODE — PropBlaze · AI Property Distribution Preview'}</span>
-          {!isMobile && <span style={{ opacity: 0.6 }}>· demo@propblaze.eu</span>}
+          <span className="demo-banner-full">DEMO MODE — PropBlaze · AI Property Distribution Preview</span>
+          <span className="demo-banner-short">DEMO MODE · PropBlaze</span>
         </div>
       )}
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* Sidebar — desktop only */}
-        {!isMobile && (
-          <div style={darkSidebarVars}>
-            <Sidebar />
-          </div>
-        )}
+      <div style={{ display:'flex', flex:1, minHeight:0 }}>
+        {/* Sidebar — hidden on mobile via CSS */}
+        <div style={darkSidebarVars} className="sidebar-wrap">
+          <Sidebar />
+        </div>
 
         {/* Main content */}
-        <main style={{
-          flex: 1,
-          minWidth: 0,
-          overflow: 'auto',
-          background: '#080810',
-          // On mobile, add bottom padding to clear the nav bar
-          paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : 0,
-        }}>
+        <main className="dash-main" style={{ flex:1, minWidth:0, overflow:'auto', background:'#080810' }}>
           {children}
         </main>
       </div>
 
-      {/* Bottom nav — mobile only */}
-      {isMobile && <MobileBottomNav />}
+      {/* Bottom nav — shown on mobile via CSS */}
+      <MobileBottomNav />
     </div>
   );
 }

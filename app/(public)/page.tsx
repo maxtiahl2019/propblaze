@@ -633,7 +633,7 @@ export default function HomePage() {
           </div>
 
           {/* ── Right: deal dashboard ────────────────────────────────────── */}
-          <div style={{ display:'flex', justifyContent:'center', paddingRight:40 }}>
+          <div className="hero-right-panel" style={{ display:'flex', justifyContent:'center', paddingRight:40 }}>
             <DealDashboard/>
           </div>
         </div>

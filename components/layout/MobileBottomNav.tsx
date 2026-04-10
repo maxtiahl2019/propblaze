@@ -35,7 +35,8 @@ const TABS = [
     badge: 3,
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <circle cx="8" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="8" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.5"
+          fill={active ? 'rgba(245,194,0,0.1)' : 'none'}/>
         <path d="M2 19c0-3.31 2.69-6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         <path d="M16 12v7M12.5 15.5H19.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
@@ -71,101 +72,74 @@ export const MobileBottomNav: React.FC = () => {
   const pathname = usePathname()
 
   return (
-    <>
-      {/* Spacer so content doesn't hide behind nav */}
-      <div style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))', display: 'block' }}
-           className="mobile-bottom-nav-spacer" />
-
-      <nav style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 200,
-        background: 'rgba(10,10,20,0.97)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        display: 'flex',
-        alignItems: 'stretch',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        height: 'calc(64px + env(safe-area-inset-bottom, 0px))',
-      }}>
-        {TABS.map(tab => {
-          const active = pathname === tab.href || pathname.startsWith(tab.href + '/')
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 3,
-                textDecoration: 'none',
-                color: active ? '#F5C200' : 'rgba(255,255,255,0.4)',
-                position: 'relative',
-                paddingTop: 8,
-                paddingBottom: 4,
-                transition: 'color 0.15s',
-              }}
-            >
-              {/* Badge */}
-              {tab.badge && (
-                <span style={{
-                  position: 'absolute',
-                  top: 6,
-                  right: 'calc(50% - 18px)',
-                  background: '#EF4444',
-                  color: 'white',
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  borderRadius: 99,
-                  minWidth: 16,
-                  height: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 4px',
-                  border: '1.5px solid #080810',
-                }}>
-                  {tab.badge}
-                </span>
-              )}
-
-              {/* Icon */}
-              {tab.icon(active)}
-
-              {/* Label */}
+    <nav className="mobile-bottom-nav" style={{
+      position:'fixed',
+      bottom:0,
+      left:0,
+      right:0,
+      zIndex:200,
+      background:'rgba(8,8,16,0.97)',
+      backdropFilter:'blur(20px)',
+      WebkitBackdropFilter:'blur(20px)',
+      borderTop:'1px solid rgba(255,255,255,0.09)',
+      display:'flex',
+      alignItems:'stretch',
+      paddingBottom:'env(safe-area-inset-bottom,0px)',
+      height:'calc(60px + env(safe-area-inset-bottom,0px))',
+    }}>
+      {TABS.map(tab => {
+        const active = pathname === tab.href || pathname.startsWith(tab.href + '/')
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            style={{
+              flex:1,
+              display:'flex',
+              flexDirection:'column',
+              alignItems:'center',
+              justifyContent:'center',
+              gap:3,
+              textDecoration:'none',
+              color: active ? '#F5C200' : 'rgba(255,255,255,0.38)',
+              position:'relative',
+              paddingTop:8,
+              paddingBottom:4,
+              transition:'color 0.15s',
+              minHeight:44,
+            }}
+          >
+            {tab.badge && (
               <span style={{
-                fontSize: '0.6rem',
-                fontWeight: active ? 600 : 400,
-                letterSpacing: '0.02em',
-                lineHeight: 1,
+                position:'absolute', top:6, right:'calc(50% - 16px)',
+                background:'#EF4444', color:'white',
+                fontSize:'0.55rem', fontWeight:700,
+                borderRadius:99, minWidth:15, height:15,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                padding:'0 3px', border:'1.5px solid #080810',
               }}>
-                {tab.label}
+                {tab.badge}
               </span>
-
-              {/* Active indicator */}
-              {active && (
-                <span style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 24,
-                  height: 2,
-                  borderRadius: 99,
-                  background: '#F5C200',
-                }} />
-              )}
-            </Link>
-          )
-        })}
-      </nav>
-    </>
+            )}
+            {tab.icon(active)}
+            <span style={{
+              fontSize:'0.6rem', fontWeight: active ? 600 : 400,
+              letterSpacing:'0.01em', lineHeight:1,
+            }}>
+              {tab.label}
+            </span>
+            {active && (
+              <span style={{
+                position:'absolute', top:0, left:'50%',
+                transform:'translateX(-50%)',
+                width:20, height:2, borderRadius:99,
+                background:'#F5C200',
+              }} />
+            )}
+          </Link>
+        )
+      })}
+    </nav>
   )
 }
 
