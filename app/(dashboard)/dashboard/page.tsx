@@ -6,8 +6,10 @@ import { useAuth } from '@/store/auth'
 import { useTranslation } from '@/lib/i18n/LangContext'
 
 const DEMO_PROPS = [
-  { id: 'p1', type: 'Apt', city: 'Belgrade', price: 145000, status: 'active', agencies: 10, leads: 3, progress: 100 },
-  { id: 'p2', type: 'Villa', city: 'Budva', price: 485000, status: 'draft', agencies: 0, leads: 0, progress: 30 },
+  { id: 'p1', type: 'Apt', city: 'Belgrade', price: 145000, status: 'active', agencies: 10, leads: 3, progress: 100,
+    thumb: 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)', emoji: '🏢', sqm: 75, beds: 2 },
+  { id: 'p2', type: 'Villa', city: 'Budva', price: 485000, status: 'draft', agencies: 0, leads: 0, progress: 30,
+    thumb: 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)', emoji: '🏝️', sqm: 220, beds: 4 },
 ]
 
 const DEMO_LEADS = [
@@ -353,33 +355,23 @@ export default function DashboardPage() {
                 overflow: 'hidden',
                 animationDelay: `${0.1 * i}s`,
               }}>
-                <div style={{ padding: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                    <div style={{
-                      width: 42, height: 42, borderRadius: 12,
-                      background: prop.status === 'active'
-                        ? 'linear-gradient(135deg, #22C55E, #16A34A)'
-                        : 'linear-gradient(135deg, #94A3B8, #64748B)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 20, flexShrink: 0,
-                    }}>
-                      🏠
-                    </div>
+                {/* Thumbnail strip */}
+                <div style={{ height: 90, background: (prop as any).thumb, position:'relative', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <span style={{ fontSize: 36, filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}>{(prop as any).emoji}</span>
+                  <div style={{ position:'absolute', top:8, right:8, background:'rgba(0,0,0,0.45)', backdropFilter:'blur(8px)', color:'#fff', fontSize:'0.65rem', fontWeight:800, padding:'3px 8px', borderRadius:99 }}>
+                    {(prop as any).sqm}m² · {(prop as any).beds} bed
+                  </div>
+                  <div style={{ position:'absolute', top:8, left:8, fontSize:'0.65rem', fontWeight:700, padding:'3px 8px', borderRadius:99, background: prop.status === 'active' ? '#DCFCE7' : '#F1F5F9', color: prop.status === 'active' ? '#16A34A' : '#64748B' }}>
+                    {prop.status === 'active' ? '● Active' : '○ Draft'}
+                  </div>
+                </div>
+                <div style={{ padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1A1F2E' }}>
-                          {prop.type} · {prop.city}
-                        </span>
-                        <span style={{
-                          fontSize: '0.65rem', fontWeight: 700, padding: '3px 8px',
-                          borderRadius: 20,
-                          background: prop.status === 'active' ? '#DCFCE7' : '#F1F5F9',
-                          color: prop.status === 'active' ? '#16A34A' : '#64748B',
-                        }}>
-                          {prop.status === 'active' ? `● ${t('billing.active')}` : `○ ${t('billing.draft')}`}
-                        </span>
+                      <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1A1F2E' }}>
+                        {prop.type} · {prop.city}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#9BA8C0', marginTop: 2 }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F97316', marginTop: 2 }}>
                         €{prop.price.toLocaleString()}
                       </div>
                     </div>
