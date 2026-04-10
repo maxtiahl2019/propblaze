@@ -67,6 +67,7 @@ export default function PropertiesNewPage() {
 
   // Step 3: Photos
   const [photos, setPhotos] = useState<string[]>([]);
+  const [isListening, setIsListening] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
   // Step 4: Distribution
@@ -80,7 +81,29 @@ export default function PropertiesNewPage() {
       setDraftSaved(true);
       setTimeout(() => setDraftSaved(false), 2000);
     }, 1000);
-    return () => clearTimeout(timer);
+  
+  // ── Voice dictation (Web Speech API) ──────────────────────────────────────
+  const startVoice = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Voice dictation not supported on this browser. Try Chrome on Android or Safari on iOS 14+.');
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setShortDesc(prev => prev ? prev + ' ' + transcript : transcript);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.start();
+  };
+
+  return () => clearTimeout(timer);
   }, [property, shortDesc, photos]);
 
   const canProceed = () => {
@@ -346,7 +369,7 @@ export default function PropertiesNewPage() {
             position: 'relative',
           }}
         >
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
               <div
                 style={{
@@ -374,14 +397,14 @@ export default function PropertiesNewPage() {
               >
                 {i < currentStep ? 'â' : i + 1}
               </div>
-              {i < 3 && (
+              {i < 4 && (
                 <div
                   style={{
                     flex: 1,
                     height: 2,
                     background:
                       i < currentStep ? CSS_VARS.green : CSS_VARS.border,
-                    margin: '0 12px',
+                    margin: '0 8px',
                   }}
                 />
               )}
@@ -399,6 +422,7 @@ export default function PropertiesNewPage() {
           <div>Basics</div>
           <div>AI Pack</div>
           <div>Photos</div>
+          <div>Docs</div>
           <div>Launch</div>
         </div>
       </div>
@@ -662,25 +686,52 @@ export default function PropertiesNewPage() {
             </h2>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                Describe your property (2-3 sentences)
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text }}>
+                  Describe your property (2–3 sentences)
+                </label>
+                {/* Voice dictation button */}
+                <button
+                  onClick={startVoice}
+                  title="Dictate with voice"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px', borderRadius: 99, border: 'none', cursor: 'pointer',
+                    background: isListening ? 'rgba(239,68,68,0.2)' : 'rgba(245,194,0,0.15)',
+                    color: isListening ? '#EF4444' : '#F5C200',
+                    fontWeight: 700, fontSize: '0.78rem',
+                    animation: isListening ? 'pulse 1s infinite' : 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <rect x="4.5" y="1" width="5" height="8" rx="2.5" fill="currentColor" fillOpacity="0.9"/>
+                    <path d="M2 7c0 2.76 2.24 5 5 5s5-2.24 5-5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
+                    <line x1="7" y1="12" x2="7" y2="13.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
+                  </svg>
+                  {isListening ? '● Recording…' : '🎤 Dictate'}
+                </button>
+              </div>
               <textarea
-                placeholder="e.g. Beautiful apartment in downtown with modern finishes. Close to metro and shopping centers. Perfect investment opportunity."
+                placeholder="e.g. Beautiful renovated apartment in city centre, 5th floor, new kitchen, close to metro. Perfect investment."
                 value={shortDesc}
                 onChange={(e) => setShortDesc(e.target.value)}
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: `1px solid ${CSS_VARS.border}`,
-                  borderRadius: 8,
-                  fontSize: 13,
-                  color: CSS_VARS.text,
-                  minHeight: 100,
-                  fontFamily: 'inherit',
-                  boxSizing: 'border-box',
+                  width: '100%', padding: '12px',
+                  border: `1px solid ${isListening ? '#EF4444' : CSS_VARS.border}`,
+                  borderRadius: 8, fontSize: 13, color: CSS_VARS.text,
+                  minHeight: 110, fontFamily: 'inherit', boxSizing: 'border-box',
+                  resize: 'vertical', transition: 'border-color 0.2s',
                 }}
               />
+              {isListening && (
+                <p style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: 6, fontWeight: 600 }}>
+                  🎤 Listening — speak now, tap Dictate again to stop
+                </p>
+              )}
+              <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>
+                Tip: on mobile, tap 🎤 Dictate and speak — AI will write for you
+              </p>
             </div>
 
             <button
@@ -775,58 +826,54 @@ export default function PropertiesNewPage() {
         {/* Step 3: Photos */}
         {currentStep === 2 && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
-              Photos & Documents
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f0f0ff', marginBottom: 8 }}>
+              📸 Photos
             </h2>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginBottom: 20, lineHeight: 1.5 }}>
+              Great photos = more agency interest. Shoot living room, kitchen, bedroom, bathroom, view, entrance.
+            </p>
 
-            <div
-              onDragEnter={() => setDragActive(true)}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={() => setDragActive(false)}
-              style={{
-                border: `2px dashed ${dragActive ? CSS_VARS.primary : CSS_VARS.border}`,
-                borderRadius: 12,
-                padding: 40,
-                textAlign: 'center',
-                background: dragActive ? CSS_VARS.primaryLight : CSS_VARS.surface2,
-                marginBottom: 24,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              <div style={{ fontSize: 28, marginBottom: 8 }}>ð¸</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: CSS_VARS.text, marginBottom: 4 }}>
-                Drag and drop photos here
+            {/* Mobile primary: camera */}
+            <label style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 10, padding: '28px 20px', borderRadius: 14, cursor: 'pointer',
+              background: 'linear-gradient(135deg,rgba(245,194,0,0.12),rgba(255,140,0,0.08))',
+              border: '2px dashed rgba(245,194,0,0.4)', marginBottom: 12,
+            }}>
+              <span style={{ fontSize: 44 }}>📷</span>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#F5C200', marginBottom: 4 }}>
+                  Take Photos with Camera
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                  Tap to open camera — take multiple shots
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: CSS_VARS.textSecondary }}>
-                Up to 20 photos (JPG, PNG)
-              </div>
-            </div>
+              <input type="file" accept="image/*" capture="environment" multiple style={{ display: 'none' }} />
+            </label>
 
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 12 }}>
-                Sample Photos
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    style={{
-                      aspectRatio: '1',
-                      background: CSS_VARS.surface2,
-                      borderRadius: 8,
-                      border: `1px solid ${CSS_VARS.border}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: CSS_VARS.textTertiary,
-                      fontSize: 12,
-                    }}
-                  >
-                    Sample Photo {i}
-                  </div>
-                ))}
-              </div>
+            {/* Secondary: gallery */}
+            <label style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              padding: '16px 20px', borderRadius: 12, cursor: 'pointer', marginBottom: 16,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
+            }}>
+              <span style={{ fontSize: 22 }}>🖼️</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+                Choose from Gallery / Files
+              </span>
+              <input type="file" accept="image/*" multiple style={{ display: 'none' }} />
+            </label>
+
+            {/* AI tip */}
+            <div style={{ padding: '12px 16px', borderRadius: 12, marginBottom: 20,
+              background: 'rgba(245,194,0,0.06)', border: '1px solid rgba(245,194,0,0.15)',
+              display: 'flex', gap: 10 }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>🤖</span>
+              <p style={{ fontSize: '0.8rem', color: 'rgba(245,194,0,0.85)', lineHeight: 1.5, margin: 0 }}>
+                AI will auto-enhance brightness and select the best shots.
+                Minimum 3 photos — 8+ gets premium agency placement.
+              </p>
             </div>
 
             <a
@@ -846,7 +893,80 @@ export default function PropertiesNewPage() {
           </div>
         )}
 
-        {currentStep === 4 && (<div style={{padding:0}}><h2 style={{fontSize:"1.4rem",fontWeight:800,color:"#f0f0ff",marginBottom:8}}>Legal Documents</h2><p style={{color:"rgba(240,240,255,0.55)",fontSize:"0.9rem",lineHeight:1.6,marginBottom:24}}>Upload title deed and supporting documents. Files are encrypted and only visible to you.</p><div style={{marginBottom:20}}><div style={{fontSize:"0.78rem",fontWeight:700,color:"rgba(240,240,255,0.5)",textTransform:"uppercase",marginBottom:10}}>Title Deed *</div><label style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px",border:"2px dashed rgba(245,194,0,0.3)",borderRadius:14,cursor:"pointer",gap:10}}><span style={{fontSize:36}}>📄</span><span style={{color:"rgba(240,240,255,0.7)"}}>Click or drag PDF / JPG / PNG</span><input type="file" accept=".pdf,.jpg,.png" style={{display:"none"}}/></label></div><div style={{background:"rgba(59,91,219,0.1)",border:"1px solid rgba(59,91,219,0.25)",borderRadius:12,padding:"14px 18px",display:"flex",gap:12,marginBottom:16}}><span>🔒</span><div><div style={{color:"#93c5fd",fontWeight:700,fontSize:"0.83rem"}}>Bank-grade encryption</div><div style={{color:"rgba(240,240,255,0.55)",fontSize:"0.8rem"}}>AES-256, EU servers. Never shared without consent.</div></div></div></div>)}
+        {/* Step 4: Legal Documents */}
+        {currentStep === 3 && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f0f0ff', marginBottom: 8 }}>
+              🗂️ Legal Documents
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginBottom: 20, lineHeight: 1.5 }}>
+              Upload title deed and supporting docs. Encrypted, only visible to you — never shared without approval.
+            </p>
+
+            {/* Title Deed — primary camera button */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                Title Deed <span style={{ color: '#EF4444' }}>*</span>
+              </div>
+              <label style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 8, padding: '24px 20px', borderRadius: 14, cursor: 'pointer', marginBottom: 10,
+                background: 'linear-gradient(135deg,rgba(245,194,0,0.12),rgba(255,140,0,0.08))',
+                border: '2px dashed rgba(245,194,0,0.4)',
+              }}>
+                <span style={{ fontSize: 40 }}>📷</span>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#F5C200', marginBottom: 3 }}>Photograph Document</div>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>AI enhances contrast automatically</div>
+                </div>
+                <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} />
+              </label>
+              <label style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
+              }}>
+                <span style={{ fontSize: 20 }}>📁</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Upload PDF from Files</span>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} />
+              </label>
+            </div>
+
+            {/* Optional docs */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                Optional — Boosts agency score
+              </div>
+              {[
+                { emoji: '📐', label: 'Floor Plan', hint: '+40% agency interest' },
+                { emoji: '⚡', label: 'Energy Certificate', hint: 'Required in EU' },
+                { emoji: '🏗️', label: 'Building Permit', hint: 'New builds / renovations' },
+              ].map(doc => (
+                <label key={doc.label} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '12px 14px', borderRadius: 12, cursor: 'pointer', marginBottom: 8,
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.09)',
+                }}>
+                  <span style={{ fontSize: 22 }}>{doc.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{doc.label}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{doc.hint}</div>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#F5C200', fontWeight: 600 }}>+ Add</span>
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png,image/*" style={{ display: 'none' }} />
+                </label>
+              ))}
+            </div>
+
+            {/* Security note */}
+            <div style={{ background: 'rgba(59,91,219,0.08)', border: '1px solid rgba(59,91,219,0.2)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 10 }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>🔒</span>
+              <p style={{ fontSize: '0.78rem', color: 'rgba(147,197,253,0.8)', lineHeight: 1.5, margin: 0 }}>
+                AES-256 encrypted · EU servers · Never shared without your explicit approval
+              </p>
+            </div>
+          </div>
+        )}
         {/* Step 5: Distribution */}
         {currentStep === 4 && (
           <div>
