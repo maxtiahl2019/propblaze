@@ -1,110 +1,83 @@
-export function generateStaticParams() { return [{ nextauth: ["signin"] }]; }
-import NextAuth from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import CredentialsProvider from 'next-auth/providers/credentials';
+/**
+ * NextAuth route — PropBlaze MVP
+ *
+ * Auth flow:
+ *   1. Supabase handles real email/password auth on the client (store/auth.ts)
+ *   2. NextAuth is used only for session persistence
+ *   3. Google OAuth enabled only if GOOGLE_CLIENT_ID is set
+ *   4. Demo mode: any credentials pass through
+ */
+
+import NextAuth from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
+
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
 const handler = NextAuth({
   providers: [
-    // ─── Google OAuth ─────────────────────────────────────────────────────────
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-    }),
-
-    // ─── Email + Password (delegates to FastAPI backend) ────────────────────
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email:    { label: 'Email',    type: 'email' },
         password: { label: 'Password', type: 'password' },
+        userId:   { label: 'User ID',  type: 'text' },
+        role:     { label: 'Role',     type: 'text' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email) return null
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-        try {
-          const res = await fetch(`${apiUrl}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-
-          if (!res.ok) return null;
-
-          const data = await res.json();
-          if (!data.access_token) return null;
-
-          // Fetch user profile
-          const userRes = await fetch(`${apiUrl}/auth/me`, {
-            headers: { Authorization: `Bearer ${data.access_token}` },
-          });
-
-          if (!userRes.ok) return null;
-
-          const user = await userRes.json();
-
+        // Demo mode — accept any credentials
+        if (DEMO_MODE) {
           return {
-            id: user.id,
-            email: user.email,
-            name: user.profile?.full_name || user.email,
-            accessToken: data.access_token,
-            role: user.role,
-          };
-        } catch {
-          // Backend not available — allow demo mode passthrough
-          if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-            return {
-              id: 'demo-user-001',
-              email: credentials.email,
-              name: 'Demo User',
-              role: 'owner',
-            };
+            id:    credentials.userId || 'demo-user-001',
+            email: credentials.email,
+            name:  credentials.email.split('@')[0],
+            role:  credentials.role || 'owner',
           }
-          return null;
         }
+
+        // Supabase client already authenticated the user and passes userId
+        if (credentials.userId) {
+          return {
+            id:    credentials.userId,
+            email: credentials.email,
+            name:  credentials.email.split('@')[0],
+            role:  credentials.role || 'owner',
+          }
+        }
+
+        return null
       },
     }),
   ],
 
-  secret: process.env.NEXTAUTH_SECRET || 'propblaze-dev-secret-change-in-production',
+  secret: process.env.NEXTAUTH_SECRET || 'propblaze-dev-secret-2026',
 
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
 
   callbacks: {
-    async jwt({ token, account, user }) {
-      // On first sign-in, persist extra fields to token
-      if (account?.provider === 'google') {
-        token.provider = 'google';
-        token.role = 'owner'; // Google users are property owners by default
-      }
+    async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role || 'owner';
-        token.accessToken = (user as any).accessToken;
+        token.role = (user as any).role || 'owner'
+        token.sub  = user.id
       }
-      return token;
+      return token
     },
-
     async session({ session, token }) {
-      // Expose role and provider to the client session
-      (session as any).role = token.role;
-      (session as any).provider = token.provider;
-      (session as any).accessToken = token.accessToken;
-      return session;
+      ;(session as any).role   = token.role
+      ;(session as any).userId = token.sub
+      return session
     },
   },
 
   pages: {
-    signIn: '/login',
+    signIn:  '/login',
     newUser: '/register',
-    error: '/login',
+    error:   '/login',
   },
-});
+})
 
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST }

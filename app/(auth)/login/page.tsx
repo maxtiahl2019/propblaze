@@ -47,12 +47,8 @@ export default function LoginPage() {
   }, [isAuthenticated, sessionStatus, router]);
 
   const handleGoogle = async () => {
-    setGoogleLoading(true);
-    try {
-      await signIn('google', { callbackUrl: '/dashboard' });
-    } catch {
-      setGoogleLoading(false);
-    }
+    // Google OAuth not configured — show message instead of crashing
+    alert('Google sign-in coming soon. Please use email/password or Demo mode.');
   };
 
   const handleDemoLogin = () => {
@@ -79,17 +75,18 @@ export default function LoginPage() {
     setErrors({});
 
     if (DEMO_MODE) {
-      // In demo mode, any email/password logs you into demo
       handleDemoLogin();
       return;
     }
 
     try {
-      const result = await signIn('credentials', { email, password, redirect: false });
-      if (result?.ok) { router.replace('/dashboard'); return; }
+      // Use Supabase auth directly via the auth store
       await login(email, password);
       router.replace('/dashboard');
-    } catch {}
+    } catch (err: any) {
+      // Error is already set in auth store, but show fallback
+      console.error('[login]', err);
+    }
   };
 
   return (
