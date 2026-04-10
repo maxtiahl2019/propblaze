@@ -46,7 +46,7 @@ export default function PropertiesNewPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [draftSaved, setDraftSaved] = useState(false);
 
-  // Step 1: Basic info â pre-filled for demo speed
+  // Step 1: Basic info — pre-filled for demo speed
   const [property, setProperty] = useState<PropertyData>({
     type: 'Apartment',
     address: 'Knez Mihailova 28',
@@ -60,7 +60,7 @@ export default function PropertiesNewPage() {
     currency: 'EUR',
   });
 
-  // Step 2: AI Description â pre-filled hint
+  // Step 2: AI Description — pre-filled hint
   const [shortDesc, setShortDesc] = useState('Renovated city-centre apartment in Belgrade\'s pedestrian zone. Floor 5, high ceilings, new kitchen. 5 min to Kalemegdan fortress.');
   const [aiPackData, setAIPackData] = useState<AIPackData | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -122,6 +122,8 @@ export default function PropertiesNewPage() {
         return true;
       case 3:
         return true;
+      case 4:
+        return !isSending;
       default:
         return false;
     }
@@ -133,15 +135,15 @@ export default function PropertiesNewPage() {
     await new Promise((r) => setTimeout(r, 2000));
 
     const pack: AIPackData = {
-      headline: `Luxury ${property.type} in ${property.city} â Premium ${property.mode === 'sale' ? 'Investment' : 'Rental'} Opportunity`,
-      description: `This stunning ${property.type} in ${property.city}, ${property.country} offers ${property.areaSqm}mÂ² of sophisticated living space. Located in one of the most sought-after areas, this property combines modern comfort with timeless elegance. The open-plan living areas are perfectly designed for contemporary lifestyles, featuring premium finishes throughout. With ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms, this residence is ideal for families and investors alike. The property boasts excellent natural light, high ceilings, and a thoughtfully curated layout that maximizes both functionality and aesthetics.\n\nEach room has been meticulously designed with attention to detail, featuring quality materials and state-of-the-art amenities. The location provides easy access to shopping, dining, cultural venues, and excellent public transportation links. Whether you're looking for a primary residence, vacation home, or investment property, this exceptional offering delivers outstanding value and lifestyle benefits.\n\nThis is a rare opportunity to acquire a premium property in a thriving market. The area has demonstrated strong appreciation and rental demand. Contact us today to schedule an exclusive viewing and discover why this property represents an excellent choice for discerning buyers.`,
+      headline: `Luxury ${property.type} in ${property.city} — Premium ${property.mode === 'sale' ? 'Investment' : 'Rental'} Opportunity`,
+      description: `This stunning ${property.type} in ${property.city}, ${property.country} offers ${property.areaSqm}m² of sophisticated living space. Located in one of the most sought-after areas, this property combines modern comfort with timeless elegance. The open-plan living areas are perfectly designed for contemporary lifestyles, featuring premium finishes throughout. With ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms, this residence is ideal for families and investors alike. The property boasts excellent natural light, high ceilings, and a thoughtfully curated layout that maximizes both functionality and aesthetics.\n\nEach room has been meticulously designed with attention to detail, featuring quality materials and state-of-the-art amenities. The location provides easy access to shopping, dining, cultural venues, and excellent public transportation links. Whether you're looking for a primary residence, vacation home, or investment property, this exceptional offering delivers outstanding value and lifestyle benefits.\n\nThis is a rare opportunity to acquire a premium property in a thriving market. The area has demonstrated strong appreciation and rental demand. Contact us today to schedule an exclusive viewing and discover why this property represents an excellent choice for discerning buyers.`,
       keyFeatures: [
-        `${property.areaSqm}mÂ² of premium living space`,
+        `${property.areaSqm}m² of premium living space`,
         `${property.bedrooms} spacious bedrooms with ensuite bathrooms`,
         `${property.bathrooms} modern bathrooms with luxury finishes`,
         'Open-plan living areas with high ceilings',
         'Modern kitchen with integrated appliances',
-        'Prime location in ${property.city}',
+        `Prime location in ${property.city}`,
       ],
       investmentHighlights: [
         'Strong property appreciation in the area',
@@ -177,7 +179,7 @@ export default function PropertiesNewPage() {
             body: JSON.stringify({
               from: 'PropBlaze Platform <onboarding@resend.dev>',
               to: 'contact@win-winsolution.com',
-              subject: `ð  New Property Offer: ${property.type} in ${property.city} â PropBlaze AI Match`,
+              subject: `🏡 New Property Offer: ${property.type} in ${property.city} — PropBlaze AI Match`,
               html: emailBody,
             }),
           });
@@ -227,10 +229,10 @@ export default function PropertiesNewPage() {
       <p>We have an exclusive property offer that matches your specialization perfectly:</p>
 
       <div class="property-card">
-        <h3>${property.type} Â· ${property.city}</h3>
+        <h3>${property.type} · ${property.city}</h3>
         <div class="property-details">
           <div class="detail-item"><strong>${property.price.toLocaleString()} ${property.currency}</strong></div>
-          <div class="detail-item"><strong>${property.areaSqm}mÂ²</strong></div>
+          <div class="detail-item"><strong>${property.areaSqm}m²</strong></div>
           <div class="detail-item"><strong>${property.bedrooms} bed</strong></div>
           <div class="detail-item"><strong>${property.bathrooms} bath</strong></div>
         </div>
@@ -258,7 +260,7 @@ export default function PropertiesNewPage() {
       <p style="color: #6B7A99; font-size: 14px;">${aiPackData.targetBuyerProfile}</p>
 
       <center>
-        <a href="https://propblaze.com/demo" class="cta-button">View Full Offer â</a>
+        <a href="https://propblaze.com/demo" class="cta-button">View Full Offer →</a>
       </center>
     </div>
     <div class="footer">
@@ -298,7 +300,7 @@ export default function PropertiesNewPage() {
               fontSize: '2rem',
             }}
           >
-            â
+            ✅
           </div>
           <h2
             style={{
@@ -570,7 +572,7 @@ export default function PropertiesNewPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  Area (mÂ²)
+                  Area (m²)
                 </label>
                 <input
                   type="number"
@@ -682,7 +684,7 @@ export default function PropertiesNewPage() {
         {currentStep === 1 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
-              â¨ AI Packaging
+              —¨ AI Packaging
             </h2>
 
             <div style={{ marginBottom: 20 }}>
@@ -1011,7 +1013,7 @@ export default function PropertiesNewPage() {
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text }}>
                         {index + 1}. {agency.name}
-                        {agency.isRealEmail && ' â'}
+                        {agency.isRealEmail && ' —'}
                       </div>
                       <div style={{ fontSize: 11, color: CSS_VARS.textSecondary }}>
                         {agency.city}, {agency.country}
@@ -1092,7 +1094,7 @@ export default function PropertiesNewPage() {
               animation: 'fadeInOut 0.3s ease',
             }}
           >
-            â Draft saved
+            — Draft saved
           </div>
         )}
       </div>
@@ -1147,7 +1149,7 @@ export default function PropertiesNewPage() {
                 : 'none',
           }}
         >
-          {isSending ? 'Sendingâ¦' : currentStep === 4 ? 'ð Launch Distribution' : 'Continue â'}
+          {isSending ? 'Sending…' : currentStep === 4 ? '🚀 Launch Distribution' : 'Continue →'}
         </button>
       </div>
 
