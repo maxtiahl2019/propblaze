@@ -1,313 +1,535 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/store/auth'
+import { useTranslation } from '@/lib/i18n/LangContext'
+
+const DEMO_PROPS = [
+  { id: 'p1', type: 'Apt', city: 'Belgrade', price: 145000, status: 'active', agencies: 10, leads: 3, progress: 100 },
+  { id: 'p2', type: 'Villa', city: 'Budva', price: 485000, status: 'draft', agencies: 0, leads: 0, progress: 30 },
+]
+
+const DEMO_LEADS = [
+  { id: 'l1', agency: 'Magnus Realty', city: 'Vienna', msg: 'Can you share floor plan and arrange a virtual tour?', time: '2h', unread: true },
+  { id: 'l2', agency: 'Adriatic Real Estate', city: 'Podgorica', msg: 'Motivated buyer offering €140k cash, quick close possible.', time: '5h', unread: true },
+]
+
+function getGreeting(t: (k: string) => string) {
+  const h = new Date().getHours()
+  if (h < 12) return t('dash.greeting_morning')
+  if (h < 18) return t('dash.greeting_day')
+  return t('dash.greeting_evening')
+}
 
 export default function DashboardPage() {
-  const [expandedProp, setExpandedProp] = useState<string | null>('prop-1')
-  const unread = 2
+  const { user } = useAuth()
+  const { t } = useTranslation()
+  const userName = (user as any)?.profile?.full_name || (user as any)?.name || user?.email?.split('@')[0] || 'Max'
+  const [pulse, setPulse] = useState(true)
+  const [aiOpen, setAiOpen] = useState(false)
+  const [globe, setGlobe] = useState(0)
+
+  useEffect(() => {
+    const t = setInterval(() => setGlobe(g => (g + 1) % 360), 50)
+    return () => clearInterval(t)
+  }, [])
+
+  const totalLeads = DEMO_LEADS.length
+  const unread = DEMO_LEADS.filter(l => l.unread).length
+  const activeProps = DEMO_PROPS.filter(p => p.status === 'active').length
 
   return (
     <>
       <style>{`
-        @keyframes pulse-ring {
-          0%   { box-shadow: 0 0 0 0 rgba(245,194,0,0.55); }
-          70%  { box-shadow: 0 0 0 14px rgba(245,194,0,0); }
-          100% { box-shadow: 0 0 0 0 rgba(245,194,0,0); }
+        @keyframes float {
+          0%,100% { transform: translateY(0px) rotate(0deg); }
+          50%      { transform: translateY(-8px) rotate(1deg); }
         }
-        @keyframes pulse-red {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
-          50%       { box-shadow: 0 0 0 7px rgba(239,68,68,0); }
+        @keyframes glow-pulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(245,150,50,0.0), 0 4px 24px rgba(245,150,50,0.12); }
+          50%      { box-shadow: 0 0 0 8px rgba(245,150,50,0.12), 0 8px 40px rgba(245,150,50,0.22); }
         }
-        @keyframes blink-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.4; transform: scale(0.7); }
+        @keyframes dot-pulse {
+          0%,100% { opacity:1; transform:scale(1); }
+          50%      { opacity:0.4; transform:scale(0.6); }
         }
-        @keyframes slide-in {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes badge-pulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+          60%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
         }
-        .banner-pulse { animation: pulse-ring 2s ease-out infinite; }
-        .red-pulse    { animation: pulse-red 1.8s ease-out infinite; }
-        .dot-blink    { animation: blink-dot 1.5s ease-in-out infinite; }
-        .action-card  { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .action-card:hover { transform: translateY(-2px); }
-        .action-card:active { transform: scale(0.97); }
-        .lead-row { transition: background 0.12s ease; }
-        .lead-row:hover { background: rgba(255,255,255,0.06) !important; }
-        .prop-card { transition: box-shadow 0.2s ease; }
-        .prop-card:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.4) !important; }
-        .slide-in { animation: slide-in 0.25s ease both; }
+        @keyframes slide-up {
+          from { opacity:0; transform:translateY(16px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+        @keyframes shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes spin-slow {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes lead-glow {
+          0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+          50%      { box-shadow: 0 0 0 10px rgba(239,68,68,0.08); }
+        }
+        .glow-card { animation: glow-pulse 3s ease-in-out infinite; }
+        .lead-card  { animation: lead-glow 2.5s ease-in-out infinite; }
+        .float-ai   { animation: float 4s ease-in-out infinite; }
+        .dot-live   { animation: dot-pulse 1.2s ease-in-out infinite; }
+        .badge-live { animation: badge-pulse 1.4s ease-in-out infinite; }
+        .slide-up   { animation: slide-up 0.5s ease both; }
+
+        .stat-hover { transition: transform 0.18s, box-shadow 0.18s; }
+        .stat-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important; }
+
+        .action-btn { transition: all 0.16s; cursor:pointer; }
+        .action-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+        .action-btn:active { transform: scale(0.98); }
+
+        /* globe rings */
+        @keyframes ring1 { 0%,100%{transform:rotateX(70deg) rotateZ(0deg)} 100%{transform:rotateX(70deg) rotateZ(360deg)} }
+        @keyframes ring2 { 0%,100%{transform:rotateX(70deg) rotateZ(60deg)} 100%{transform:rotateX(70deg) rotateZ(420deg)} }
       `}</style>
 
-      <div style={{ background: '#14142A', minHeight: '100vh', color: '#fff', fontFamily: "'Inter',system-ui,sans-serif" }}>
-        <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(160deg, #FAFAF8 0%, #F5F3EF 50%, #F8F6F2 100%)',
+        fontFamily: 'Inter, -apple-system, sans-serif',
+        padding: '0 0 80px',
+      }}>
 
-          {/* ─── HEADER ─────────────────────────────────────────── */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
-            <div>
-              <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.7rem)', fontWeight: 900, letterSpacing: '-0.03em', color: '#fff', marginBottom: 2 }}>
-                Good morning 👋
-              </h1>
-              <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)' }}>
-                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+        {/* ── TOP HERO SECTION ──────────────────────────────────── */}
+        <div style={{
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%)',
+          padding: '32px 24px 40px',
+          borderRadius: '0 0 32px 32px',
+        }}>
+          {/* Background earth glow */}
+          <div style={{
+            position: 'absolute', right: -60, top: -60,
+            width: 280, height: 280, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(59,91,219,0.25) 0%, rgba(15,52,96,0.1) 50%, transparent 70%)',
+            pointerEvents: 'none',
+          }}/>
+
+          {/* Animated globe rings */}
+          <div style={{
+            position: 'absolute', right: 16, top: 16,
+            width: 120, height: 120,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
+            {/* Globe body */}
+            <div style={{
+              position: 'absolute',
+              width: 80, height: 80, borderRadius: '50%',
+              background: 'radial-gradient(circle at 35% 35%, #4A90D9, #1a3a6b)',
+              boxShadow: '0 0 30px rgba(74,144,217,0.4), inset -8px -8px 16px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}>
+              {/* Continents (abstract) */}
+              <div style={{ position:'absolute', top:20, left:10, width:30, height:18, borderRadius:8, background:'rgba(80,180,80,0.6)' }}/>
+              <div style={{ position:'absolute', top:35, left:38, width:22, height:28, borderRadius:6, background:'rgba(80,180,80,0.5)' }}/>
+              <div style={{ position:'absolute', top:15, left:48, width:18, height:14, borderRadius:5, background:'rgba(80,180,80,0.55)' }}/>
+            </div>
+            {/* Orbit ring 1 */}
+            <div style={{
+              position: 'absolute', width: 100, height: 100, borderRadius: '50%',
+              border: '1px solid rgba(74,144,217,0.3)',
+              transform: 'rotateX(70deg)',
+              animation: 'ring1 8s linear infinite',
+            }}/>
+            {/* Orbit ring 2 */}
+            <div style={{
+              position: 'absolute', width: 115, height: 115, borderRadius: '50%',
+              border: '1px dashed rgba(245,194,0,0.25)',
+              transform: 'rotateX(70deg) rotateZ(60deg)',
+              animation: 'ring2 12s linear infinite',
+            }}/>
+            {/* Pulsing dot on orbit */}
+            <div className="dot-live" style={{
+              position: 'absolute', top: 6, right: 6,
+              width: 8, height: 8, borderRadius: '50%',
+              background: '#F5C200',
+              boxShadow: '0 0 8px #F5C200',
+            }}/>
+          </div>
+
+          {/* Greeting */}
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              {getGreeting(t)}, {new Date().toLocaleDateString(undefined, { weekday:'long', day:'numeric', month:'long' })}
+            </p>
+            <h1 style={{
+              fontSize: 'clamp(1.4rem, 5vw, 2rem)',
+              fontWeight: 800,
+              color: '#fff',
+              letterSpacing: '-0.03em',
+              marginBottom: 6,
+              lineHeight: 1.2,
+            }}>
+              Дорогой {userName} 👋
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
+              {activeProps === 0
+                ? t('wizard.sell_desc')
+                : `${activeProps} ${t('dash.your_properties').toLowerCase()} · ${totalLeads} ${t('dash.new_leads').toLowerCase()}`}
+            </p>
+
+            {/* CTA */}
+            <Link href="/properties/new" style={{ textDecoration: 'none' }}>
+              <button className="glow-card action-btn" style={{
+                background: 'linear-gradient(135deg, #F5C200, #FF8C00)',
+                border: 'none', borderRadius: 14,
+                padding: '12px 24px',
+                color: '#1A1A2E', fontWeight: 800, fontSize: '0.9rem',
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                letterSpacing: '-0.01em',
+              }}>
+                <span style={{ fontSize: 18 }}>＋</span>
+                {t('dash.add_property')}
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        <div style={{ padding: '0 16px' }}>
+
+          {/* ── AI ASSISTANT ──────────────────────────────────────── */}
+          <div className="float-ai slide-up" style={{
+            marginTop: -20,
+            background: '#fff',
+            borderRadius: 20,
+            padding: '20px',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.8) inset',
+            border: '1px solid rgba(0,0,0,0.06)',
+            display: 'flex', alignItems: 'center', gap: 16,
+            position: 'relative',
+            animationDelay: '0.1s',
+          }}>
+            {/* AI Avatar */}
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 26, flexShrink: 0,
+              boxShadow: '0 4px 16px rgba(118,75,162,0.35)',
+              position: 'relative',
+            }}>
+              👩‍💼
+              <div className="dot-live" style={{
+                position: 'absolute', bottom: 2, right: 2,
+                width: 12, height: 12, borderRadius: '50%',
+                background: '#22C55E', border: '2px solid #fff',
+              }}/>
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#9BA8C0', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>
+                {t('dash.ai_assistant')} · {t('dash.ai_online').split('·')[1]?.trim() || 'online'}
+              </div>
+              <p style={{ fontSize: '0.875rem', color: '#1A1F2E', fontWeight: 600, lineHeight: 1.4, margin: 0 }}>
+                {unread > 0
+                  ? `${unread} ${t('dash.new_leads')} — ${t('leads.reply_email').toLowerCase()}`
+                  : t('dash.your_properties') + ' — ' + t('dash.add_property').toLowerCase()}
               </p>
             </div>
-            <Link href="/properties/new" style={{
-              display: 'flex', alignItems: 'center', gap: 7, padding: '12px 20px',
-              background: 'linear-gradient(135deg, #F5C200, #FF8C00)',
-              borderRadius: 14, color: '#0A0A18', fontWeight: 900,
-              fontSize: '0.85rem', textDecoration: 'none', flexShrink: 0,
-              boxShadow: '0 6px 20px rgba(245,194,0,0.45)',
-            }}>
-              ➕ List Property
-            </Link>
-          </div>
 
-          {/* ─── AI URGENCY BANNER ─────────────────────────────── */}
-          {unread > 0 && (
-            <Link href="/leads" style={{ display: 'block', textDecoration: 'none', marginBottom: 18 }}>
-              <div className="banner-pulse" style={{
-                background: 'linear-gradient(135deg, rgba(245,194,0,0.18) 0%, rgba(255,120,0,0.12) 100%)',
-                border: '1.5px solid rgba(245,194,0,0.55)', borderRadius: 20,
-                padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'center',
-              }}>
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 13, background: 'rgba(245,194,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🤖</div>
-                  <div className="red-pulse" style={{
-                    position: 'absolute', top: -5, right: -5,
-                    width: 20, height: 20, borderRadius: 99,
-                    background: '#EF4444', border: '2px solid #14142A',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.6rem', fontWeight: 900, color: '#fff',
-                  }}>{unread}</div>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#F5C200', marginBottom: 3 }}>
-                    {unread} new leads — reply within 24h
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'rgba(245,194,0,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    Magnus Realty: "Interested in Belgrade apt. Can you share floor plan?"
-                  </div>
-                </div>
-                <div style={{ fontSize: '1.4rem', color: 'rgba(245,194,0,0.5)', flexShrink: 0 }}>›</div>
-              </div>
-            </Link>
-          )}
-
-          {/* ─── KPI TILES ──────────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 22 }}>
-            {[
-              { v: 10, label: 'Agencies', icon: '📡', color: '#F5C200', glow: 'rgba(245,194,0,0.22)', border: 'rgba(245,194,0,0.35)', bg: 'rgba(245,194,0,0.09)' },
-              { v: 3,  label: 'Leads',    icon: '🔥', color: '#FB923C', glow: 'rgba(251,146,60,0.22)', border: 'rgba(251,146,60,0.35)', bg: 'rgba(251,146,60,0.09)' },
-              { v: unread, label: 'Unread', icon: '💬', color: '#93C5FD', glow: 'rgba(59,91,219,0.25)', border: 'rgba(59,91,219,0.38)', bg: 'rgba(59,91,219,0.10)', pulse: unread > 0 },
-            ].map(t => (
-              <div key={t.label} className={t.pulse ? 'banner-pulse' : ''} style={{
-                background: t.bg, border: `1.5px solid ${t.border}`, borderRadius: 16,
-                padding: '14px 10px', textAlign: 'center',
-                boxShadow: `0 4px 16px ${t.glow}`,
-              }}>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>{t.icon}</div>
-                <div style={{ fontSize: 'clamp(1.6rem,6vw,2.2rem)', fontWeight: 900, color: t.color, lineHeight: 1 }}>{t.v}</div>
-                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', marginTop: 5, fontWeight: 600 }}>{t.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* ─── QUICK ACTIONS ──────────────────────────────────── */}
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
-            Quick Actions
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 22 }}>
-            {[
-              { emoji: '➕', label: 'List Property', href: '/properties/new',
-                bg: 'linear-gradient(135deg,#F5C200,#FF8C00)', color: '#0A0A18',
-                shadow: '0 6px 20px rgba(245,194,0,0.4)', border: 'transparent' },
-              { emoji: '🔥', label: 'View Leads', href: '/leads',
-                bg: 'linear-gradient(135deg,rgba(251,146,60,0.25),rgba(239,68,68,0.18))', color: '#FB923C',
-                shadow: '0 4px 16px rgba(251,146,60,0.2)', border: 'rgba(251,146,60,0.4)' },
-              { emoji: '🗂️', label: 'Documents', href: '/documents',
-                bg: 'linear-gradient(135deg,rgba(34,197,94,0.18),rgba(22,163,74,0.12))', color: '#4ADE80',
-                shadow: '0 4px 16px rgba(34,197,94,0.18)', border: 'rgba(34,197,94,0.38)' },
-              { emoji: '📡', label: 'Distribution', href: '/distribution',
-                bg: 'linear-gradient(135deg,rgba(59,91,219,0.22),rgba(112,72,232,0.15))', color: '#93C5FD',
-                shadow: '0 4px 16px rgba(59,91,219,0.18)', border: 'rgba(59,91,219,0.38)' },
-            ].map(a => (
-              <Link key={a.label} href={a.href} style={{ textDecoration: 'none' }}>
-                <div className="action-card" style={{
-                  background: a.bg, border: `1.5px solid ${a.border}`, borderRadius: 16,
-                  padding: '18px 16px', display: 'flex', alignItems: 'center', gap: 12,
-                  boxShadow: a.shadow, cursor: 'pointer',
+            {unread > 0 && (
+              <Link href="/leads" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                <div className="badge-live action-btn" style={{
+                  background: '#EF4444', color: '#fff',
+                  fontWeight: 800, fontSize: '0.8rem',
+                  borderRadius: 10, padding: '8px 14px',
+                  whiteSpace: 'nowrap',
                 }}>
-                  <span style={{ fontSize: 28, flexShrink: 0 }}>{a.emoji}</span>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: a.color, lineHeight: 1.2 }}>{a.label}</span>
+                  {unread} новых →
+                </div>
+              </Link>
+            )}
+          </div>
+
+          {/* ── STATS ROW ─────────────────────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 16 }} className="slide-up">
+            {[
+              { icon: '🏠', val: DEMO_PROPS.length, label: t('dash.properties_label'), color: '#3B5BDB', bg: '#EEF2FF', link: '/properties' },
+              { icon: '🔥', val: totalLeads, label: t('dash.new_leads'), color: '#EA580C', bg: '#FFF3E8', link: '/leads' },
+              { icon: '💬', val: unread, label: t('dash.unread_messages'), color: '#7C3AED', bg: '#F3E8FF', link: '/messenger', pulse: unread > 0 },
+            ].map(s => (
+              <Link key={s.label} href={s.link} style={{ textDecoration: 'none' }}>
+                <div className={`stat-hover${s.pulse ? ' badge-live' : ''}`} style={{
+                  background: '#fff',
+                  borderRadius: 16, padding: '16px 12px',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                  border: '1px solid rgba(0,0,0,0.05)',
+                }}>
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.val}</div>
+                  <div style={{ fontSize: '0.68rem', color: '#9BA8C0', fontWeight: 600, marginTop: 4 }}>{s.label}</div>
                 </div>
               </Link>
             ))}
           </div>
 
-          {/* ─── MY PROPERTIES ─────────────────────────────────── */}
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
-            My Properties
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-
-            {/* Active property */}
-            <div className="prop-card" style={{
-              background: '#1C1C34', border: '1.5px solid rgba(34,197,94,0.35)',
-              borderLeft: '4px solid #22C55E', borderRadius: 16, overflow: 'hidden',
-              boxShadow: '0 4px 20px rgba(34,197,94,0.10)',
+          {/* ── ATTENTION: NEW LEADS ZONE ─────────────────────────── */}
+          {unread > 0 && (
+            <div className="lead-card slide-up" style={{
+              marginTop: 16,
+              background: 'linear-gradient(135deg, #FFF5F5, #FFF)',
+              borderRadius: 20,
+              border: '1.5px solid rgba(239,68,68,0.2)',
+              overflow: 'hidden',
+              animationDelay: '0.2s',
             }}>
-              <div onClick={() => setExpandedProp(expandedProp === 'prop-1' ? null : 'prop-1')}
-                style={{ padding: '15px 17px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                <span style={{ fontSize: 28, flexShrink: 0 }}>🏢</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#fff' }}>Apt · Belgrade</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.68rem', fontWeight: 700, color: '#22C55E', background: 'rgba(34,197,94,0.18)', padding: '2px 9px', borderRadius: 99, border: '1px solid rgba(34,197,94,0.4)' }}>
-                      <span className="dot-blink" style={{ width: 5, height: 5, borderRadius: 99, background: '#22C55E', display: 'inline-block' }} />
-                      Active
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.45)' }}>€145,000 · Knez Mihailova 28</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
-                  style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, transform: expandedProp === 'prop-1' ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s' }}>
-                  <path d="M3 6L8 10L13 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
+              <div style={{
+                padding: '14px 18px',
+                borderBottom: '1px solid rgba(239,68,68,0.1)',
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <div className="dot-live" style={{
+                  width: 10, height: 10, borderRadius: '50%',
+                  background: '#EF4444', flexShrink: 0,
+                }}/>
+                <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#991B1B' }}>
+                  {t('dash.requires_reply')} · {unread} {t('dash.new_leads')}
+                </span>
+                <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#EF4444', fontWeight: 600 }}>
+                  {t('leads.reply_email')} ↗
+                </span>
               </div>
+              {DEMO_LEADS.filter(l => l.unread).map((lead, i) => (
+                <Link key={lead.id} href="/leads" style={{ textDecoration: 'none' }}>
+                  <div className="action-btn" style={{
+                    padding: '14px 18px',
+                    borderBottom: i < unread - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                    display: 'flex', alignItems: 'flex-start', gap: 12,
+                  }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #FDE68A, #F97316)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, flexShrink: 0,
+                    }}>
+                      🏢
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#1A1F2E' }}>{lead.agency}</span>
+                        <span style={{ fontSize: '0.7rem', color: '#9BA8C0' }}>· {lead.city}</span>
+                        <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: '#9BA8C0' }}>{lead.time} назад</span>
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: '#6B7A99', lineHeight: 1.45, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {lead.msg}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
 
-              {expandedProp === 'prop-1' && (
-                <div className="slide-in" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '14px 17px', background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Wave 1 · 10 agencies contacted</span>
-                      <span style={{ fontSize: '0.78rem', color: '#22C55E', fontWeight: 800 }}>🔥 3 leads</span>
-                    </div>
-                    <div style={{ height: 7, background: 'rgba(255,255,255,0.09)', borderRadius: 99, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: '67%', borderRadius: 99, background: 'linear-gradient(90deg,#22C55E,#16A34A)', boxShadow: '0 0 10px rgba(34,197,94,0.6)' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {[
-                      { href: '/leads', label: '🔥 3 Leads', bg: 'rgba(34,197,94,0.18)', border: 'rgba(34,197,94,0.38)', color: '#4ADE80' },
-                      { href: '/distribution', label: '📡 Distribution', bg: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.75)' },
-                      { href: '/documents', label: '🗂️ Docs', bg: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.75)' },
-                    ].map(b => (
-                      <Link key={b.label} href={b.href} style={{ flex: 1, padding: '10px 8px', borderRadius: 12, background: b.bg, border: `1px solid ${b.border}`, color: b.color, fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', textAlign: 'center', display: 'block' }}>
-                        {b.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {/* ── MY PROPERTIES ─────────────────────────────────────── */}
+          <div style={{ marginTop: 20 }} className="slide-up">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h2 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1A1F2E', letterSpacing: '-0.02em' }}>
+                Мои объекты
+              </h2>
+              <Link href="/properties" style={{ fontSize: '0.78rem', color: '#3B5BDB', fontWeight: 600, textDecoration: 'none' }}>
+                Все →
+              </Link>
             </div>
 
-            {/* Draft property */}
-            <div className="prop-card" style={{
-              background: '#1C1C34', border: '1.5px solid rgba(245,194,0,0.28)',
-              borderLeft: '4px solid #F5C200', borderRadius: 16, overflow: 'hidden',
-              boxShadow: '0 4px 16px rgba(245,194,0,0.06)',
-            }}>
-              <div onClick={() => setExpandedProp(expandedProp === 'prop-2' ? null : 'prop-2')}
-                style={{ padding: '15px 17px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                <span style={{ fontSize: 28, flexShrink: 0 }}>🏖️</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#fff' }}>Villa · Budva</span>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#F5C200', background: 'rgba(245,194,0,0.14)', padding: '2px 9px', borderRadius: 99, border: '1px solid rgba(245,194,0,0.35)' }}>○ Draft</span>
-                  </div>
-                  <div style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.45)' }}>€485,000 · Sveti Stefan Peninsula</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
-                  style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, transform: expandedProp === 'prop-2' ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s' }}>
-                  <path d="M3 6L8 10L13 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              {expandedProp === 'prop-2' && (
-                <div className="slide-in" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '14px 17px', background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ background: 'rgba(245,194,0,0.10)', border: '1px solid rgba(245,194,0,0.30)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <span style={{ fontSize: 18, flexShrink: 0 }}>🤖</span>
-                      <div>
-                        <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#F5C200', marginBottom: 3 }}>2 things needed to launch</div>
-                        <div style={{ fontSize: '0.76rem', color: 'rgba(245,194,0,0.7)', lineHeight: 1.5 }}>Upload title deed · Add photos → AI reaches 30 agencies</div>
+            {DEMO_PROPS.map((prop, i) => (
+              <div key={prop.id} className="stat-hover" style={{
+                background: '#fff',
+                borderRadius: 18,
+                marginBottom: 10,
+                boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+                border: `1.5px solid ${prop.status === 'active' ? 'rgba(34,197,94,0.2)' : 'rgba(0,0,0,0.06)'}`,
+                overflow: 'hidden',
+                animationDelay: `${0.1 * i}s`,
+              }}>
+                <div style={{ padding: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <div style={{
+                      width: 42, height: 42, borderRadius: 12,
+                      background: prop.status === 'active'
+                        ? 'linear-gradient(135deg, #22C55E, #16A34A)'
+                        : 'linear-gradient(135deg, #94A3B8, #64748B)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 20, flexShrink: 0,
+                    }}>
+                      🏠
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1A1F2E' }}>
+                          {prop.type} · {prop.city}
+                        </span>
+                        <span style={{
+                          fontSize: '0.65rem', fontWeight: 700, padding: '3px 8px',
+                          borderRadius: 20,
+                          background: prop.status === 'active' ? '#DCFCE7' : '#F1F5F9',
+                          color: prop.status === 'active' ? '#16A34A' : '#64748B',
+                        }}>
+                          {prop.status === 'active' ? `● ${t('billing.active')}` : `○ ${t('billing.draft')}`}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#9BA8C0', marginTop: 2 }}>
+                        €{prop.price.toLocaleString()}
                       </div>
                     </div>
                   </div>
+
+                  {/* Progress bar */}
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.45)' }}>Documents</span>
-                      <span style={{ fontSize: '0.73rem', color: '#F5C200', fontWeight: 700 }}>40%</span>
+                      <span style={{ fontSize: '0.72rem', color: '#9BA8C0', fontWeight: 600 }}>
+                        {prop.agencies > 0 ? `Wave 1 · ${prop.agencies} ${t('distribution.agencies').toLowerCase()}` : t('wizard.publish')}
+                      </span>
+                      {prop.leads > 0 && (
+                        <span style={{ fontSize: '0.72rem', color: '#EA580C', fontWeight: 700 }}>
+                          🔥 {prop.leads} {t('dash.new_leads')}
+                        </span>
+                      )}
                     </div>
-                    <div style={{ height: 5, background: 'rgba(255,255,255,0.09)', borderRadius: 99, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: '40%', borderRadius: 99, background: 'linear-gradient(90deg,#F5C200,#FF8C00)' }} />
+                    <div style={{ height: 6, borderRadius: 99, background: '#F1F5F9', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: 99,
+                        width: `${prop.progress}%`,
+                        background: prop.progress === 100
+                          ? 'linear-gradient(90deg, #22C55E, #16A34A)'
+                          : 'linear-gradient(90deg, #F5C200, #FF8C00)',
+                        transition: 'width 1s ease',
+                      }}/>
                     </div>
                   </div>
-                  <Link href="/documents" style={{ display: 'block', padding: '13px', borderRadius: 12, background: 'linear-gradient(135deg,#F5C200,#FF8C00)', color: '#0A0A18', fontWeight: 900, fontSize: '0.88rem', textDecoration: 'none', textAlign: 'center', boxShadow: '0 6px 18px rgba(245,194,0,0.35)' }}>
-                    📷 Upload Docs to Launch
-                  </Link>
-                </div>
-              )}
-            </div>
 
-            <Link href="/properties/new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '15px', borderRadius: 14, textDecoration: 'none', border: '1.5px dashed rgba(245,194,0,0.40)', color: '#F5C200', fontWeight: 700, fontSize: '0.875rem', background: 'rgba(245,194,0,0.05)' }}>
-              ➕ List another property
-            </Link>
-          </div>
-
-          {/* ─── RECENT LEADS ───────────────────────────────────── */}
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
-            Recent Lead Activity
-          </div>
-          <div style={{ background: '#1C1C34', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, overflow: 'hidden', marginBottom: 22 }}>
-            {[
-              { flag: '🇦🇹', name: 'Magnus Realty', city: 'Vienna', time: '2h ago', snippet: 'Can you share floor plan and arrange a virtual tour?', unread: true },
-              { flag: '🇲🇪', name: 'Adriatic Real Estate', city: 'Podgorica', time: '5h ago', snippet: 'Motivated buyer offering €140k cash, quick close possible.', unread: true },
-              { flag: '🇦🇹', name: 'Euro Prime', city: 'Vienna', time: '1d ago', snippet: 'Professional photos received. Listing goes live today.', unread: false },
-            ].map((lead, i, arr) => (
-              <Link key={lead.name} href="/leads" style={{ textDecoration: 'none', display: 'block' }}>
-                <div className="lead-row" style={{
-                  padding: '13px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
-                  borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none',
-                  background: lead.unread ? 'rgba(245,194,0,0.04)' : 'transparent',
-                }}>
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 11, background: lead.unread ? 'rgba(245,194,0,0.14)' : 'rgba(255,255,255,0.08)', border: `1.5px solid ${lead.unread ? 'rgba(245,194,0,0.40)' : 'rgba(255,255,255,0.12)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{lead.flag}</div>
-                    {lead.unread && <div className="red-pulse" style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, background: '#EF4444', borderRadius: 99, border: '2px solid #14142A' }} />}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: lead.unread ? '#F5C200' : 'rgba(255,255,255,0.9)' }}>{lead.name}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0, marginLeft: 8 }}>{lead.time}</span>
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>{lead.city}</div>
-                    <div style={{ fontSize: '0.78rem', color: lead.unread ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.snippet}</div>
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {prop.status === 'active' ? (
+                      <>
+                        <Link href="/leads" style={{ textDecoration: 'none', flex: 1 }}>
+                          <button className="action-btn" style={{
+                            width: '100%', padding: '9px',
+                            background: '#FFF7ED', border: '1px solid rgba(234,88,12,0.2)',
+                            borderRadius: 10, color: '#EA580C', fontWeight: 700, fontSize: '0.78rem',
+                          }}>🔥 {prop.leads} {t('leads.title')}</button>
+                        </Link>
+                        <Link href="/distribution" style={{ textDecoration: 'none', flex: 1 }}>
+                          <button className="action-btn" style={{
+                            width: '100%', padding: '9px',
+                            background: '#EEF2FF', border: '1px solid rgba(59,91,219,0.15)',
+                            borderRadius: 10, color: '#3B5BDB', fontWeight: 700, fontSize: '0.78rem',
+                          }}>📡 {t('dash.distribution')}</button>
+                        </Link>
+                      </>
+                    ) : (
+                      <Link href="/properties/new" style={{ textDecoration: 'none', flex: 1 }}>
+                        <button className="glow-card action-btn" style={{
+                          width: '100%', padding: '10px',
+                          background: 'linear-gradient(135deg, #F5C200, #FF8C00)',
+                          border: 'none', borderRadius: 10,
+                          color: '#1A1A2E', fontWeight: 800, fontSize: '0.82rem',
+                        }}>🚀 {t('wizard.publish')}</button>
+                      </Link>
+                    )}
                   </div>
                 </div>
-              </Link>
-            ))}
-            <Link href="/leads" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-              View all leads →
-            </Link>
-          </div>
-
-          {/* ─── AI STATUS ──────────────────────────────────────── */}
-          <div style={{ padding: '18px 20px', borderRadius: 18, marginBottom: 40,
-            background: 'linear-gradient(135deg,rgba(59,91,219,0.18),rgba(112,72,232,0.12))',
-            border: '1.5px solid rgba(59,91,219,0.40)',
-            boxShadow: '0 6px 24px rgba(59,91,219,0.15)' }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(59,91,219,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>🤖</div>
-              <div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#93C5FD', marginBottom: 5 }}>
-                  PropBlaze AI — Active
-                </div>
-                <p style={{ fontSize: '0.81rem', color: 'rgba(147,197,253,0.72)', lineHeight: 1.65, margin: 0 }}>
-                  Monitoring 10 agencies for your Belgrade apartment. Wave 2 sends automatically in <strong style={{ color: '#93C5FD' }}>3 days</strong> if no Wave 1 response. All replies forward to <strong style={{ color: '#93C5FD' }}>contact@win-winsolution.com</strong>
-                </p>
               </div>
+            ))}
+
+            {/* Add property */}
+            <Link href="/properties/new" style={{ textDecoration: 'none' }}>
+              <div className="action-btn" style={{
+                padding: '16px',
+                background: 'rgba(59,91,219,0.04)',
+                border: '2px dashed rgba(59,91,219,0.2)',
+                borderRadius: 18,
+                textAlign: 'center',
+                color: '#3B5BDB',
+                fontWeight: 700,
+                fontSize: '0.875rem',
+              }}>
+                ＋ {t('dash.add_property')}
+              </div>
+            </Link>
+          </div>
+
+          {/* ── QUICK ACTIONS ─────────────────────────────────────── */}
+          <div style={{ marginTop: 20 }} className="slide-up">
+            <h2 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1A1F2E', letterSpacing: '-0.02em', marginBottom: 12 }}>
+              {t('dash.quick_actions')}
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { emoji:'🔥', label:t('leads.title'), sub:t('leads.new'), href:'/leads', grad:'linear-gradient(135deg,#FFF7ED,#FFF3E8)', border:'rgba(234,88,12,0.15)', color:'#EA580C' },
+                { emoji:'💬', label:t('messenger.title'), sub:t('dash.messenger_desc'), href:'/messenger', grad:'linear-gradient(135deg,#F3E8FF,#EDE9FE)', border:'rgba(124,58,237,0.15)', color:'#7C3AED', badge: unread },
+                { emoji:'📡', label:t('distribution.title'), sub:t('dash.distribution_desc'), href:'/distribution', grad:'linear-gradient(135deg,#EEF2FF,#E8ECFF)', border:'rgba(59,91,219,0.15)', color:'#3B5BDB' },
+                { emoji:'💳', label:t('billing.title'), sub:t('billing.subtitle'), href:'/billing', grad:'linear-gradient(135deg,#F0FDF4,#DCFCE7)', border:'rgba(22,163,74,0.15)', color:'#16A34A' },
+              ].map(a => (
+                <Link key={a.label} href={a.href} style={{ textDecoration: 'none' }}>
+                  <div className="action-btn" style={{
+                    background: a.grad, border: `1.5px solid ${a.border}`,
+                    borderRadius: 16, padding: '16px 14px',
+                    position: 'relative',
+                  }}>
+                    {a.badge ? (
+                      <div className="badge-live" style={{
+                        position: 'absolute', top: 10, right: 10,
+                        width: 18, height: 18, borderRadius: '50%',
+                        background: '#EF4444', color: '#fff',
+                        fontSize: '0.65rem', fontWeight: 800,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>{a.badge}</div>
+                    ) : null}
+                    <div style={{ fontSize: 26, marginBottom: 8 }}>{a.emoji}</div>
+                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: a.color, marginBottom: 2 }}>{a.label}</div>
+                    <div style={{ fontSize: '0.72rem', color: '#9BA8C0', fontWeight: 500 }}>{a.sub}</div>
+                  </div>
+                </Link>
+              ))}
             </div>
+          </div>
+
+          {/* ── PROGRESS INSIGHT ──────────────────────────────────── */}
+          <div className="slide-up" style={{
+            marginTop: 20,
+            background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)',
+            borderRadius: 20,
+            padding: '20px',
+            color: '#fff',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <span style={{ fontSize: 20 }}>📊</span>
+              <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{t('dash.agency_reach')}</span>
+            </div>
+            {[
+              { label: t('dash.agency_reach'), val: 10, max: 30, color: '#F5C200' },
+              { label: t('dash.lead_conversion'), val: 3, max: 10, color: '#22C55E' },
+              { label: t('dash.profile_complete'), val: 70, max: 100, color: '#3B5BDB', pct: true },
+            ].map(s => (
+              <div key={s.label} style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>{s.label}</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: s.color }}>
+                    {s.pct ? `${s.val}%` : `${s.val}/${s.max}`}
+                  </span>
+                </div>
+                <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,0.08)' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 99,
+                    width: `${(s.val / s.max) * 100}%`,
+                    background: s.color,
+                    transition: 'width 1.5s ease',
+                  }}/>
+                </div>
+              </div>
+            ))}
           </div>
 
         </div>

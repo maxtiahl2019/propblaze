@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/LangContext';
 
 const D = {
   bg: '#10101E', surface: 'rgba(255,255,255,0.07)', surface2: 'rgba(255,255,255,0.12)',
@@ -29,6 +30,7 @@ const INVOICES = [
 ];
 
 export default function BillingPage() {
+  const { t } = useTranslation();
   const [markingSold, setMarkingSold] = useState<string | null>(null);
   const [soldDone, setSoldDone] = useState<string[]>([]);
 
@@ -45,7 +47,7 @@ export default function BillingPage() {
 
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>💳 Billing</h1>
+          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>💳 {t('billing.title')}</h1>
           <p style={{ fontSize: '0.85rem', color: D.w40 }}>Subscription · per property · auto-stops on sold</p>
         </div>
 
@@ -53,11 +55,11 @@ export default function BillingPage() {
         <div style={{ background: 'linear-gradient(135deg, rgba(245,194,0,0.1), rgba(255,140,0,0.06))', border: '1px solid rgba(245,194,0,0.25)', borderRadius: 18, padding: '18px 20px', marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(245,194,0,0.7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Monthly Total</div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(245,194,0,0.7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{t('billing.monthly_total')}</div>
               <div style={{ fontSize: 'clamp(2rem,8vw,2.5rem)', fontWeight: 800, color: D.yellow, lineHeight: 1 }}>€{totalMonthly}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.75rem', color: D.w40, marginBottom: 4 }}>Next billing</div>
+              <div style={{ fontSize: '0.75rem', color: D.w40, marginBottom: 4 }}>{t('billing.next_billing')}</div>
               <div style={{ fontSize: '0.875rem', fontWeight: 700, color: D.w80 }}>May 10, 2026</div>
             </div>
           </div>
@@ -110,7 +112,7 @@ export default function BillingPage() {
         </div>
 
         {/* Plans */}
-        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Plans</div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>{t('billing.plans')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
           {PLANS.map(plan => (
             <div key={plan.id} style={{ background: plan.bg, border: `1px solid ${plan.active ? 'rgba(245,194,0,0.3)' : D.border}`, borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -131,7 +133,7 @@ export default function BillingPage() {
         </div>
 
         {/* Invoice history */}
-        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Invoice History</div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>{t('billing.invoices')}</div>
         <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 14, overflow: 'hidden', marginBottom: 24 }}>
           {INVOICES.map((inv, i) => (
             <div key={inv.id} style={{ padding: '13px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: i < INVOICES.length - 1 ? `1px solid ${D.border}` : 'none' }}>
@@ -153,16 +155,16 @@ export default function BillingPage() {
             <div onClick={() => setMarkingSold(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(4px)' }} />
             <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0D0D1A', borderRadius: '24px 24px 0 0', border: `1px solid ${D.border2}`, padding: '24px 20px calc(24px + env(safe-area-inset-bottom,0px))', zIndex: 101 }}>
               <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 99, margin: '0 auto 20px' }} />
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: D.white, marginBottom: 6 }}>🏷️ Mark as Sold</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: D.white, marginBottom: 6 }}>🏷️ {t('billing.mark_sold')}</div>
               <p style={{ fontSize: '0.85rem', color: D.w60, lineHeight: 1.6, marginBottom: 20 }}>
                 This will stop the subscription immediately. No further charges after today. Your listing data will be archived.
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setMarkingSold(null)} style={{ flex: 1, padding: '14px', borderRadius: 14, background: D.surface2, border: `1px solid ${D.border2}`, color: D.w80, fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}>
-                  Cancel
+                  {t('billing.cancel')}
                 </button>
                 <button onClick={() => handleMarkSold(markingSold)} style={{ flex: 1, padding: '14px', borderRadius: 14, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: D.red, fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}>
-                  Confirm — Sold ✓
+                  {t('billing.mark_sold_confirm')} ✓
                 </button>
               </div>
             </div>

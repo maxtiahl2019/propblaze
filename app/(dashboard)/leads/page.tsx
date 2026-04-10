@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/LangContext';
 
 const D = {
   bg: '#10101E', surface: 'rgba(255,255,255,0.07)', surface2: 'rgba(255,255,255,0.12)',
@@ -25,20 +26,30 @@ const LEADS: Lead[] = [
   { id: 'l5', flag: '🇷🇸', name: 'Capital Estate Beograd', city: 'Belgrade', country: 'Serbia', property: 'Apt · Belgrade', score: 85, time: '3d ago', status: 'replied', email: 'office@capital-estate.rs', message: "We operate one of Belgrade's largest buyer networks. We'd like to feature this property in our premium newsletter reaching 12,000 subscribers." },
 ];
 
-const STATUS_CFG: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  new:     { label: 'New', bg: 'rgba(245,194,0,0.12)', color: '#F5C200', border: 'rgba(245,194,0,0.28)' },
-  replied: { label: 'Replied', bg: 'rgba(34,197,94,0.10)', color: '#22C55E', border: 'rgba(34,197,94,0.25)' },
-  meeting: { label: 'Meeting', bg: 'rgba(59,91,219,0.12)', color: '#93c5fd', border: 'rgba(59,91,219,0.28)' },
-  closed:  { label: 'Closed', bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.12)' },
+const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }> = {
+  new:     { bg: 'rgba(245,194,0,0.12)', color: '#F5C200', border: 'rgba(245,194,0,0.28)' },
+  replied: { bg: 'rgba(34,197,94,0.10)', color: '#22C55E', border: 'rgba(34,197,94,0.25)' },
+  meeting: { bg: 'rgba(59,91,219,0.12)', color: '#93c5fd', border: 'rgba(59,91,219,0.28)' },
+  closed:  { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.12)' },
 };
 
-const FILTERS = ['All', 'New', 'Replied', 'Meeting'];
+const FILTER_KEYS = ['All', 'new', 'replied', 'meeting'] as const;
 
 export default function LeadsPage() {
+  const { t } = useTranslation();
+  const STATUS_CFG = {
+    new:     { label: t('leads.new'),     ...STATUS_STYLE.new },
+    replied: { label: t('leads.replied'), ...STATUS_STYLE.replied },
+    meeting: { label: t('leads.meeting'), ...STATUS_STYLE.meeting },
+    closed:  { label: t('leads.closed'),  ...STATUS_STYLE.closed },
+  };
+  const FILTER_LABELS: Record<string, string> = {
+    All: t('leads.all'), new: t('leads.new'), replied: t('leads.replied'), meeting: t('leads.meeting'),
+  };
   const [filter, setFilter] = useState('All');
   const [selected, setSelected] = useState<Lead | null>(null);
 
-  const filtered = filter === 'All' ? LEADS : LEADS.filter(l => l.status === filter.toLowerCase());
+  const filtered = filter === 'All' ? LEADS : LEADS.filter(l => l.status === filter);
   const newCount = LEADS.filter(l => l.status === 'new').length;
 
   if (selected) {
@@ -47,7 +58,7 @@ export default function LeadsPage() {
       <div style={{ background: D.bg, minHeight: '100vh', color: D.white, fontFamily: "'Inter',system-ui,sans-serif" }}>
         <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
           <button onClick={() => setSelected(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: D.w60, fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', marginBottom: 20, padding: 0 }}>
-            ← Back to Leads
+            ← {t('leads.back')}
           </button>
           <div style={{ background: D.surface, border: `1px solid ${D.border2}`, borderRadius: 18, padding: '20px', marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
@@ -59,9 +70,9 @@ export default function LeadsPage() {
               <span style={{ padding: '4px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`, flexShrink: 0 }}>{cfg.label}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-              {[{ label: 'AI Score', value: `${selected.score}/100`, color: D.yellow, bg: 'rgba(245,194,0,0.08)' },
-                { label: 'Property', value: selected.property, color: D.w80, bg: D.surface2 },
-                { label: 'Received', value: selected.time, color: D.w80, bg: D.surface2 }].map(s => (
+              {[{ label: t('leads.ai_score'), value: `${selected.score}/100`, color: D.yellow, bg: 'rgba(245,194,0,0.08)' },
+                { label: t('leads.property'), value: selected.property, color: D.w80, bg: D.surface2 },
+                { label: t('leads.received'), value: selected.time, color: D.w80, bg: D.surface2 }].map(s => (
                 <div key={s.label} style={{ flex: 1, padding: '10px 8px', borderRadius: 10, background: s.bg, textAlign: 'center' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 800, color: s.color }}>{s.value}</div>
                   <div style={{ fontSize: '0.62rem', color: D.w40, marginTop: 2 }}>{s.label}</div>
@@ -69,15 +80,15 @@ export default function LeadsPage() {
               ))}
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${D.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Message from Agency</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: D.w40, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{t('leads.from_agency')}</div>
               <p style={{ fontSize: '0.875rem', color: D.w80, lineHeight: 1.65, margin: 0 }}>{selected.message}</p>
             </div>
             <a href={`mailto:${selected.email}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', borderRadius: 12, background: D.surface2, border: `1px solid ${D.border2}`, color: D.w80, fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none', marginBottom: selected.phone ? 8 : 0 }}>
-              ✉️ Reply via Email
+              ✉️ {t('leads.reply_email')}
             </a>
             {selected.phone && (
               <a href={`tel:${selected.phone}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', borderRadius: 12, background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.22)', color: D.green, fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>
-                📞 Call Agency
+                📞 {t('leads.call_agency')}
               </a>
             )}
           </div>
@@ -99,7 +110,7 @@ export default function LeadsPage() {
     <div style={{ background: D.bg, minHeight: '100vh', color: D.white, fontFamily: "'Inter',system-ui,sans-serif" }}>
       <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>🔥 Leads</h1>
+          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>🔥 {t('leads.title')}</h1>
           <p style={{ fontSize: '0.85rem', color: D.w40 }}>{newCount > 0 ? `${newCount} new agency responses` : 'All responses from agencies'}</p>
         </div>
         {newCount > 0 && (
@@ -111,12 +122,12 @@ export default function LeadsPage() {
           </div>
         )}
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
-          {FILTERS.map(f => {
+          {FILTER_KEYS.map(f => {
             const isActive = filter === f;
-            const count = f === 'All' ? LEADS.length : LEADS.filter(l => l.status === f.toLowerCase()).length;
+            const count = f === 'All' ? LEADS.length : LEADS.filter(l => l.status === f).length;
             return (
               <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 14px', borderRadius: 99, fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, background: isActive ? D.yellow : D.surface, color: isActive ? '#080810' : D.w60, border: isActive ? 'none' : `1px solid ${D.border}` }}>
-                {f}{count > 0 ? ` (${count})` : ''}
+                {FILTER_LABELS[f]}{count > 0 ? ` (${count})` : ''}
               </button>
             );
           })}
@@ -148,7 +159,7 @@ export default function LeadsPage() {
         {filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 20px', color: D.w40 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>No {filter.toLowerCase()} leads yet</div>
+            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{filtered.length === 0 && filter === 'All' ? t('leads.no_leads') : t('leads.empty_filter')}</div>
           </div>
         )}
         <div style={{ height: 40 }} />

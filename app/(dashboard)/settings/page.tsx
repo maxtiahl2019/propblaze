@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/LangContext';
+import type { Lang } from '@/lib/i18n/translations';
 
 const D = {
   bg: '#10101E', surface: 'rgba(255,255,255,0.07)', surface2: 'rgba(255,255,255,0.12)',
@@ -56,12 +58,12 @@ function Divider() {
 }
 
 export default function SettingsPage() {
+  const { t, lang, setLang } = useTranslation();
   const [emailNotif, setEmailNotif] = useState(true);
   const [telegramNotif, setTelegramNotif] = useState(true);
   const [whatsappNotif, setWhatsappNotif] = useState(false);
   const [autoWave2, setAutoWave2] = useState(true);
   const [forwardLeads, setForwardLeads] = useState(true);
-  const [lang, setLang] = useState('en');
 
   return (
     <div style={{ background: D.bg, minHeight: '100vh', color: D.white, fontFamily: "'Inter',system-ui,sans-serif" }}>
@@ -69,7 +71,7 @@ export default function SettingsPage() {
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>⚙️ Settings</h1>
+          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>⚙️ {t('settings.title')}</h1>
         </div>
 
         {/* Profile */}
@@ -83,12 +85,12 @@ export default function SettingsPage() {
         </div>
 
         {/* Notifications */}
-        <Section title="Notifications">
-          <SettingsRow emoji="✉️" label="Email" desc="Lead replies, wave updates, billing" right={<Toggle on={emailNotif} onChange={setEmailNotif} />} />
+        <Section title={t('settings.notifications')}>
+          <SettingsRow emoji="✉️" label={t('settings.email_notif')} desc={t('settings.email_notif_desc')} right={<Toggle on={emailNotif} onChange={setEmailNotif} />} />
           <Divider />
-          <SettingsRow emoji="✈️" label="Telegram" desc="Instant lead alerts" right={<Toggle on={telegramNotif} onChange={setTelegramNotif} />} />
+          <SettingsRow emoji="✈️" label={t('settings.telegram_notif')} desc={t('settings.telegram_notif_desc')} right={<Toggle on={telegramNotif} onChange={setTelegramNotif} />} />
           <Divider />
-          <SettingsRow emoji="💬" label="WhatsApp" desc="Premium plan required" right={<Toggle on={whatsappNotif} onChange={setWhatsappNotif} />} />
+          <SettingsRow emoji="💬" label={t('settings.whatsapp_notif')} desc={t('settings.whatsapp_notif_desc')} right={<Toggle on={whatsappNotif} onChange={setWhatsappNotif} />} />
         </Section>
 
         {/* AI Settings */}
@@ -98,10 +100,10 @@ export default function SettingsPage() {
           <SettingsRow emoji="📨" label="Forward Leads to Email" desc="All agency replies → contact@win-winsolution.com" right={<Toggle on={forwardLeads} onChange={setForwardLeads} />} />
         </Section>
 
-        {/* Language */}
-        <Section title="Language">
+        {/* Language — wired to real LangContext */}
+        <Section title={t('settings.language')}>
           <div style={{ padding: '8px 10px', display: 'flex', gap: 6 }}>
-            {[{ code: 'en', label: '🇬🇧 EN' }, { code: 'ru', label: '🇷🇺 RU' }, { code: 'sr', label: '🇷🇸 SR' }].map(l => (
+            {([{ code: 'en' as Lang, label: '🇬🇧 EN' }, { code: 'ru' as Lang, label: '🇷🇺 RU' }, { code: 'sr' as Lang, label: '🇷🇸 SR' }]).map(l => (
               <button key={l.code} onClick={() => setLang(l.code)} style={{ flex: 1, padding: '10px 8px', borderRadius: 10, fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', background: lang === l.code ? D.yellow : 'transparent', color: lang === l.code ? '#080810' : D.w60, border: lang === l.code ? 'none' : `1px solid ${D.border}` }}>
                 {l.label}
               </button>
@@ -110,17 +112,17 @@ export default function SettingsPage() {
         </Section>
 
         {/* Account */}
-        <Section title="Account">
+        <Section title={t('settings.profile')}>
           <SettingsRow emoji="🔒" label="Change Password" desc="" right={<span style={{ color: D.w40, fontSize: 18 }}>›</span>} />
           <Divider />
-          <SettingsRow emoji="🛡️" label="Privacy & GDPR" desc="Data, consent, export" right={<span style={{ color: D.w40, fontSize: 18 }}>›</span>} />
+          <SettingsRow emoji="🛡️" label={t('settings.privacy')} desc={t('settings.data_export_desc')} right={<span style={{ color: D.w40, fontSize: 18 }}>›</span>} />
           <Divider />
           <SettingsRow emoji="📄" label="Terms of Service" desc="" right={<span style={{ color: D.w40, fontSize: 18 }}>›</span>} />
         </Section>
 
         {/* Danger zone */}
-        <Section title="Danger Zone">
-          <SettingsRow emoji="🗑️" label="Delete Account" desc="Permanent — removes all data" right={<span style={{ color: D.red, fontSize: '0.78rem', fontWeight: 700 }}>Delete</span>} />
+        <Section title={t('settings.danger')}>
+          <SettingsRow emoji="🗑️" label={t('settings.delete_account')} desc={t('settings.delete_account_desc')} right={<span style={{ color: D.red, fontSize: '0.78rem', fontWeight: 700 }}>{t('settings.delete_account')}</span>} />
         </Section>
 
         {/* Version */}

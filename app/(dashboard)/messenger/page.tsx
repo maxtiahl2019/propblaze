@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/LangContext';
 
 const D = {
   bg: '#10101E', surface: 'rgba(255,255,255,0.07)', surface2: 'rgba(255,255,255,0.12)',
@@ -53,8 +54,9 @@ const THREADS: Thread[] = [
 ];
 
 export default function MessengerPage() {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<Thread | null>(null);
-  const totalUnread = THREADS.reduce((s, t) => s + t.unread, 0);
+  const totalUnread = THREADS.reduce((s, th) => s + th.unread, 0);
 
   if (selected) {
     return (
@@ -98,7 +100,7 @@ export default function MessengerPage() {
 
         {/* Reply bar */}
         <div style={{ position: 'fixed', bottom: 'calc(60px + env(safe-area-inset-bottom,0px))', left: 0, right: 0, padding: '10px 16px', background: 'rgba(8,8,16,0.97)', borderTop: `1px solid ${D.border}`, backdropFilter: 'blur(20px)', display: 'flex', gap: 10 }}>
-          <input placeholder="Reply to agency..." style={{ flex: 1, padding: '12px 16px', borderRadius: 22, background: D.surface2, border: `1px solid ${D.border2}`, color: D.white, fontSize: '0.875rem', outline: 'none', fontFamily: 'inherit' }} />
+          <input placeholder={t('messenger.placeholder')} style={{ flex: 1, padding: '12px 16px', borderRadius: 22, background: D.surface2, border: `1px solid ${D.border2}`, color: D.white, fontSize: '0.875rem', outline: 'none', fontFamily: 'inherit' }} />
           <button style={{ width: 46, height: 46, borderRadius: 23, background: 'linear-gradient(135deg,#F5C200,#FF8C00)', border: 'none', color: '#080810', fontWeight: 900, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>↑</button>
         </div>
       </div>
@@ -110,10 +112,10 @@ export default function MessengerPage() {
       <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
         <div style={{ marginBottom: 20 }}>
           <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>
-            💬 Messages
+            💬 {t('messenger.title')}
           </h1>
           <p style={{ fontSize: '0.85rem', color: D.w40 }}>
-            {totalUnread > 0 ? `${totalUnread} unread — all agency replies forwarded to your email` : 'All agency conversations'}
+            {totalUnread > 0 ? `${totalUnread} ${t('messenger.unread')}` : t('messenger.all')}
           </p>
         </div>
 
