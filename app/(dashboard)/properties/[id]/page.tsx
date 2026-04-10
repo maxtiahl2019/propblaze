@@ -304,7 +304,7 @@ function PropertyDetailPageInner() {
       {/* Content */}
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        {activeTab === 'overview' && (
+        {activeTab === 'overview' && (<>
           <div style={{marginBottom:24,borderRadius:16,overflow:"hidden"}}>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
 <div style={{gridColumn:"1/3",gridRow:"1/3",minHeight:180,background:"linear-gradient(135deg,rgba(245,194,0,0.12),rgba(59,91,219,0.18))",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",cursor:"pointer"}}>
@@ -316,7 +316,7 @@ function PropertyDetailPageInner() {
 <span style={{fontSize:28,opacity:0.4}}>🌊</span>
 <div style={{position:"absolute",inset:0,background:"rgba(7,7,15,0.45)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#fff",fontWeight:700,fontSize:"0.82rem"}}>+3 more</span></div>
 </div>
-</div></div></div>
+</div></div>
 <div className="space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h3 className="font-semibold text-gray-900 mb-4">Campaign performance</h3>
@@ -373,6 +373,7 @@ function PropertyDetailPageInner() {
               </div>
             </div>
           </div>
+          </>
         )}
 
         {activeTab === 'distribution' && (
