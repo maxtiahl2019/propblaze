@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { useTranslation } from '@/lib/i18n/LangContext';
 
-const D = {
-  bg: '#10101E', surface: 'rgba(255,255,255,0.07)', surface2: 'rgba(255,255,255,0.12)',
-  border: 'rgba(255,255,255,0.10)', border2: 'rgba(255,255,255,0.22)',
-  yellow: '#F5C200', green: '#22C55E', red: '#EF4444', blue: '#3B5BDB',
-  white: '#FFFFFF',
-  w80: 'rgba(255,255,255,0.88)', w60: 'rgba(255,255,255,0.68)',
-  w40: 'rgba(255,255,255,0.48)', w20: 'rgba(255,255,255,0.28)',
+const C = {
+  bg: '#F8FAFC', white: '#FFFFFF', border: '#E2E8F0',
+  text: '#0F172A', text2: '#475569', text3: '#94A3B8',
+  green: '#16A34A', greenBg: '#DCFCE7',
+  blue: '#3B5BDB', blueBg: '#EFF6FF',
+  yellow: '#CA8A04', yellowBg: '#FEF9C3',
+  red: '#DC2626',
 };
 
 interface Thread {
@@ -31,7 +31,7 @@ const THREADS: Thread[] = [
     id: 't2', flag: '🇲🇪', name: 'Adriatic Real Estate', city: 'Podgorica', time: '5h ago', unread: 1,
     property: 'Apt · Belgrade', lastMsg: 'We have a motivated buyer offering €140,000 cash.',
     messages: [
-      { from: 'agency', text: 'Hello! We have a motivated buyer offering €140,000 cash. Quick close possible — 30 days. Owner direct contact preferred. Please call us at your earliest convenience.', time: '5h ago' },
+      { from: 'agency', text: 'Hello! We have a motivated buyer offering €140,000 cash. Quick close possible — 30 days. Owner direct contact preferred.', time: '5h ago' },
     ],
   },
   {
@@ -47,7 +47,7 @@ const THREADS: Thread[] = [
     id: 't4', flag: '🇩🇪', name: 'Berlin Invest Group', city: 'Berlin', time: '2d ago', unread: 0,
     property: 'Apt · Belgrade', lastMsg: 'We have set up a call for Tuesday 14:00 CET.',
     messages: [
-      { from: 'agency', text: 'We have set up a call for next Tuesday 14:00 CET. Our investor portfolio manager will discuss the property directly. Please confirm availability.', time: '2d ago' },
+      { from: 'agency', text: 'We have set up a call for next Tuesday 14:00 CET. Our investor portfolio manager will discuss the property directly.', time: '2d ago' },
       { from: 'me', text: 'Tuesday 14:00 works. Looking forward to the call.', time: '2d ago' },
     ],
   },
@@ -60,14 +60,14 @@ export default function MessengerPage() {
 
   if (selected) {
     return (
-      <div style={{ background: D.bg, minHeight: '100vh', color: D.white, fontFamily: "'Inter',system-ui,sans-serif", display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Inter',system-ui,sans-serif", display: 'flex', flexDirection: 'column' }}>
         {/* Thread header */}
-        <div style={{ background: 'rgba(13,13,26,0.95)', borderBottom: `1px solid ${D.border}`, padding: 'clamp(12px,3vw,16px) clamp(16px,4vw,24px)', display: 'flex', alignItems: 'center', gap: 12, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 10 }}>
-          <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: D.w60, fontSize: 22, cursor: 'pointer', padding: '4px', flexShrink: 0 }}>←</button>
-          <div style={{ width: 38, height: 38, borderRadius: 10, background: D.surface2, border: `1px solid ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{selected.flag}</div>
+        <div style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: 'clamp(12px,3vw,16px) clamp(16px,4vw,24px)', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: C.text2, fontSize: 22, cursor: 'pointer', padding: '4px', flexShrink: 0 }}>←</button>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{selected.flag}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: D.white, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.name}</div>
-            <div style={{ fontSize: '0.72rem', color: D.w40 }}>{selected.city} · {selected.property}</div>
+            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{selected.name}</div>
+            <div style={{ fontSize: '0.72rem', color: C.text3 }}>{selected.city} · {selected.property}</div>
           </div>
         </div>
 
@@ -77,53 +77,57 @@ export default function MessengerPage() {
             <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'me' ? 'flex-end' : 'flex-start' }}>
               <div style={{ maxWidth: '80%' }}>
                 <div style={{
-                  padding: '12px 15px', borderRadius: msg.from === 'me' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  background: msg.from === 'me' ? 'linear-gradient(135deg,#F5C200,#FF8C00)' : D.surface2,
-                  color: msg.from === 'me' ? '#080810' : D.w80,
-                  fontSize: '0.875rem', lineHeight: 1.55, fontWeight: msg.from === 'me' ? 600 : 400,
+                  padding: '12px 15px',
+                  borderRadius: msg.from === 'me' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                  background: msg.from === 'me' ? C.green : C.white,
+                  border: msg.from === 'me' ? 'none' : `1px solid ${C.border}`,
+                  color: msg.from === 'me' ? C.white : C.text,
+                  fontSize: '0.875rem', lineHeight: 1.55,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                 }}>
                   {msg.text}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: D.w20, marginTop: 4, textAlign: msg.from === 'me' ? 'right' : 'left' }}>{msg.time}</div>
+                <div style={{ fontSize: '0.65rem', color: C.text3, marginTop: 4, textAlign: msg.from === 'me' ? 'right' : 'left' }}>{msg.time}</div>
               </div>
             </div>
           ))}
 
           {/* AI suggestion */}
-          <div style={{ padding: '12px 14px', borderRadius: 14, background: 'rgba(59,91,219,0.08)', border: '1px solid rgba(59,91,219,0.18)', marginTop: 8 }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#93c5fd', marginBottom: 6 }}>🤖 AI suggested reply</div>
-            <p style={{ fontSize: '0.82rem', color: 'rgba(147,197,253,0.75)', lineHeight: 1.5, margin: 0 }}>
+          <div style={{ padding: '12px 14px', borderRadius: 12, background: C.blueBg, border: `1px solid rgba(59,91,219,0.15)`, marginTop: 8 }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: C.blue, marginBottom: 6 }}>🤖 AI suggested reply</div>
+            <p style={{ fontSize: '0.82rem', color: C.blue, lineHeight: 1.5, margin: 0, opacity: 0.8 }}>
               "Thank you for reaching out. I can share the floor plan and schedule a virtual tour. What time works best for your clients?"
             </p>
           </div>
         </div>
 
         {/* Reply bar */}
-        <div style={{ position: 'fixed', bottom: 'calc(60px + env(safe-area-inset-bottom,0px))', left: 0, right: 0, padding: '10px 16px', background: 'rgba(8,8,16,0.97)', borderTop: `1px solid ${D.border}`, backdropFilter: 'blur(20px)', display: 'flex', gap: 10 }}>
-          <input placeholder={t('messenger.placeholder')} style={{ flex: 1, padding: '12px 16px', borderRadius: 22, background: D.surface2, border: `1px solid ${D.border2}`, color: D.white, fontSize: '0.875rem', outline: 'none', fontFamily: 'inherit' }} />
-          <button style={{ width: 46, height: 46, borderRadius: 23, background: 'linear-gradient(135deg,#F5C200,#FF8C00)', border: 'none', color: '#080810', fontWeight: 900, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>↑</button>
+        <div style={{ position: 'fixed', bottom: 'calc(60px + env(safe-area-inset-bottom,0px))', left: 0, right: 0, padding: '10px 16px', background: C.white, borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10, boxShadow: '0 -2px 8px rgba(0,0,0,0.06)' }}>
+          <input placeholder="Reply…" style={{ flex: 1, padding: '12px 16px', borderRadius: 22, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: '0.875rem', outline: 'none', fontFamily: 'inherit' }} />
+          <button style={{ width: 46, height: 46, borderRadius: 23, background: C.green, border: 'none', color: C.white, fontWeight: 900, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>↑</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ background: D.bg, minHeight: '100vh', color: D.white, fontFamily: "'Inter',system-ui,sans-serif" }}>
+    <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Inter',system-ui,sans-serif" }}>
       <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
+
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.6rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>
-            💬 {t('messenger.title')}
+          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.5rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4, color: C.text }}>
+            💬 Messages
           </h1>
-          <p style={{ fontSize: '0.85rem', color: D.w40 }}>
-            {totalUnread > 0 ? `${totalUnread} ${t('messenger.unread')}` : t('messenger.all')}
+          <p style={{ fontSize: '0.85rem', color: C.text3 }}>
+            {totalUnread > 0 ? `${totalUnread} unread messages` : 'All agency conversations'}
           </p>
         </div>
 
         {totalUnread > 0 && (
-          <div style={{ background: 'rgba(245,194,0,0.07)', border: '1px solid rgba(245,194,0,0.22)', borderRadius: 14, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div style={{ background: C.greenBg, border: `1px solid rgba(22,163,74,0.2)`, borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             <span style={{ fontSize: 16, flexShrink: 0 }}>🤖</span>
-            <p style={{ fontSize: '0.8rem', color: 'rgba(245,194,0,0.85)', lineHeight: 1.5, margin: 0 }}>
-              All replies are also forwarded to <strong>contact@win-winsolution.com</strong> so you never miss a message.
+            <p style={{ fontSize: '0.8rem', color: C.green, lineHeight: 1.5, margin: 0 }}>
+              All replies are forwarded to <strong>contact@win-winsolution.com</strong> so you never miss a message.
             </p>
           </div>
         )}
@@ -131,25 +135,30 @@ export default function MessengerPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {THREADS.map(thread => (
             <div key={thread.id} onClick={() => setSelected(thread)} style={{
-              background: thread.unread > 0 ? 'rgba(245,194,0,0.04)' : D.surface,
-              border: `1px solid ${thread.unread > 0 ? 'rgba(245,194,0,0.2)' : D.border}`,
-              borderLeft: `3px solid ${thread.unread > 0 ? D.yellow : 'rgba(255,255,255,0.15)'}`,
-              borderRadius: 14, padding: '13px 15px', cursor: 'pointer',
-              display: 'flex', gap: 12, alignItems: 'flex-start',
-            }}>
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: D.surface2, border: `1px solid ${D.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{thread.flag}</div>
-                {thread.unread > 0 && (
-                  <div style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, background: D.red, borderRadius: 99, border: '2px solid #080810', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 800, color: D.white }}>{thread.unread}</div>
-                )}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: thread.unread > 0 ? 700 : 600, color: thread.unread > 0 ? D.yellow : D.w80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{thread.name}</span>
-                  <span style={{ fontSize: '0.68rem', color: D.w40, flexShrink: 0 }}>{thread.time}</span>
+              background: C.white,
+              border: `1px solid ${thread.unread > 0 ? 'rgba(202,138,4,0.3)' : C.border}`,
+              borderLeft: `3px solid ${thread.unread > 0 ? C.yellow : C.border}`,
+              borderRadius: 12, padding: '13px 15px', cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'box-shadow 0.15s, transform 0.1s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: C.bg, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{thread.flag}</div>
+                  {thread.unread > 0 && (
+                    <div style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, background: C.red, borderRadius: 99, border: `2px solid ${C.white}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 800, color: C.white }}>{thread.unread}</div>
+                  )}
                 </div>
-                <div style={{ fontSize: '0.7rem', color: D.w40, marginBottom: 3 }}>{thread.property}</div>
-                <div style={{ fontSize: '0.78rem', color: thread.unread > 0 ? D.w60 : D.w40, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastMsg}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: thread.unread > 0 ? 700 : 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{thread.name}</span>
+                    <span style={{ fontSize: '0.68rem', color: C.text3, flexShrink: 0 }}>{thread.time}</span>
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: C.text3, marginBottom: 3 }}>{thread.property}</div>
+                  <div style={{ fontSize: '0.78rem', color: thread.unread > 0 ? C.text2 : C.text3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastMsg}</div>
+                </div>
               </div>
             </div>
           ))}
