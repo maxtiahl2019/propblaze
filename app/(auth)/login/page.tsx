@@ -39,12 +39,17 @@ export default function LoginPage() {
     setTimeout(() => setVisible(true), 60);
   }, []);
 
-  // Only auto-redirect if already authenticated (not in demo mode — let user see login page)
+  // Auto-redirect only if there's a real Supabase session
   useEffect(() => {
-    if (!DEMO_MODE && (isAuthenticated || sessionStatus === 'authenticated')) {
-      router.replace('/dashboard');
-    }
-  }, [isAuthenticated, sessionStatus, router]);
+    if (DEMO_MODE) return;
+    import('@/lib/supabase').then(({ supabase, isSupabaseConfigured }) => {
+      if (!isSupabaseConfigured) return;
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) router.replace('/dashboard');
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGoogle = async () => {
     // Google OAuth not configured — show message instead of crashing

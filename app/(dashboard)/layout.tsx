@@ -1,35 +1,52 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth, DEMO_MODE } from '@/store/auth';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+    const verify = async () => {
+      // Demo mode — allow through
+      if (DEMO_MODE) { setVerified(true); return; }
 
-  if (!isAuthenticated) {
+      // Supabase: verify there's a real live session
+      if (isSupabaseConfigured) {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          logout();           // clear stale localStorage
+          router.replace('/login');
+          return;
+        }
+        setVerified(true);
+        return;
+      }
+
+      // Fallback (no Supabase): redirect to login always
+      router.replace('/login');
+    };
+    verify();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!verified) {
     return (
       <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#080810' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.75rem' }}>
-          <div style={{ width:36, height:36, background:'#3B5BDB', borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 1.5L2 7.5V16.5H6.5V12H11.5V16.5H16V7.5L9 1.5Z" fill="white" fillOpacity="0.9"/>
-            </svg>
-          </div>
-          <p style={{ fontSize:'0.8125rem', color:'rgba(255,255,255,0.5)' }}>Loading…</p>
+          <div style={{ width:36, height:36, border:'3px solid rgba(245,194,0,0.2)', borderTopColor:'#F5C200', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
+          <p style={{ fontSize:'0.8125rem', color:'rgba(255,255,255,0.5)' }}>Checking session…</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
