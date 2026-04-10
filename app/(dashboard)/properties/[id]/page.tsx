@@ -11,14 +11,14 @@ import clsx from 'clsx';
 
 type Tab = 'overview' | 'distribution' | 'leads' | 'billing';
 
-// âââ Demo data for property detail âââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Demo data for property detail Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 const DEMO_PROPERTY_MAP: Record<string, Partial<Property> & { [k: string]: any }> = {
   'demo-1': {
     id: 'demo-1', user_id: 'demo-user-001',
     property_type: 'villa' as any, address: 'Jadranska bb 14', city: 'Budva', country: 'Montenegro',
     region: 'Coastal', asking_price: 485000, currency: 'EUR',
     status: 'in_distribution' as any, area_sqm: 210, bedrooms: 4, bathrooms: 3,
-    description: 'Luxury sea-view villa with private pool and terrace. Premium finishes throughout. 180Â° Adriatic views. Gated community with 24/7 security.',
+    description: 'Luxury sea-view villa with private pool and terrace. Premium finishes throughout. 180ÃÂ° Adriatic views. Gated community with 24/7 security.',
     created_at: '2026-03-01T10:00:00Z', updated_at: '2026-04-01T12:00:00Z',
   },
   'demo-2': {
@@ -55,13 +55,13 @@ const DEMO_CAMPAIGN_MAP: Record<string, any> = {
 
 const DEMO_LEADS_MAP: Record<string, any[]> = {
   'demo-1': [
-    { id: 'l1', agency_name: 'Engel & VÃ¶lkers', contact_person: 'Klaus Weber', email: 'k.weber@ev.de', status: 'interested', response_date: '2 hours ago', message: 'Have 3 qualified buyers interested in this range. Can arrange viewing this week.' },
-    { id: 'l2', agency_name: "Sotheby's MNE", contact_person: 'Marina PopoviÄ', email: 'm.popovic@sothebys.com', status: 'viewing', response_date: '5 hours ago', message: 'HNWI client very interested. Requesting exclusive viewing + all documents.' },
+    { id: 'l1', agency_name: 'Engel & VÃÂ¶lkers', contact_person: 'Klaus Weber', email: 'k.weber@ev.de', status: 'interested', response_date: '2 hours ago', message: 'Have 3 qualified buyers interested in this range. Can arrange viewing this week.' },
+    { id: 'l2', agency_name: "Sotheby's MNE", contact_person: 'Marina PopoviÃÂ', email: 'm.popovic@sothebys.com', status: 'viewing', response_date: '5 hours ago', message: 'HNWI client very interested. Requesting exclusive viewing + all documents.' },
     { id: 'l3', agency_name: 'Savills Intl', contact_person: 'James Clarke', email: 'j.clarke@savills.com', status: 'new', response_date: '1 day ago', message: 'Received listing. Forwarding to our Balkans desk for review.' },
   ],
   'demo-2': [
-    { id: 'l4', agency_name: 'Win-Win Solution', contact_person: 'Nikola JovanoviÄ', email: 'contact@win-winsolution.com', status: 'interested', response_date: '3 hours ago', message: 'Central Belgrade apartment is perfect for our buyers. Ready to schedule viewing next week.' },
-    { id: 'l5', agency_name: 'Knight Frank Serbia', contact_person: 'Ana SimiÄ', email: 'a.simic@knightfrank.rs', status: 'new', response_date: '6 hours ago', message: 'Reviewing. Our Belgrade team will follow up.' },
+    { id: 'l4', agency_name: 'Win-Win Solution', contact_person: 'Nikola JovanoviÃÂ', email: 'contact@win-winsolution.com', status: 'interested', response_date: '3 hours ago', message: 'Central Belgrade apartment is perfect for our buyers. Ready to schedule viewing next week.' },
+    { id: 'l5', agency_name: 'Knight Frank Serbia', contact_person: 'Ana SimiÃÂ', email: 'a.simic@knightfrank.rs', status: 'new', response_date: '6 hours ago', message: 'Reviewing. Our Belgrade team will follow up.' },
   ],
   'demo-3': [],
 };
@@ -97,7 +97,7 @@ function PropertyDetailPageInner() {
   }, [searchParams]);
 
   const loadData = useCallback(async () => {
-    // ââ DEMO MODE: serve local data, no backend needed ââââââââââââââââââââââ
+    // Ã¢ÂÂÃ¢ÂÂ DEMO MODE: serve local data, no backend needed Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     if (DEMO_MODE || id in DEMO_PROPERTY_MAP) {
       const demoId = id in DEMO_PROPERTY_MAP ? id : 'demo-1';
       setProperty(DEMO_PROPERTY_MAP[demoId] as Property);
@@ -106,7 +106,7 @@ function PropertyDetailPageInner() {
       setLoading(false);
       return;
     }
-    // ââ Real API âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+    // Ã¢ÂÂÃ¢ÂÂ Real API Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     try {
       const [propRes, campaignRes, leadsRes] = await Promise.all([
         api.get(`/properties/${id}`),
@@ -158,16 +158,16 @@ function PropertyDetailPageInner() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-4xl mb-3">ð</p>
+          <p className="text-4xl mb-3">Ã°ÂÂÂ</p>
           <p className="text-gray-600">Property not found</p>
-          <Link href="/dashboard" className="text-blue-600 text-sm mt-2 block">â Dashboard</Link>
+          <Link href="/dashboard" className="text-blue-600 text-sm mt-2 block">Ã¢ÂÂ Dashboard</Link>
         </div>
       </div>
     );
   }
 
   const statusCfg = STATUS_CONFIG[property.status] || { label: property.status, variant: 'default', desc: '' };
-  const title = `${(property.property_type || 'Property').charAt(0).toUpperCase()}${(property.property_type || '').slice(1)} Â· ${property.area_sqm || '?'}mÂ²`;
+  const title = `${(property.property_type || 'Property').charAt(0).toUpperCase()}${(property.property_type || '').slice(1)} ÃÂ· ${property.area_sqm || '?'}mÃÂ²`;
   const location = [property.city, property.region, property.country].filter(Boolean).join(', ');
   const isActive = ['active', 'in_distribution'].includes(property.status);
   const canSell = !['sold', 'archived', 'draft'].includes(property.status);
@@ -196,7 +196,7 @@ function PropertyDetailPageInner() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex gap-3 items-start flex-1 min-w-0">
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 flex-shrink-0 flex items-center justify-center text-2xl">
-                ð 
+                Ã°ÂÂÂ 
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -206,11 +206,11 @@ function PropertyDetailPageInner() {
                     <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{newLeadsCount} new</span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">ð {location}</p>
+                <p className="text-sm text-gray-500 mt-0.5">Ã°ÂÂÂ {location}</p>
                 {property.asking_price && (
                   <p className="text-base font-semibold text-blue-700 mt-0.5">
                     {property.currency} {property.asking_price.toLocaleString()}
-                    {property.negotiable && <span className="text-xs font-normal text-gray-400 ml-1">Â· Negotiable</span>}
+                    {property.negotiable && <span className="text-xs font-normal text-gray-400 ml-1">ÃÂ· Negotiable</span>}
                   </p>
                 )}
               </div>
@@ -223,43 +223,43 @@ function PropertyDetailPageInner() {
                 href={`/properties/${id}/agreement`}
                 className="px-3 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl text-sm font-semibold hover:bg-indigo-100 flex items-center gap-1.5"
               >
-                ð Agreement
+                Ã°ÂÂÂ Agreement
                 {/* Show orange dot if pending signature */}
                 <span className="w-2 h-2 bg-orange-500 rounded-full" />
               </Link>
               {needsApproval && (
                 <Link href={`/dashboard/properties/${id}/offer-approval`}
                   className="px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600 animate-pulse">
-                  â¡ Approve offer
+                  Ã¢ÂÂ¡ Approve offer
                 </Link>
               )}
               {needsPayment && (
                 <button onClick={() => setActiveTab('billing')}
                   className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700">
-                  ð³ Activate
+                  Ã°ÂÂÂ³ Activate
                 </button>
               )}
               {isActive && campaign?.status === 'active' && (
                 <button onClick={handlePause} disabled={actionLoading === 'pause'}
                   className="px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50">
-                  {actionLoading === 'pause' ? 'â¦' : 'â¸ Pause'}
+                  {actionLoading === 'pause' ? 'Ã¢ÂÂ¦' : 'Ã¢ÂÂ¸ Pause'}
                 </button>
               )}
               {campaign?.status === 'paused' && (
                 <button onClick={handleResume} disabled={actionLoading === 'resume'}
                   className="px-3 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50">
-                  {actionLoading === 'resume' ? 'â¦' : 'â¶ Resume'}
+                  {actionLoading === 'resume' ? 'Ã¢ÂÂ¦' : 'Ã¢ÂÂ¶ Resume'}
                 </button>
               )}
               {canSell && (
                 <button onClick={() => setShowSoldModal(true)}
                   className="px-3 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700">
-                  â Mark Sold
+                  Ã¢ÂÂ Mark Sold
                 </button>
               )}
               <Link href={`/dashboard/properties/${id}/edit`}
                 className="px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
-                âï¸ Edit
+                Ã¢ÂÂÃ¯Â¸Â Edit
               </Link>
             </div>
           </div>
@@ -267,13 +267,13 @@ function PropertyDetailPageInner() {
           {/* Approval banner */}
           {needsApproval && (
             <div className="mt-3 flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
-              <span className="text-orange-500 text-lg">â¡</span>
+              <span className="text-orange-500 text-lg">Ã¢ÂÂ¡</span>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-orange-800">Review your AI-prepared offer â nothing sent until you approve</p>
+                <p className="text-sm font-semibold text-orange-800">Review your AI-prepared offer Ã¢ÂÂ nothing sent until you approve</p>
               </div>
               <Link href={`/dashboard/properties/${id}/offer-approval`}
                 className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600">
-                Review â
+                Review Ã¢ÂÂ
               </Link>
             </div>
           )}
@@ -308,15 +308,15 @@ function PropertyDetailPageInner() {
           <div style={{marginBottom:24,borderRadius:16,overflow:"hidden"}}>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
 <div style={{gridColumn:"1/3",gridRow:"1/3",minHeight:180,background:"linear-gradient(135deg,rgba(245,194,0,0.12),rgba(59,91,219,0.18))",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",cursor:"pointer"}}>
-<div style={{textAlign:"center",opacity:0.5}}><div style={{fontSize:52}}>🏠</div><div style={{color:"rgba(240,240,255,0.6)",fontSize:"0.78rem",marginTop:6}}>Main photo</div></div>
-<div style={{position:"absolute",bottom:10,left:10,background:"rgba(7,7,15,0.75)",backdropFilter:"blur(8px)",borderRadius:8,padding:"3px 10px",fontSize:"0.72rem",color:"rgba(240,240,255,0.8)"}}>📷 1 / 3</div>
+<div style={{textAlign:"center",opacity:0.5}}><div style={{fontSize:52}}>ð </div><div style={{color:"rgba(240,240,255,0.6)",fontSize:"0.78rem",marginTop:6}}>Main photo</div></div>
+<div style={{position:"absolute",bottom:10,left:10,background:"rgba(7,7,15,0.75)",backdropFilter:"blur(8px)",borderRadius:8,padding:"3px 10px",fontSize:"0.72rem",color:"rgba(240,240,255,0.8)"}}>ð· 1 / 3</div>
 </div>
-<div style={{minHeight:87,background:"linear-gradient(135deg,rgba(59,91,219,0.14),rgba(112,72,232,0.18))",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><span style={{fontSize:28,opacity:0.4}}>🛋️</span></div>
+<div style={{minHeight:87,background:"linear-gradient(135deg,rgba(59,91,219,0.14),rgba(112,72,232,0.18))",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><span style={{fontSize:28,opacity:0.4}}>ðï¸</span></div>
 <div style={{minHeight:87,background:"linear-gradient(135deg,rgba(74,222,128,0.1),rgba(59,91,219,0.15))",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",cursor:"pointer"}}>
-<span style={{fontSize:28,opacity:0.4}}>🌊</span>
+<span style={{fontSize:28,opacity:0.4}}>ð</span>
 <div style={{position:"absolute",inset:0,background:"rgba(7,7,15,0.45)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#fff",fontWeight:700,fontSize:"0.82rem"}}>+3 more</span></div>
 </div>
-</div></div>
+</div></div></div>
 <div className="space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h3 className="font-semibold text-gray-900 mb-4">Campaign performance</h3>
@@ -328,11 +328,11 @@ function PropertyDetailPageInner() {
                 <div className="grid grid-cols-2 gap-y-2">
                   {[
                     ['Type', property.property_type],
-                    ['Area', property.area_sqm ? `${property.area_sqm} mÂ²` : 'â'],
-                    ['Bedrooms', property.bedrooms ?? 'â'],
-                    ['Bathrooms', property.bathrooms ?? 'â'],
-                    ['Condition', property.condition?.replace('_', ' ') || 'â'],
-                    ['Year built', property.year_built || 'â'],
+                    ['Area', property.area_sqm ? `${property.area_sqm} mÃÂ²` : 'Ã¢ÂÂ'],
+                    ['Bedrooms', property.bedrooms ?? 'Ã¢ÂÂ'],
+                    ['Bathrooms', property.bathrooms ?? 'Ã¢ÂÂ'],
+                    ['Condition', property.condition?.replace('_', ' ') || 'Ã¢ÂÂ'],
+                    ['Year built', property.year_built || 'Ã¢ÂÂ'],
                   ].map(([k, v]) => (
                     <React.Fragment key={String(k)}>
                       <span className="text-gray-400 text-xs">{k}</span>
@@ -404,8 +404,8 @@ function PropertyDetailPageInner() {
                 <p className="text-blue-100 text-sm mb-5">Choose a plan to start sending your property to matched agencies</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
-                    { name: 'Promo', price: 'â¬5', period: '3 months', features: ['Full AI packaging', '30 agencies matched', '3-wave distribution', 'All notifications'], badge: 'ð¥ Best start' },
-                    { name: 'Standard', price: 'â¬29', period: 'per month', features: ['Everything in Promo', 'Priority matching', 'Follow-up waves', 'Featured listing'], badge: 'â­ Most popular' },
+                    { name: 'Promo', price: 'Ã¢ÂÂ¬5', period: '3 months', features: ['Full AI packaging', '30 agencies matched', '3-wave distribution', 'All notifications'], badge: 'Ã°ÂÂÂ¥ Best start' },
+                    { name: 'Standard', price: 'Ã¢ÂÂ¬29', period: 'per month', features: ['Everything in Promo', 'Priority matching', 'Follow-up waves', 'Featured listing'], badge: 'Ã¢Â­Â Most popular' },
                   ].map(plan => (
                     <div key={plan.name} className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
                       <div className="flex items-center justify-between mb-2">
@@ -416,7 +416,7 @@ function PropertyDetailPageInner() {
                       <ul className="mt-3 space-y-1 mb-4">
                         {plan.features.map(f => (
                           <li key={f} className="text-xs text-blue-100 flex items-center gap-1.5">
-                            <span className="text-green-400">â</span> {f}
+                            <span className="text-green-400">Ã¢ÂÂ</span> {f}
                           </li>
                         ))}
                       </ul>
@@ -428,7 +428,7 @@ function PropertyDetailPageInner() {
                           } catch {}
                         }}
                         className="w-full py-2.5 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-blue-50">
-                        Start with {plan.name} â
+                        Start with {plan.name} Ã¢ÂÂ
                       </button>
                     </div>
                   ))}
@@ -438,7 +438,7 @@ function PropertyDetailPageInner() {
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
                 <h3 className="font-semibold text-gray-900 mb-3">Billing</h3>
                 <Link href="/dashboard/billing" className="text-sm text-blue-600 hover:underline">
-                  Open billing settings â
+                  Open billing settings Ã¢ÂÂ
                 </Link>
               </div>
             )}
@@ -460,7 +460,7 @@ function PropertyDetailPageInner() {
 
 export default function PropertyDetailPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Loadingâ¦</p></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">LoadingÃ¢ÂÂ¦</p></div>}>
       <PropertyDetailPageInner />
     </Suspense>
   );
