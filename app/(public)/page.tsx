@@ -3,6 +3,133 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
+// ─── Luxury Splash Screen ─────────────────────────────────────────────────────
+function SplashScreen({ onDone }: { onDone: () => void }) {
+  const [phase, setPhase] = useState<'in' | 'hold' | 'out'>('in');
+  const letters = 'PROPBLAZE'.split('');
+
+  useEffect(() => {
+    // hold after letters animate in
+    const t1 = setTimeout(() => setPhase('hold'), 900);
+    // start fade-out
+    const t2 = setTimeout(() => setPhase('out'), 2600);
+    // unmount
+    const t3 = setTimeout(() => onDone(), 3350);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        @keyframes splashLetterIn {
+          from { opacity:0; transform:translateY(40px) skewY(6deg); }
+          to   { opacity:1; transform:translateY(0) skewY(0deg); }
+        }
+        @keyframes splashTagIn {
+          from { opacity:0; transform:translateY(12px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+        @keyframes splashBarIn {
+          from { transform:scaleX(0); }
+          to   { transform:scaleX(1); }
+        }
+        @keyframes splashLogoIn {
+          from { opacity:0; transform:scale(0.7); }
+          to   { opacity:1; transform:scale(1); }
+        }
+      `}</style>
+      <div
+        onClick={() => { setPhase('out'); setTimeout(onDone, 750); }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: '#080808',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+          opacity: phase === 'out' ? 0 : 1,
+          transition: phase === 'out' ? 'opacity 0.75s cubic-bezier(0.16,1,0.3,1)' : 'none',
+          fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif',
+        }}
+      >
+        {/* PB logo mark */}
+        <div style={{
+          width: 52, height: 52, borderRadius: 14,
+          background: '#FFFFFF',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1rem', fontWeight: 900, color: '#080808',
+          letterSpacing: '-0.02em',
+          marginBottom: 36,
+          animation: 'splashLogoIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both',
+          animationDelay: '0.1s',
+        }}>
+          PB
+        </div>
+
+        {/* PROPBLAZE letters */}
+        <div style={{ display: 'flex', gap: 0, overflow: 'hidden' }}>
+          {letters.map((l, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                fontSize: 'clamp(3rem,8vw,6rem)',
+                fontWeight: 900,
+                letterSpacing: '-0.04em',
+                lineHeight: 1,
+                color: '#FFFFFF',
+                animation: 'splashLetterIn 0.55s cubic-bezier(0.22,1,0.36,1) both',
+                animationDelay: `${0.25 + i * 0.06}s`,
+              }}
+            >
+              {l}
+            </span>
+          ))}
+        </div>
+
+        {/* Tagline */}
+        <p style={{
+          marginTop: 18,
+          fontSize: '0.8rem',
+          fontWeight: 500,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.38)',
+          animation: 'splashTagIn 0.5s ease both',
+          animationDelay: '1.0s',
+        }}>
+          AI-Powered Property Distribution
+        </p>
+
+        {/* Progress bar */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: 2,
+          background: 'rgba(255,255,255,0.08)',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%',
+            background: '#F5C200',
+            transformOrigin: 'left',
+            animation: 'splashBarIn 2.5s linear 0.2s both',
+          }} />
+        </div>
+
+        {/* Skip hint */}
+        <div style={{
+          position: 'absolute', bottom: 28, right: 32,
+          fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)',
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+          animation: 'splashTagIn 0.5s ease 1.2s both',
+        }}>
+          Tap to skip
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── FIND / Cuberto editorial design tokens ────────────────────────────────
 const C = {
   black:   '#080808',
@@ -365,6 +492,17 @@ function ApexCard() {
 export default function LandingPage() {
   useFadeIn();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
+
+  // Show splash only once per session
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const seen = sessionStorage.getItem('pb_splash_seen');
+    if (!seen) {
+      setShowSplash(true);
+      sessionStorage.setItem('pb_splash_seen', '1');
+    }
+  }, []);
 
   // Property showcase images (using high-quality Unsplash)
   const props = [
@@ -482,6 +620,9 @@ export default function LandingPage() {
   return (
     <>
       <GlobalStyles />
+
+      {/* ── LUXURY SPLASH ────────────────────────────────────────────────── */}
+      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
 
       {/* ── NAV ──────────────────────────────────────────────────────────── */}
       <nav style={{

@@ -36,9 +36,15 @@ const NAV = [
   },
   {
     href: '/messenger',
-    label: 'Messages',
+    label: 'Outreach',
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3.5C2 3.22 2.22 3 2.5 3H13.5C13.78 3 14 3.22 14 3.5V11.5C14 11.78 13.78 12 13.5 12H3L1.5 13.5V3.5Z" stroke="currentColor" strokeWidth="1.25"/></svg>,
     badge: '1',
+  },
+  {
+    href: '/chat',
+    label: 'Chat',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 2H2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h2v2l3-2h7a.5.5 0 0 0 .5-.5v-9A.5.5 0 0 0 14 2Z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/><path d="M5 7h6M5 9.5h4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+    badge: '2',
   },
   {
     href: '/billing',
