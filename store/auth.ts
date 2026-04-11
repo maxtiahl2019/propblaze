@@ -17,6 +17,22 @@ export const DEMO_USER: User = {
   updated_at: '2026-04-08T00:00:00Z',
 };
 
+/** Returns DEMO_USER with the role chosen at demo-login time (persisted in localStorage). */
+function getDemoUser(): User {
+  if (typeof window === 'undefined') return DEMO_USER;
+  try {
+    const raw = localStorage.getItem('propblaze-auth');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const role = parsed?.state?.user?.role;
+      if (role === 'agency' || role === 'staff' || role === 'owner') {
+        return { ...DEMO_USER, role };
+      }
+    }
+  } catch {}
+  return DEMO_USER;
+}
+
 interface AuthStore {
   user: User | null;
   token: string | null;
@@ -47,7 +63,7 @@ function mapSupabaseUser(sbUser: any, role: 'owner' | 'agency' = 'owner'): User 
 export const useAuth = create<AuthStore>()(
   persist(
     (set) => ({
-      user: DEMO_MODE ? DEMO_USER : null,
+      user: DEMO_MODE ? getDemoUser() : null,
       token: DEMO_MODE ? 'demo-token' : null,
       isAuthenticated: DEMO_MODE,
       isLoading: false,
@@ -236,11 +252,12 @@ export const useAuth = create<AuthStore>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
-      // In DEMO_MODE: always force authenticated state after rehydration
+      // In DEMO_MODE: always force authenticated state after rehydration,
+      // but preserve the role the user chose at demo-login time.
       onRehydrateStorage: () => (state) => {
         if (DEMO_MODE && state) {
           state.isAuthenticated = true;
-          state.user = DEMO_USER;
+          state.user = getDemoUser();
           state.token = 'demo-token';
         }
       },
@@ -250,7 +267,7 @@ export const useAuth = create<AuthStore>()(
             ...current,
             ...persisted,
             isAuthenticated: true,
-            user: DEMO_USER,
+            user: getDemoUser(),
             token: 'demo-token',
           };
         }

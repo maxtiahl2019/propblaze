@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { OfferPreview } from '@/components/offer/OfferPreview';
-import { AgencyMatchList } from '@/components/offer/AgencyMatchList';
+import AgencyMatchList from '@/components/offer/AgencyMatchList';
 import { Badge } from '@/components/ui/Badge';
 import { OfferDraft, MatchScore, Property } from '@/lib/types';
 import api from '@/lib/api';
