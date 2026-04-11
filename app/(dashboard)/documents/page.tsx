@@ -20,8 +20,7 @@ interface DocItem {
 }
 
 const INITIAL_DOCS: DocItem[] = [
-  { id: 'title_deed', label: 'Title Deed / Ownership Certificate', required: true, status: 'uploaded',
-    fileName: 'title_deed_belgrade_apt.pdf', uploadedAt: '2 days ago',
+  { id: 'title_deed', label: 'Title Deed / Ownership Certificate', required: true, status: 'missing',
     aiHint: 'Most critical document. Agencies verify ownership before contacting buyers.' },
   { id: 'floor_plan', label: 'Floor Plan', required: false, status: 'missing',
     aiHint: 'Increases agency interest by 40%. Photograph the original — AI enhances it automatically.' },
@@ -29,8 +28,7 @@ const INITIAL_DOCS: DocItem[] = [
     aiHint: 'Required for new-builds and renovations. Buyers request this frequently.' },
   { id: 'energy_cert', label: 'Energy Certificate', required: false, status: 'missing',
     aiHint: 'EU law requires this for most sales. Upload now to avoid delays.' },
-  { id: 'passport', label: 'Passport / ID (redacted)', required: true, status: 'uploaded',
-    fileName: 'passport_redacted.pdf', uploadedAt: '2 days ago',
+  { id: 'passport', label: 'Passport / ID (redacted)', required: true, status: 'missing',
     aiHint: 'Encrypted, never shared with agencies — only used for owner verification.' },
   { id: 'proof_address', label: 'Proof of Address', required: false, status: 'missing',
     aiHint: 'Utility bill or bank statement from the last 3 months is sufficient.' },

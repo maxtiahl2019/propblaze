@@ -84,7 +84,10 @@ export default function PropertiesPage() {
     } catch { setLocalProps([]); }
   }, []);
 
-  const baseList: Partial<Property>[] = DEMO_MODE ? DEMO_PROPERTIES : store.properties;
+  // Show demo properties only when the user has no real localStorage properties yet
+  const baseList: Partial<Property>[] = DEMO_MODE
+    ? (localProps.length === 0 ? DEMO_PROPERTIES : [])
+    : store.properties;
   const rawList: Partial<Property>[] = [...localProps, ...baseList.filter(p => !localProps.find(lp => lp.id === p.id))];
   const isLoading = DEMO_MODE ? false : store.isLoading;
 
@@ -101,6 +104,7 @@ export default function PropertiesPage() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
 
+  // Only use demo stats for the demo properties (no fake stats for real listings)
   const totalLeads = rawList.reduce((s, p) => s + (DEMO_STATS[p.id ?? '']?.leads ?? 0), 0);
   const totalViews = rawList.reduce((s, p) => s + (DEMO_STATS[p.id ?? '']?.views ?? 0), 0);
   const activeCount = rawList.filter(p => ['active', 'in_distribution', 'distributing', 'distributed'].includes(p.status ?? '')).length;

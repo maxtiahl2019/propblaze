@@ -28,25 +28,35 @@ const C = {
   purpleBg: '#F3E8FF',
 }
 
-// ─── Demo data ─────────────────────────────────────────────────────────────
-const DEMO_ACTIVITY = [
-  { id: 1, agency: 'City Expert Belgrade', flag: '🇷🇸', msg: 'Interested. Can you share the title deed?', time: '2h', unread: true, avatar: 'CE' },
-  { id: 2, agency: 'FK Montenegro',        flag: '🇲🇪', msg: 'We have a German buyer ready for viewing.', time: '5h', unread: true, avatar: 'FK' },
-  { id: 3, agency: 'RE/MAX Serbia',        flag: '🇷🇸', msg: 'What is the minimum acceptable price?', time: '1d', unread: false, avatar: 'RM' },
-  { id: 4, agency: 'Balkanians EU',        flag: '🇩🇪', msg: 'Client requests virtual tour. Available?',  time: '2d', unread: false, avatar: 'BL' },
-]
+// Build bar chart data from wave_log sent_at timestamps (last 7 days)
+function buildBarData(waveLog: any[]) {
+  const days = ['Su','Mo','Tu','We','Th','Fr','Sa']
+  const now = new Date()
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now)
+    d.setDate(d.getDate() - (6 - i))
+    const label = days[d.getDay()]
+    const sent = waveLog.filter(e => {
+      if (!e.sent_at) return false
+      const ed = new Date(e.sent_at)
+      return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth() && ed.getDate() === d.getDate()
+    }).length
+    return { day: label, sent, replied: 0 }
+  })
+}
 
-// Bar chart data — agencies contacted per day (last 7 days)
-const BAR_DATA = [
-  { day: 'Mo', sent: 4, replied: 1 },
-  { day: 'Tu', sent: 8, replied: 3 },
-  { day: 'We', sent: 6, replied: 2 },
-  { day: 'Th', sent: 10, replied: 4 },
-  { day: 'Fr', sent: 7, replied: 2 },
-  { day: 'Sa', sent: 2, replied: 1 },
-  { day: 'Su', sent: 0, replied: 0 },
-]
-const BAR_MAX = Math.max(...BAR_DATA.map(d => d.sent))
+const COUNTRY_FLAGS: Record<string, string> = {
+  me:'🇲🇪', rs:'🇷🇸', at:'🇦🇹', de:'🇩🇪', ch:'🇨🇭',
+  gb:'🇬🇧', nl:'🇳🇱', hr:'🇭🇷', gr:'🇬🇷', it:'🇮🇹',
+  fr:'🇫🇷', si:'🇸🇮', ae:'🇦🇪', cy:'🇨🇾', ru:'🇷🇺',
+}
+function flagFromId(id: string) {
+  const m = id?.match(/^([a-z]{2})-/i)
+  return m ? (COUNTRY_FLAGS[m[1].toLowerCase()] ?? '🏢') : '🏢'
+}
+function avatarFromName(name: string) {
+  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
+}
 
 // Unsplash placeholder property images
 const PROP_IMAGES = [
@@ -66,41 +76,62 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const userName = (user as any)?.profile?.full_name || (user as any)?.name || user?.email?.split('@')[0] || 'Max'
   const [localProps, setLocalProps] = useState<any[]>([])
+  const [waveLog,    setWaveLog]    = useState<any[]>([])
 
   useEffect(() => {
     try {
       const stored = JSON.parse(localStorage.getItem('pb_wizard_props') || '[]')
-      setLocalProps(stored)
+      setLocalProps(Array.isArray(stored) ? stored : [])
     } catch { setLocalProps([]) }
+    try {
+      const wl = JSON.parse(localStorage.getItem('pb_wave_log') || '[]')
+      setWaveLog(Array.isArray(wl) ? wl : [])
+    } catch { setWaveLog([]) }
   }, [])
 
-  // Merge wizard props with demo data
-  const allProps = [
-    ...localProps.map((p: any, i: number) => ({
-      id: p.id,
-      type: p.property_type?.charAt(0).toUpperCase() + p.property_type?.slice(1) || 'Property',
-      city: p.city || '—',
-      country: p.country || '',
-      price: p.asking_price || 0,
-      currency: p.currency || 'EUR',
-      sqm: p.area_sqm || 0,
-      beds: p.bedrooms || 0,
-      status: p.status || 'draft',
-      agencies: p.agencies_sent || 0,
-      leads: 0,
-      img: p.photos?.[0] || PROP_IMAGES[i % PROP_IMAGES.length],
-    })),
-  ]
+  const allProps = localProps.map((p: any, i: number) => ({
+    id: p.id,
+    type: p.property_type?.charAt(0).toUpperCase() + p.property_type?.slice(1) || 'Property',
+    city: p.city || '—',
+    country: p.country || '',
+    price: p.asking_price || 0,
+    currency: p.currency || 'EUR',
+    sqm: p.area_sqm || 0,
+    beds: p.bedrooms || 0,
+    status: p.status || 'draft',
+    agencies: waveLog.length > 0 ? waveLog.length : (p.agencies_sent || 0),
+    leads: 0,
+    img: p.photos?.[0] || PROP_IMAGES[i % PROP_IMAGES.length],
+  }))
 
-  const activeProps = allProps.filter(p => p.status === 'in_distribution' || p.status === 'active')
-  const totalAgencies = allProps.reduce((s, p) => s + (p.agencies || 0), 0)
-  const unread = DEMO_ACTIVITY.filter(a => a.unread).length
+  const activeProps    = allProps.filter(p => p.status === 'in_distribution' || p.status === 'active')
+  const totalAgencies  = waveLog.length
+  const BAR_DATA       = buildBarData(waveLog)
+  const BAR_MAX        = Math.max(...BAR_DATA.map(d => d.sent), 1)
+
+  // Activity feed: last 8 agencies from wave_log (most recent first)
+  const activity = waveLog.slice(-8).reverse().map((e: any, i: number) => ({
+    id: e.id || i,
+    agency: e.name,
+    flag: flagFromId(e.id),
+    avatar: avatarFromName(e.name),
+    msg: `Email sent · APEX score ${e.score} · awaiting reply`,
+    time: e.sent_at ? (() => {
+      const diff = Date.now() - new Date(e.sent_at).getTime()
+      const h = Math.floor(diff / 3600000)
+      if (h < 1) return '<1h'
+      if (h < 24) return `${h}h`
+      return `${Math.floor(h/24)}d`
+    })() : '—',
+    unread: false,
+    wave: e.wave,
+  }))
 
   const kpis = [
-    { label: 'Properties',  value: allProps.length,      icon: '🏠', color: C.green,  bg: C.greenBg,  link: '/properties' },
-    { label: 'Agencies',    value: totalAgencies || 10,  icon: '📡', color: C.blue,   bg: C.blueBg,   link: '/distribution' },
-    { label: 'Leads',       value: DEMO_ACTIVITY.length, icon: '🔥', color: C.orange, bg: C.orangeBg, link: '/leads' },
-    { label: 'Messages',    value: unread,               icon: '💬', color: C.purple, bg: C.purpleBg, link: '/messenger' },
+    { label: 'Properties',  value: allProps.length,   icon: '🏠', color: C.green,  bg: C.greenBg,  link: '/properties'  },
+    { label: 'Agencies',    value: totalAgencies,     icon: '📡', color: C.blue,   bg: C.blueBg,   link: '/distribution'},
+    { label: 'Contacted',   value: totalAgencies,     icon: '🔥', color: C.orange, bg: C.orangeBg, link: '/leads'       },
+    { label: 'Messages',    value: 0,                 icon: '💬', color: C.purple, bg: C.purpleBg, link: '/messenger'   },
   ]
 
   return (
@@ -330,8 +361,8 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {[
-                    { label: 'Agencies reached', val: totalAgencies || 0 },
-                    { label: 'New leads',         val: unread },
+                    { label: 'Agencies reached', val: totalAgencies },
+                    { label: 'Waves sent',        val: waveLog.length > 0 ? [...new Set(waveLog.map((e:any)=>e.wave))].length : 0 },
                   ].map(s => (
                     <div key={s.label} style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '10px 12px' }}>
                       <div style={{ fontSize: 22, fontWeight: 900 }}>{s.val}</div>
@@ -346,35 +377,37 @@ export default function DashboardPage() {
                 <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <h2 style={{ fontSize: 14, fontWeight: 800, margin: 0 }}>Activity</h2>
-                    {unread > 0 && (
-                      <span style={{ background: C.red, color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 20, padding: '2px 7px' }}>{unread}</span>
+                    {activity.length > 0 && (
+                      <span style={{ background: C.green, color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 20, padding: '2px 7px' }}>{activity.length}</span>
                     )}
                   </div>
                   <Link href="/leads" style={{ fontSize: 12, color: C.green, fontWeight: 700, textDecoration: 'none' }}>All →</Link>
                 </div>
 
-                {DEMO_ACTIVITY.map((a, i) => (
-                  <Link key={a.id} href="/leads" style={{ textDecoration: 'none' }}>
+                {activity.length === 0 ? (
+                  <div style={{ padding: '28px 18px', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>📡</div>
+                    <div style={{ fontSize: 12, color: C.text3 }}>No campaign launched yet. Add a property to start.</div>
+                  </div>
+                ) : activity.map((a, i) => (
+                  <Link key={`${a.id}-${i}`} href="/leads" style={{ textDecoration: 'none' }}>
                     <div className="db-btn" style={{
                       padding: '12px 18px',
-                      borderBottom: i < DEMO_ACTIVITY.length - 1 ? `1px solid ${C.border2}` : 'none',
+                      borderBottom: i < activity.length - 1 ? `1px solid ${C.border2}` : 'none',
                       display: 'flex', gap: 10, alignItems: 'flex-start',
-                      background: a.unread ? '#FAFFFE' : 'transparent',
                     }}>
                       {/* Avatar */}
                       <div style={{
                         width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                        background: a.unread ? C.green : C.bg,
-                        color: a.unread ? '#fff' : C.text2,
+                        background: C.bg, color: C.text2,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 800,
+                        fontSize: 10, fontWeight: 800, border: `1px solid ${C.border}`,
                       }}>
                         {a.avatar}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{a.flag} {a.agency}</span>
-                          {a.unread && <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.red, flexShrink: 0 }} />}
                           <span style={{ fontSize: 10, color: C.text3, marginLeft: 'auto' }}>{a.time}</span>
                         </div>
                         <div style={{ fontSize: 11, color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.4 }}>
@@ -392,7 +425,7 @@ export default function DashboardPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
                     { label: 'New Property',  sub: 'Launch APEX distribution',     href: '/properties/new', color: C.green,  bg: C.greenBg,  icon: '🏠' },
-                    { label: 'Messages',      sub: `${unread} unread`,              href: '/messenger',      color: C.purple, bg: C.purpleBg, icon: '💬' },
+                    { label: 'Messages',      sub: 'Check inbox',                   href: '/messenger',      color: C.purple, bg: C.purpleBg, icon: '💬' },
                     { label: 'Distribution',  sub: 'Wave report',                  href: '/distribution',   color: C.blue,   bg: C.blueBg,   icon: '📡' },
                     { label: 'Billing',       sub: 'Subscription & plans',         href: '/billing',        color: C.orange, bg: C.orangeBg, icon: '💳' },
                   ].map(q => (

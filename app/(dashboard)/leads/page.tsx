@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-// i18n removed: English-only MVP
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 const C = {
   bg: '#F8FAFC', white: '#FFFFFF', border: '#E2E8F0',
@@ -11,207 +11,240 @@ const C = {
   yellow: '#CA8A04', yellowBg: '#FEF9C3',
   orange: '#EA580C', orangeBg: '#FFF7ED',
   red: '#DC2626', redBg: '#FEF2F2',
+  purple: '#7C3AED', purpleBg: '#EDE9FE',
 };
 
-interface Lead {
-  id: string; flag: string; name: string; city: string; country: string;
-  property: string; score: number; time: string; status: 'new' | 'replied' | 'meeting' | 'closed';
-  message: string; email: string; phone?: string;
+interface WaveEntry {
+  id: string; name: string; email: string; wave: 1 | 2 | 3;
+  score: number; sent_at: string;
 }
 
-const LEADS: Lead[] = [
-  { id: 'l1', flag: '🇦🇹', name: 'Magnus Realty GmbH', city: 'Vienna', country: 'Austria', property: 'Apt · Belgrade', score: 94, time: '2h ago', status: 'new', email: 'info@magnus-realty.at', phone: '+43 1 234 5678', message: 'Dear owner, we have several qualified buyers looking for Belgrade apartments in this price range. Can you share the floor plan and arrange a virtual tour?' },
-  { id: 'l2', flag: '🇲🇪', name: 'Adriatic Real Estate', city: 'Podgorica', country: 'Montenegro', property: 'Apt · Belgrade', score: 88, time: '5h ago', status: 'new', email: 'sales@adriatic-re.me', message: 'Hello! We have a motivated buyer offering €140,000 cash. Quick close possible — 30 days. Owner direct contact preferred.' },
-  { id: 'l3', flag: '🇦🇹', name: 'Euro Prime Properties', city: 'Vienna', country: 'Austria', property: 'Apt · Belgrade', score: 91, time: '1d ago', status: 'replied', email: 'contact@europrime.at', message: 'Professional photos received. Listing is going live today on our platform (50k monthly visitors). We typically close within 45-60 days.' },
-  { id: 'l4', flag: '🇩🇪', name: 'Berlin Invest Group', city: 'Berlin', country: 'Germany', property: 'Apt · Belgrade', score: 79, time: '2d ago', status: 'meeting', email: 'team@berlininvest.de', message: 'We have set up a call for next Tuesday 14:00 CET. Our investor portfolio manager will discuss the property directly.' },
-  { id: 'l5', flag: '🇷🇸', name: 'Capital Estate Beograd', city: 'Belgrade', country: 'Serbia', property: 'Apt · Belgrade', score: 85, time: '3d ago', status: 'replied', email: 'office@capital-estate.rs', message: "We operate one of Belgrade's largest buyer networks. We'd like to feature this property in our premium newsletter reaching 12,000 subscribers." },
-];
-
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  new:     { bg: C.yellowBg, color: C.yellow },
-  replied: { bg: C.greenBg,  color: C.green  },
-  meeting: { bg: C.blueBg,   color: C.blue   },
-  closed:  { bg: C.bg,       color: C.text3  },
-};
-const STATUS_LABEL: Record<string, string> = {
-  new: 'New', replied: 'Replied', meeting: 'Meeting', closed: 'Closed',
+const WAVE_META: Record<number, { color: string; bg: string; label: string }> = {
+  1: { color: C.green,  bg: C.greenBg,  label: 'Wave 1' },
+  2: { color: C.blue,   bg: C.blueBg,   label: 'Wave 2' },
+  3: { color: C.purple, bg: C.purpleBg, label: 'Wave 3' },
 };
 
-const FILTER_KEYS = ['All', 'new', 'replied', 'meeting'] as const;
+const COUNTRY_FLAGS: Record<string, string> = {
+  me: '🇲🇪', rs: '🇷🇸', at: '🇦🇹', de: '🇩🇪', ch: '🇨🇭',
+  gb: '🇬🇧', nl: '🇳🇱', hr: '🇭🇷', gr: '🇬🇷', it: '🇮🇹',
+  fr: '🇫🇷', pl: '🇵🇱', si: '🇸🇮', ae: '🇦🇪', cy: '🇨🇾',
+  ru: '🇷🇺', ua: '🇺🇦', ba: '🇧🇦', mk: '🇲🇰', se: '🇸🇪',
+};
 
-// FIX P0-2: All LEADS data is demo/example content — clearly labeled in UI
-const IS_DEMO_LEADS = true; // flip to false when real backend leads are wired
+function flagFromId(id: string): string {
+  const m = id.match(/^([a-z]{2})-/i);
+  return m ? (COUNTRY_FLAGS[m[1].toLowerCase()] ?? '🏢') : '🏢';
+}
+
+function scoreColor(score: number): string {
+  if (score >= 85) return C.green;
+  if (score >= 70) return C.yellow;
+  return C.orange;
+}
 
 export default function LeadsPage() {
-  const [filter, setFilter] = useState('All');
-  const [selected, setSelected] = useState<Lead | null>(null);
+  const [waveLog, setWaveLog] = useState<WaveEntry[]>([]);
+  const [filter,  setFilter]  = useState<string>('All');
+  const [selected, setSelected] = useState<WaveEntry | null>(null);
 
-  const filtered = filter === 'All' ? LEADS : LEADS.filter(l => l.status === filter);
-  const newCount = LEADS.filter(l => l.status === 'new').length;
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('pb_wave_log');
+      if (raw) setWaveLog(JSON.parse(raw));
+    } catch {}
+  }, []);
 
+  const activewaves = ([1, 2, 3] as const).filter(w => waveLog.some(e => e.wave === w));
+  const filtered = filter === 'All' ? waveLog : waveLog.filter(e => String(e.wave) === filter);
+
+  /* ─── Detail view ─────────────────────────────────────── */
   if (selected) {
-    const cfg = STATUS_STYLE[selected.status];
+    const wm = WAVE_META[selected.wave];
+    const sc = scoreColor(selected.score);
     return (
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Inter',system-ui,sans-serif" }}>
-        <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
-          {IS_DEMO_LEADS && (
-            <div style={{ padding: '8px 14px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, fontSize: '0.75rem', color: '#92400E', fontWeight: 600, marginBottom: 16, display: 'flex', gap: 6, alignItems: 'center' }}>
-              <span>🧪</span>
-              <span>DEMO — This is a sample lead. Real agency responses appear here after your campaign is live.</span>
-            </div>
-          )}
-          <button onClick={() => setSelected(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: C.text2, fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', marginBottom: 20, padding: 0 }}>
-            ← Back
+        <div style={{ maxWidth: 620, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
+          <button onClick={() => setSelected(null)} style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', color:C.text2, fontSize:'0.875rem', fontWeight:600, cursor:'pointer', marginBottom:20, padding:0 }}>
+            ← Back to list
           </button>
 
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 16, padding: '20px', marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 14, background: C.bg, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0 }}>{selected.flag}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: C.text, marginBottom: 3 }}>{selected.name}</div>
-                <div style={{ fontSize: '0.8rem', color: C.text3 }}>{selected.city}, {selected.country}</div>
+          {/* Agency card */}
+          <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:'20px', marginBottom:14, boxShadow:'0 1px 4px rgba(0,0,0,0.06)' }}>
+            <div style={{ display:'flex', gap:14, alignItems:'flex-start', marginBottom:16 }}>
+              <div style={{ width:52, height:52, borderRadius:14, background:C.bg, border:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>
+                {flagFromId(selected.id)}
               </div>
-              <span style={{ padding: '4px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700, background: cfg.bg, color: cfg.color, flexShrink: 0 }}>{STATUS_LABEL[selected.status]}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:'1rem', fontWeight:700, color:C.text, marginBottom:3 }}>{selected.name}</div>
+                <div style={{ fontSize:'0.8rem', color:C.text3 }}>{selected.email}</div>
+              </div>
+              <span style={{ padding:'4px 12px', borderRadius:99, fontSize:'0.72rem', fontWeight:700, background:wm.bg, color:wm.color, flexShrink:0 }}>{wm.label}</span>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            {/* Stats row */}
+            <div style={{ display:'flex', gap:10, marginBottom:16 }}>
               {[
-                { label: 'AI Score', value: `${selected.score}/100`, color: C.green, bg: C.greenBg },
-                { label: 'Property',  value: selected.property, color: C.text, bg: C.bg },
-                { label: 'Received',  value: selected.time, color: C.text2, bg: C.bg },
+                { label:'APEX Score', value:`${selected.score}`, sub:'/100', color:sc, bg:sc === C.green ? C.greenBg : sc === C.yellow ? C.yellowBg : C.orangeBg },
+                { label:'Wave',       value:`Wave ${selected.wave}`, sub:'', color:wm.color, bg:wm.bg },
+                { label:'Sent',       value: selected.sent_at ? new Date(selected.sent_at).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—', sub:'', color:C.text2, bg:C.bg },
               ].map(s => (
-                <div key={s.label} style={{ flex: 1, padding: '10px 8px', borderRadius: 10, background: s.bg, border: `1px solid ${C.border}`, textAlign: 'center' as const }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: s.color }}>{s.value}</div>
-                  <div style={{ fontSize: '0.62rem', color: C.text3, marginTop: 2 }}>{s.label}</div>
+                <div key={s.label} style={{ flex:1, padding:'10px 8px', borderRadius:10, background:s.bg, border:`1px solid ${C.border}`, textAlign:'center' as const }}>
+                  <div style={{ fontSize:'0.9rem', fontWeight:700, color:s.color }}>{s.value}<span style={{ fontSize:'0.7rem', fontWeight:400 }}>{s.sub}</span></div>
+                  <div style={{ fontSize:'0.62rem', color:C.text3, marginTop:2 }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
-            <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: C.text3, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 8 }}>Message from agency</div>
-              <p style={{ fontSize: '0.875rem', color: C.text2, lineHeight: 1.65, margin: 0 }}>{selected.message}</p>
+            {/* Status banner */}
+            <div style={{ background:C.yellowBg, border:`1px solid rgba(202,138,4,0.25)`, borderRadius:12, padding:'12px 14px', marginBottom:16 }}>
+              <p style={{ fontSize:'0.8rem', color:C.yellow, lineHeight:1.6, margin:0, fontWeight:500 }}>
+                📧 <strong>Email sent.</strong> Waiting for agency reply — responses arrive in your inbox. Reply within 24 h to maximise conversion.
+              </p>
             </div>
 
-            <a href={`mailto:${selected.email}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', borderRadius: 12, background: C.green, color: C.white, fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none', marginBottom: selected.phone ? 8 : 0 }}>
-              ✉️ Reply by Email
+            {/* Actions */}
+            <a href={`mailto:${selected.email}?subject=Follow-up: property listing`} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px', borderRadius:12, background:C.green, color:C.white, fontWeight:700, fontSize:'0.875rem', textDecoration:'none', marginBottom:8 }}>
+              ✉️ Follow Up by Email
             </a>
-            {selected.phone && (
-              <a href={`tel:${selected.phone}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', borderRadius: 12, background: C.greenBg, border: `1px solid rgba(22,163,74,0.3)`, color: C.green, fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>
-                📞 Call Agency
-              </a>
-            )}
+            <Link href="/messenger" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px', borderRadius:12, background:C.blueBg, border:`1px solid rgba(59,91,219,0.2)`, color:C.blue, fontWeight:700, fontSize:'0.875rem', textDecoration:'none' }}>
+              💬 Open Messages
+            </Link>
           </div>
 
-          <div style={{ padding: '14px 16px', borderRadius: 14, background: C.blueBg, border: `1px solid rgba(59,91,219,0.15)` }}>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>🤖</span>
-              <p style={{ fontSize: '0.8rem', color: C.blue, lineHeight: 1.6, margin: 0 }}>
-                <strong>AI insight:</strong> Score {selected.score}/100 — strong match. Replying within 24h increases close probability 3×.
+          {/* AI insight */}
+          <div style={{ padding:'14px 16px', borderRadius:14, background:C.blueBg, border:`1px solid rgba(59,91,219,0.15)` }}>
+            <div style={{ display:'flex', gap:10 }}>
+              <span style={{ fontSize:18, flexShrink:0 }}>🤖</span>
+              <p style={{ fontSize:'0.8rem', color:C.blue, lineHeight:1.6, margin:0 }}>
+                <strong>APEX Score {selected.score}/100</strong> — {
+                  selected.score >= 88 ? 'Top-tier match. Very high conversion probability. Prioritise this agency.' :
+                  selected.score >= 75 ? 'Strong match. Good buyer network fit. Recommended for follow-up.' :
+                  'Qualified match. Engaged in your target market. Follow up recommended.'
+                }
               </p>
             </div>
           </div>
-          <div style={{ height: 40 }} />
+          <div style={{ height:40 }} />
         </div>
       </div>
     );
   }
 
-  return (
-    <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Inter',system-ui,sans-serif" }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
+  /* ─── Empty state ─────────────────────────────────────── */
+  if (waveLog.length === 0) {
+    return (
+      <div style={{ background:C.bg, minHeight:'100vh', fontFamily:"'Inter',system-ui,sans-serif" }}>
+        <div style={{ maxWidth:620, margin:'0 auto', padding:'clamp(16px,4vw,28px)' }}>
+          <div style={{ marginBottom:20 }}>
+            <h1 style={{ fontSize:'clamp(1.3rem,5vw,1.5rem)', fontWeight:700, letterSpacing:'-0.02em', marginBottom:4, color:C.text }}>Agency Contacts</h1>
+            <p style={{ fontSize:'0.85rem', color:C.text3 }}>All agencies reached by your APEX campaign</p>
+          </div>
+          <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:'56px 24px', textAlign:'center' as const }}>
+            <div style={{ fontSize:'2.5rem', marginBottom:12 }}>📭</div>
+            <div style={{ fontSize:'1rem', fontWeight:700, color:C.text, marginBottom:6 }}>No campaign data yet</div>
+            <p style={{ fontSize:'0.8125rem', color:C.text3, maxWidth:320, margin:'0 auto 24px' }}>
+              Run an APEX distribution campaign to see all contacted agencies here with scores and status.
+            </p>
+            <Link href="/properties/new" style={{ display:'inline-flex', padding:'10px 22px', borderRadius:10, background:C.green, color:C.white, fontWeight:600, fontSize:'0.875rem', textDecoration:'none' }}>
+              Start Campaign
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.5rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4, color: C.text }}>
-            Agency Responses
-          </h1>
-          <p style={{ fontSize: '0.85rem', color: C.text3 }}>
-            {newCount > 0 ? `${newCount} new agency responses` : 'All responses from agencies'}
+  /* ─── Main list ───────────────────────────────────────── */
+  return (
+    <div style={{ background:C.bg, minHeight:'100vh', fontFamily:"'Inter',system-ui,sans-serif" }}>
+      <div style={{ maxWidth:620, margin:'0 auto', padding:'clamp(16px,4vw,28px)' }}>
+
+        <div style={{ marginBottom:20 }}>
+          <h1 style={{ fontSize:'clamp(1.3rem,5vw,1.5rem)', fontWeight:700, letterSpacing:'-0.02em', marginBottom:4, color:C.text }}>Agency Contacts</h1>
+          <p style={{ fontSize:'0.85rem', color:C.text3 }}>{waveLog.length} agencies contacted · replies delivered to your inbox</p>
+        </div>
+
+        {/* Info bar */}
+        <div style={{ padding:'12px 16px', background:C.blueBg, border:'1px solid rgba(59,91,219,0.2)', borderRadius:12, marginBottom:20, display:'flex', gap:10, alignItems:'flex-start' }}>
+          <span style={{ fontSize:18, flexShrink:0 }}>📧</span>
+          <p style={{ fontSize:'0.78rem', color:C.blue, lineHeight:1.55, margin:0 }}>
+            <strong>Replies go directly to your email.</strong> Each agency received a personalised offer. When they reply, the message lands in your inbox with a BCC copy. Use Messages to track conversations.
           </p>
         </div>
 
-        {IS_DEMO_LEADS && (
-          <div style={{ padding: '12px 16px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 12, marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <span style={{ fontSize: 18, flexShrink: 0 }}>🧪</span>
-            <div>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E', marginBottom: 3 }}>Demo Examples</div>
-              <p style={{ fontSize: '0.75rem', color: '#92400E', lineHeight: 1.5, margin: 0 }}>
-                These are example agency responses shown for illustration. Once your property campaign goes live, real agency messages will appear here — linked to your actual listing.
-              </p>
-            </div>
+        {/* Wave stats */}
+        <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+          {activewaves.map(w => {
+            const wm = WAVE_META[w];
+            const cnt = waveLog.filter(e => e.wave === w).length;
+            return (
+              <div key={w} style={{ flex:1, padding:'10px 12px', borderRadius:10, background:wm.bg, border:`1px solid ${wm.color}22`, textAlign:'center' as const }}>
+                <div style={{ fontSize:'1.25rem', fontWeight:700, color:wm.color }}>{cnt}</div>
+                <div style={{ fontSize:'0.65rem', color:C.text3, marginTop:1 }}>{wm.label}</div>
+              </div>
+            );
+          })}
+          <div style={{ flex:1, padding:'10px 12px', borderRadius:10, background:C.bg, border:`1px solid ${C.border}`, textAlign:'center' as const }}>
+            <div style={{ fontSize:'1.25rem', fontWeight:700, color:C.text2 }}>{waveLog.length}</div>
+            <div style={{ fontSize:'0.65rem', color:C.text3, marginTop:1 }}>Total</div>
           </div>
-        )}
-
-        {newCount > 0 && (
-          <div style={{ background: C.yellowBg, border: `1px solid rgba(202,138,4,0.25)`, borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <span style={{ fontSize: 16, flexShrink: 0 }}>🤖</span>
-            <p style={{ fontSize: '0.8rem', color: C.yellow, lineHeight: 1.5, margin: 0 }}>
-              <strong>Reply within 24h</strong> — agencies with active buyers expect fast responses. Reply rate impacts Wave 2 selection.
-            </p>
-          </div>
-        )}
+        </div>
 
         {/* Filter tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, background: C.white, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4 }}>
-          {FILTER_KEYS.map(f => {
+        <div style={{ display:'flex', gap:6, marginBottom:16, background:C.white, border:`1px solid ${C.border}`, borderRadius:10, padding:4 }}>
+          {(['All', ...activewaves.map(String)] as string[]).map(f => {
             const isActive = filter === f;
-            const count = f === 'All' ? LEADS.length : LEADS.filter(l => l.status === f).length;
+            const label = f === 'All' ? 'All' : `Wave ${f}`;
+            const cnt = f === 'All' ? waveLog.length : waveLog.filter(e => String(e.wave) === f).length;
             return (
               <button key={f} onClick={() => setFilter(f)} style={{
-                flex: 1, padding: '7px 10px', borderRadius: 7, fontWeight: 600, fontSize: '0.78rem',
-                cursor: 'pointer', whiteSpace: 'nowrap' as const, border: 'none',
+                flex:1, padding:'7px 8px', borderRadius:7, fontWeight:600, fontSize:'0.78rem',
+                cursor:'pointer', whiteSpace:'nowrap' as const, border:'none',
                 background: isActive ? C.green : 'transparent',
                 color: isActive ? C.white : C.text2,
-                transition: 'all 0.15s',
+                transition:'all 0.15s',
               }}>
-                {f === 'All' ? 'All' : STATUS_LABEL[f]}{count > 0 ? ` (${count})` : ''}
+                {label} ({cnt})
               </button>
             );
           })}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filtered.map(lead => {
-            const cfg = STATUS_STYLE[lead.status];
-            const isNew = lead.status === 'new';
+        {/* List */}
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {filtered.map(entry => {
+            const wm = WAVE_META[entry.wave];
+            const sc = scoreColor(entry.score);
             return (
-              <div key={lead.id} onClick={() => setSelected(lead)} style={{
-                background: C.white,
-                border: `1px solid ${isNew ? 'rgba(202,138,4,0.3)' : C.border}`,
-                borderLeft: `3px solid ${isNew ? C.yellow : cfg.color}`,
-                borderRadius: 12, padding: '14px 15px', cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'box-shadow 0.15s, transform 0.1s',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 11, background: C.bg, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{lead.flag}</div>
-                    {isNew && <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, background: C.red, borderRadius: 99, border: `2px solid ${C.white}` }} />}
+              <div
+                key={entry.id}
+                onClick={() => setSelected(entry)}
+                style={{ background:C.white, border:`1px solid ${C.border}`, borderLeft:`3px solid ${wm.color}`, borderRadius:12, padding:'14px 15px', cursor:'pointer', boxShadow:'0 1px 3px rgba(0,0,0,0.04)', transition:'box-shadow 0.15s, transform 0.1s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLElement).style.transform='translateY(-1px)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLElement).style.transform='none'; }}
+              >
+                <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+                  <div style={{ width:42, height:42, borderRadius:11, background:C.bg, border:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+                    {flagFromId(entry.id)}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 3 }}>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 700, color: C.text, flex: 1, marginRight: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{lead.name}</span>
-                      <span style={{ padding: '2px 8px', borderRadius: 99, fontSize: '0.65rem', fontWeight: 700, background: cfg.bg, color: cfg.color, flexShrink: 0 }}>{STATUS_LABEL[lead.status]}</span>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:3 }}>
+                      <span style={{ fontSize:'0.875rem', fontWeight:700, color:C.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, flex:1, marginRight:8 }}>{entry.name}</span>
+                      <span style={{ padding:'2px 8px', borderRadius:99, fontSize:'0.65rem', fontWeight:700, background:wm.bg, color:wm.color, flexShrink:0 }}>{wm.label}</span>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: C.text3, marginBottom: 4 }}>
-                      {lead.city} · <span style={{ color: C.green, fontWeight: 700 }}>Score {lead.score}</span> · {lead.time}
+                    <div style={{ fontSize:'0.72rem', color:C.text3 }}>
+                      Score <span style={{ color:sc, fontWeight:700 }}>{entry.score}</span>
+                      {' · '}{entry.sent_at ? new Date(entry.sent_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—'}
+                      {' · '}<span style={{ color:C.yellow }}>awaiting reply</span>
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{lead.message}</div>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '48px 20px', color: C.text3 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: C.text2 }}>No leads yet</div>
-          </div>
-        )}
-        <div style={{ height: 40 }} />
+        <div style={{ height:40 }} />
       </div>
     </div>
   );
