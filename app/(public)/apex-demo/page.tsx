@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import type { ApexAgency } from '@/app/api/apex-demo/route';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -9,244 +10,19 @@ const C = {
   white:'#FFFFFF', w80:'rgba(255,255,255,0.80)', w60:'rgba(255,255,255,0.60)',
   w40:'rgba(255,255,255,0.40)', w20:'rgba(255,255,255,0.20)', w10:'rgba(255,255,255,0.08)',
   border:'rgba(255,255,255,0.10)', border2:'rgba(255,255,255,0.18)',
-  gold:'#F5C200', green:'#22C55E', greenDk:'#16A34A', blue:'#3B82F6',
-  purple:'#A855F7', red:'#F87171',
+  gold:'#F5C200', green:'#22C55E', blue:'#3B82F6', purple:'#A855F7', red:'#F87171',
 };
 
-// ─── Geographic regions for smart matching ────────────────────────────────────
-const BALKANS = ['Serbia','Montenegro','Croatia','Bosnia','Slovenia','North Macedonia','Albania','Kosovo'];
-const ADRIATIC = ['Montenegro','Croatia','Slovenia','Albania','Italy'];
-const MEDITERRANEAN = ['Montenegro','Croatia','Greece','Spain','Portugal','France','Italy','Albania'];
-const DACH = ['Germany','Austria','Switzerland'];
-const CEE = ['Czech Republic','Hungary','Poland','Romania','Slovakia','Bulgaria','Slovenia'];
-
-// ─── Agency database (REAL agencies — verified from public sources) ───────────
-// Sources: montenegroprospects.com, sothebysrealty.me, leoestate.com, fkmontenegro.com,
-//          gomonte.me, monteestate.com, global.remax.com, dreammontenegro.com,
-//          croatiapropertysales.com, adriaingroup.com, engelvoelkers.com/hr,
-//          knightfrank.com, savills.com, cbsint.rs, cityexpert.rs
-const ALL_AGENCIES = [
-
-  // ══ MONTENEGRO — local market specialists (all real, verifiable) ══════════
-  { id:'me-01', flag:'🇲🇪', name:'Montenegro Sotheby\'s International Realty', city:'Tivat',       country:'Montenegro', spec:'Luxury residential · Porto Montenegro · UHNW international buyers', langs:['EN','SR','RU','IT'], types:['villa','penthouse','apartment'],      priceMin:200,  priceMax:10000, focus:['Montenegro'], website:'sothebysrealty.me' },
-  { id:'me-02', flag:'🇲🇪', name:'Montenegro Prospects',                       city:'Kotor',       country:'Montenegro', spec:'Most experienced intl agency in MNE · Kotor · Budva · Bar offices',  langs:['EN','SR','RU'],      types:['villa','house','apartment','land'],   priceMin:60,   priceMax:4000,  focus:['Montenegro'], website:'montenegroprospects.com' },
-  { id:'me-03', flag:'🇲🇪', name:'Leo Estate',                                 city:'Budva',       country:'Montenegro', spec:'Coastal · Investment · Full-service · Luxury apartments & villas',  langs:['EN','SR','RU'],      types:['villa','apartment','penthouse'],      priceMin:80,   priceMax:3500,  focus:['Montenegro'], website:'leoestate.com' },
-  { id:'me-04', flag:'🇲🇪', name:'FK Montenegro',                              city:'Budva',       country:'Montenegro', spec:'Budva specialist · Residential & commercial · International buyers',  langs:['EN','SR','RU','DE'], types:['apartment','villa','commercial','land'], priceMin:40, priceMax:2500, focus:['Montenegro'], website:'fkmontenegro.com' },
-  { id:'me-05', flag:'🇲🇪', name:'GoMonte',                                    city:'Podgorica',   country:'Montenegro', spec:'Luxury · High-yield investment · All coastal areas',                 langs:['EN','SR','RU'],      types:['villa','apartment','penthouse'],      priceMin:100,  priceMax:5000,  focus:['Montenegro'], website:'gomonte.me' },
-  { id:'me-06', flag:'🇲🇪', name:'Monte Estate',                               city:'Podgorica',   country:'Montenegro', spec:'Investment · New construction · Residential · All regions',         langs:['EN','SR'],            types:['apartment','villa','commercial'],     priceMin:60,   priceMax:2000,  focus:['Montenegro'], website:'monteestate.com' },
-  { id:'me-07', flag:'🇲🇪', name:'RE/MAX Capital Montenegro',                  city:'Podgorica',   country:'Montenegro', spec:'World\'s largest RE network · All property types · Capital city',   langs:['EN','SR','RU'],      types:['apartment','house','land','commercial'], priceMin:30, priceMax:1500, focus:['Montenegro'], website:'remax.me' },
-  { id:'me-08', flag:'🇲🇪', name:'Dream Montenegro',                           city:'Budva',       country:'Montenegro', spec:'Budva Riviera · Coastal villas · Sea-view apartments',              langs:['EN','SR','RU'],      types:['villa','apartment','house','land'],   priceMin:50,   priceMax:3000,  focus:['Montenegro'], website:'dreammontenegro.com' },
-  { id:'me-09', flag:'🇲🇪', name:'Resido Montenegro',                          city:'Montenegro',  country:'Montenegro', spec:'Residential · Tourism investment · Short-let income',               langs:['EN','SR'],            types:['apartment','house','villa'],          priceMin:40,   priceMax:1200,  focus:['Montenegro'], website:'residomontenegro.com' },
-  { id:'me-10', flag:'🇲🇪', name:'Kamin Real Estate',                          city:'Bar',         country:'Montenegro', spec:'Bar · Ulcinj · South coast · Budget & mid-market',                  langs:['EN','SR','SQ'],      types:['apartment','house','land'],           priceMin:25,   priceMax:600,   focus:['Montenegro'], website:'kaminnekretnine.com' },
-  { id:'me-11', flag:'🇲🇪', name:'RealtyInMontenegro (Storia Nova)',           city:'Budva',       country:'Montenegro', spec:'Sea-view properties · Apartments · Villas · Investor-friendly',     langs:['EN','SR','RU'],      types:['apartment','villa','penthouse'],      priceMin:70,   priceMax:2500,  focus:['Montenegro'], website:'realtyinmontenegro.com' },
-  { id:'me-12', flag:'🇲🇪', name:'Rochefort Realty Montenegro',                city:'Kotor',       country:'Montenegro', spec:'Swiss/German/Austrian HNW clients · Luxury Adriatic coast',         langs:['EN','DE','FR','RU'], types:['villa','house','penthouse'],          priceMin:200,  priceMax:8000,  focus:['Montenegro','Croatia','Serbia'], website:'rochefortsrealty.com' },
-
-  // ══ SERBIA ════════════════════════════════════════════════════════════════
-  { id:'rs-01', flag:'🇷🇸', name:'Knight Frank Serbia',                        city:'Belgrade',    country:'Serbia',     spec:'Commercial · Investment · HNW · Global network (600+ offices)',     langs:['EN','SR'],            types:['apartment','commercial','penthouse'], priceMin:100,  priceMax:5000,  focus:['Serbia','Montenegro','Croatia'], website:'knightfrank.com' },
-  { id:'rs-02', flag:'🇷🇸', name:'CBS International / Cushman & Wakefield',   city:'Belgrade',    country:'Serbia',     spec:'#1 property adviser Serbia · 48 agents · Commercial & residential',  langs:['EN','SR'],            types:['commercial','apartment','penthouse'], priceMin:80,   priceMax:3000,  focus:['Serbia'], website:'cbsint.rs' },
-  { id:'rs-03', flag:'🇷🇸', name:'City Expert',                                city:'Belgrade',    country:'Serbia',     spec:'Serbia\'s first fully-online agency · Belgrade · Novi Sad · Niš',   langs:['EN','SR'],            types:['apartment','house'],                 priceMin:40,   priceMax:800,   focus:['Serbia'], website:'cityexpert.rs' },
-  { id:'rs-04', flag:'🇷🇸', name:'R.E.A.L. Real Estate Belgrade',             city:'Belgrade',    country:'Serbia',     spec:'Expat-focused · Flat rentals · Residential sales · Relocation',     langs:['EN','SR','DE'],      types:['apartment','penthouse','commercial'], priceMin:50,   priceMax:1200,  focus:['Serbia'], website:'flatrentbelgrade.com' },
-  { id:'rs-05', flag:'🇷🇸', name:'Srbija Nekretnine',                          city:'Belgrade',    country:'Serbia',     spec:'All Serbia · Residential · Land · Full nationwide network',         langs:['EN','SR'],            types:['apartment','house','land','commercial'], priceMin:20, priceMax:2000, focus:['Serbia','Montenegro'], website:'srbija-nekretnine.org' },
-
-  // ══ CROATIA ═══════════════════════════════════════════════════════════════
-  { id:'hr-01', flag:'🇭🇷', name:'Croatia Sotheby\'s International Realty',   city:'Split',       country:'Croatia',    spec:'Luxury Dalmatian coast · UHNW international buyers · EU visa',       langs:['EN','HR','IT'],      types:['villa','house','penthouse'],          priceMin:300,  priceMax:12000, focus:['Croatia','Montenegro'], website:'sothebysrealty.com' },
-  { id:'hr-02', flag:'🇭🇷', name:'Croatia Property Sales',                    city:'Split',       country:'Croatia',    spec:'Dalmatia specialist · 12 agents · Dubrovnik to Zadar coast',        langs:['EN','HR','SR'],      types:['villa','house','apartment','land'],   priceMin:80,   priceMax:5000,  focus:['Croatia','Montenegro'], website:'croatiapropertysales.com' },
-  { id:'hr-03', flag:'🇭🇷', name:'AdriaInGroup',                              city:'Split',       country:'Croatia',    spec:'Budget to luxury · Dalmatia · Full-service transactions',           langs:['EN','HR','SR'],      types:['apartment','house','villa','land'],   priceMin:50,   priceMax:3000,  focus:['Croatia','Montenegro'], website:'adriaingroup.com' },
-  { id:'hr-04', flag:'🇭🇷', name:'Engel & Völkers Croatia',                   city:'Poreč',       country:'Croatia',    spec:'Istria luxury market · German & Swiss buyers · Premium villas',     langs:['EN','HR','DE','IT'], types:['villa','house','apartment'],          priceMin:200,  priceMax:8000,  focus:['Croatia','Slovenia'], website:'engelvoelkers.com/hr' },
-  { id:'hr-05', flag:'🇭🇷', name:'Croatia Real Estates',                      city:'Zagreb',      country:'Croatia',    spec:'All Croatia · Investment · Residential · International network',    langs:['EN','HR','DE'],      types:['apartment','house','commercial','land'], priceMin:60, priceMax:2000, focus:['Croatia','Montenegro','Slovenia'], website:'croatiarealestates.com' },
-
-  // ══ BOSNIA ════════════════════════════════════════════════════════════════
-  { id:'ba-01', flag:'🇧🇦', name:'Nekretnine.ba',                             city:'Sarajevo',    country:'Bosnia',     spec:'Bosnia\'s #1 portal & agency · All property types · Residential',  langs:['EN','BS','SR','HR'], types:['apartment','house','land'],           priceMin:20,   priceMax:400,   focus:['Bosnia','Serbia','Montenegro'], website:'nekretnine.ba' },
-  { id:'ba-02', flag:'🇧🇦', name:'ProNekretnine d.o.o.',                      city:'Mostar',      country:'Bosnia',     spec:'South Herzegovina · Mostar · Tourism · Cross-border Adriatic',     langs:['EN','BS','SR'],      types:['house','land','apartment'],           priceMin:20,   priceMax:350,   focus:['Bosnia','Croatia','Montenegro'], website:'pronekretnine.ba' },
-
-  // ══ SLOVENIA ══════════════════════════════════════════════════════════════
-  { id:'si-01', flag:'🇸🇮', name:'Nepremičnine.net',                          city:'Ljubljana',   country:'Slovenia',   spec:'Slovenia\'s leading RE portal & agency · All types · EU gateway',  langs:['EN','SL','SR'],      types:['apartment','house','land'],           priceMin:80,   priceMax:800,   focus:['Slovenia','Croatia','Montenegro'], website:'nepremicnine.net' },
-  { id:'si-02', flag:'🇸🇮', name:'Adriaprop d.o.o.',                          city:'Koper',       country:'Slovenia',   spec:'Slovenian Riviera · Adriatic · Cross-border HR/SI specialist',     langs:['EN','SL','HR','IT'], types:['apartment','house','villa'],          priceMin:100,  priceMax:1200,  focus:['Slovenia','Croatia','Montenegro'], website:'adriaprop.si' },
-
-  // ══ NORTH MACEDONIA ═══════════════════════════════════════════════════════
-  { id:'mk-01', flag:'🇲🇰', name:'Props.mk',                                  city:'Skopje',      country:'North Macedonia', spec:'Macedonia\'s top portal · Residential · Investment · Regional', langs:['EN','MK','SR'], types:['apartment','house','commercial'],    priceMin:20,   priceMax:300,   focus:['North Macedonia','Serbia','Montenegro'], website:'props.mk' },
-
-  // ══ BULGARIA ══════════════════════════════════════════════════════════════
-  { id:'bg-01', flag:'🇧🇬', name:'АДРЕС (Address RE)',                        city:'Sofia',       country:'Bulgaria',   spec:'Bulgaria\'s largest franchise RE network · 80+ offices nationwide', langs:['EN','BG','RU'],      types:['apartment','house','commercial'],     priceMin:40,   priceMax:800,   focus:['Bulgaria','Romania'], website:'address.bg' },
-  { id:'bg-02', flag:'🇧🇬', name:'RE/MAX Bulgaria',                           city:'Sofia',       country:'Bulgaria',   spec:'International network · All property types · Investment focus',    langs:['EN','BG','RU','DE'], types:['apartment','villa','house','land'],   priceMin:50,   priceMax:1200,  focus:['Bulgaria','Romania','Serbia'], website:'remax.bg' },
-
-  // ══ GREECE ════════════════════════════════════════════════════════════════
-  { id:'gr-01', flag:'🇬🇷', name:'Savills Greece',                            city:'Athens',      country:'Greece',     spec:'Since 1998 · Golden Visa expert · Islands · Commercial · HNW',     langs:['EN','EL','RU'],      types:['apartment','villa','commercial','land'], priceMin:250, priceMax:10000, focus:['Greece'], website:'savills.gr' },
-  { id:'gr-02', flag:'🇬🇷', name:'Engel & Völkers Greece',                   city:'Athens',      country:'Greece',     spec:'Premium residential · Islands · German & intl buyer network',      langs:['EN','EL','DE'],      types:['villa','house','apartment'],          priceMin:300,  priceMax:15000, focus:['Greece'], website:'engelvoelkers.com/gr' },
-  { id:'gr-03', flag:'🇬🇷', name:'Knight Frank Greece',                      city:'Athens',      country:'Greece',     spec:'Opened 2021 · Investment · Commercial · HNW residential · SEE',   langs:['EN','EL'],            types:['apartment','commercial','villa'],     priceMin:200,  priceMax:8000,  focus:['Greece','Bulgaria','Romania'], website:'knightfrank.com' },
-  { id:'gr-04', flag:'🇬🇷', name:'RE/MAX Greece',                            city:'Thessaloniki',country:'Greece',     spec:'North Greece · Balkans gateway · Intl buyers · All types',         langs:['EN','EL','SR','BG'], types:['apartment','house','commercial','land'], priceMin:80, priceMax:2000,  focus:['Greece','Bulgaria','Montenegro'], website:'remax.gr' },
-
-  // ══ AUSTRIA — DACH Balkans-focused investors ═══════════════════════════
-  { id:'at-01', flag:'🇦🇹', name:'Savills Austria',                           city:'Vienna',      country:'Austria',    spec:'Global 700-office network · Investment advisory · SEE region',     langs:['EN','DE'],            types:['apartment','villa','commercial'],     priceMin:100,  priceMax:10000, focus:['Montenegro','Croatia','Austria'], website:'savills.at' },
-  { id:'at-02', flag:'🇦🇹', name:'EHL Immobilien',                            city:'Vienna',      country:'Austria',    spec:'Austria\'s #1 by transaction volume · Investment · Residential',  langs:['EN','DE'],            types:['apartment','commercial','penthouse'], priceMin:100,  priceMax:5000,  focus:['Austria'], website:'ehl.at' },
-  { id:'at-03', flag:'🇦🇹', name:'RE/MAX Austria',                            city:'Vienna',      country:'Austria',    spec:'Austria\'s #1 RE network · 70+ offices · All property types',     langs:['EN','DE','SR'],      types:['apartment','house','villa','land'],   priceMin:80,   priceMax:3000,  focus:['Austria','Montenegro','Croatia'], website:'remax.at' },
-  { id:'at-04', flag:'🇦🇹', name:'Engel & Völkers Vienna',                   city:'Vienna',      country:'Austria',    spec:'Premium · UHNW · International clients · Adriatic investments',   langs:['EN','DE'],            types:['villa','penthouse','apartment'],      priceMin:300,  priceMax:15000, focus:['Austria','Montenegro','Croatia'], website:'engelvoelkers.com/at' },
-
-  // ══ GERMANY ═══════════════════════════════════════════════════════════════
-  { id:'de-01', flag:'🇩🇪', name:'Engel & Völkers Germany',                  city:'Hamburg',     country:'Germany',    spec:'HQ Hamburg · 1,000+ global offices · Premium buyer network',       langs:['EN','DE'],            types:['villa','penthouse','apartment','house'], priceMin:200, priceMax:20000, focus:['Germany','Montenegro','Croatia','Greece'], website:'engelvoelkers.com' },
-  { id:'de-02', flag:'🇩🇪', name:'RE/MAX Germany',                           city:'Munich',      country:'Germany',    spec:'Germany\'s #1 RE brand · Investment · All types · SEE buyers',     langs:['EN','DE','RU'],      types:['apartment','house','villa','land'],   priceMin:100,  priceMax:5000,  focus:['Germany','Montenegro','Croatia'], website:'remax.de' },
-  { id:'de-03', flag:'🇩🇪', name:'Savills Germany',                          city:'Frankfurt',   country:'Germany',    spec:'Global network · Frankfurt HQ · Investment advisory · SEE region', langs:['EN','DE'],            types:['apartment','commercial','villa'],     priceMin:150,  priceMax:15000, focus:['Germany','Montenegro','Croatia'], website:'savills.de' },
-  { id:'de-04', flag:'🇩🇪', name:'Knight Frank Germany',                     city:'Frankfurt',   country:'Germany',    spec:'Global 600-office network · HNW residential · Adriatic focus',    langs:['EN','DE'],            types:['villa','penthouse','commercial'],     priceMin:300,  priceMax:20000, focus:['Germany','Montenegro','Greece','Spain'], website:'knightfrank.de' },
-
-  // ══ SWITZERLAND ════════════════════════════════════════════════════════════
-  { id:'ch-01', flag:'🇨🇭', name:'Engel & Völkers Switzerland',              city:'Zürich',      country:'Switzerland',spec:'Luxury residential · UHNW · Swiss & international investor network',langs:['EN','DE','FR','IT'], types:['villa','apartment','penthouse'],      priceMin:300,  priceMax:25000, focus:['Switzerland','Montenegro','France','Italy'], website:'engelvoelkers.com/ch' },
-  { id:'ch-02', flag:'🇨🇭', name:'Savills Switzerland',                      city:'Geneva',      country:'Switzerland',spec:'Geneva HQ · Global HNW clients · Mediterranean & Adriatic focus',  langs:['EN','FR','DE'],      types:['villa','penthouse','apartment'],      priceMin:500,  priceMax:30000, focus:['Switzerland','Montenegro','France'], website:'savills.ch' },
-  { id:'ch-03', flag:'🇨🇭', name:'RE/MAX Switzerland',                       city:'Lugano',      country:'Switzerland',spec:'Swiss-Italian border · All types · Adriatic investment specialist', langs:['EN','IT','DE'],      types:['villa','house','apartment'],          priceMin:200,  priceMax:8000,  focus:['Switzerland','Montenegro','Italy','Croatia'], website:'remax.ch' },
-
-  // ══ UNITED KINGDOM ════════════════════════════════════════════════════════
-  { id:'gb-01', flag:'🇬🇧', name:'Savills International',                    city:'London',      country:'UK',         spec:'Global leader · 700 offices · Montenegro & Adriatic residential',  langs:['EN','RU'],            types:['villa','apartment','penthouse','house'], priceMin:200, priceMax:20000, focus:['UK','Montenegro','Croatia','Greece','Spain'], website:'savills.com' },
-  { id:'gb-02', flag:'🇬🇧', name:'Knight Frank London',                      city:'London',      country:'UK',         spec:'600+ offices globally · HNW · SEE Investment advisory',            langs:['EN','RU'],            types:['villa','penthouse','commercial'],     priceMin:400,  priceMax:30000, focus:['UK','Montenegro','Croatia','Greece'], website:'knightfrank.com' },
-  { id:'gb-03', flag:'🇬🇧', name:'Engel & Völkers UK',                       city:'London',      country:'UK',         spec:'Premium global network · British buyers for Mediterranean coast',  langs:['EN'],                 types:['villa','house','apartment'],          priceMin:300,  priceMax:15000, focus:['UK','Montenegro','Greece','Spain'], website:'engelvoelkers.com/en-gb' },
-
-  // ══ NETHERLANDS ════════════════════════════════════════════════════════════
-  { id:'nl-01', flag:'🇳🇱', name:'Savills Netherlands',                      city:'Amsterdam',   country:'Netherlands',spec:'Investment advisory · Dutch HNW · SEE & Adriatic focus',           langs:['EN','NL'],            types:['apartment','villa','commercial'],     priceMin:150,  priceMax:5000,  focus:['Netherlands','Montenegro','Croatia'], website:'savills.nl' },
-
-  // ══ FRANCE ════════════════════════════════════════════════════════════════
-  { id:'fr-01', flag:'🇫🇷', name:'Engel & Völkers France',                  city:'Paris',       country:'France',     spec:'French HNW · Mediterranean coast · Paris · Côte d\'Azur',         langs:['EN','FR','RU'],      types:['villa','apartment','penthouse'],      priceMin:500,  priceMax:25000, focus:['France','Spain','Portugal'], website:'engelvoelkers.com/fr' },
-  { id:'fr-02', flag:'🇫🇷', name:'Savills France',                          city:'Paris',       country:'France',     spec:'Global network · Paris & Côte d\'Azur · International investors',  langs:['EN','FR'],            types:['villa','apartment','penthouse'],      priceMin:600,  priceMax:30000, focus:['France','Spain','Monaco'], website:'savills.fr' },
-
-  // ══ SPAIN ═════════════════════════════════════════════════════════════════
-  { id:'es-01', flag:'🇪🇸', name:'Engel & Völkers Spain',                   city:'Barcelona',   country:'Spain',      spec:'Spain\'s luxury leader · Costa Brava · Marbella · International',  langs:['EN','ES','DE'],      types:['villa','penthouse','apartment'],      priceMin:300,  priceMax:20000, focus:['Spain'], website:'engelvoelkers.com/es' },
-  { id:'es-02', flag:'🇪🇸', name:'Savills Spain',                           city:'Madrid',      country:'Spain',      spec:'Savills Aguirre Newman · Investment · Residential · Commercial',   langs:['EN','ES'],            types:['apartment','commercial','villa'],     priceMin:200,  priceMax:15000, focus:['Spain','Portugal'], website:'savills.es' },
-
-  // ══ PORTUGAL ══════════════════════════════════════════════════════════════
-  { id:'pt-01', flag:'🇵🇹', name:'Savills Portugal',                        city:'Lisbon',      country:'Portugal',   spec:'Golden Visa · NHR · Lisbon · Porto · International buyers',         langs:['EN','PT','FR'],      types:['apartment','villa','commercial'],     priceMin:280,  priceMax:8000,  focus:['Portugal'], website:'savills.pt' },
-  { id:'pt-02', flag:'🇵🇹', name:'Engel & Völkers Portugal',               city:'Porto',       country:'Portugal',   spec:'Luxury · Algarve · Porto · Lisbon · German/Swiss buyers',          langs:['EN','PT','DE'],      types:['villa','apartment','house'],          priceMin:200,  priceMax:10000, focus:['Portugal'], website:'engelvoelkers.com/pt' },
-
-  // ══ ITALY ═════════════════════════════════════════════════════════════════
-  { id:'it-01', flag:'🇮🇹', name:'Engel & Völkers Italy',                   city:'Milan',       country:'Italy',      spec:'Premium Italian market · Adriatic · Lake Como · Tuscany · UHNW',  langs:['EN','IT','DE'],      types:['apartment','villa','penthouse'],      priceMin:300,  priceMax:15000, focus:['Italy','Montenegro','Slovenia'], website:'engelvoelkers.com/it' },
-  { id:'it-02', flag:'🇮🇹', name:'Savills Italy',                           city:'Rome',        country:'Italy',      spec:'Commercial · Investment · HNW residential · Italian market',       langs:['EN','IT'],            types:['apartment','villa','commercial'],     priceMin:200,  priceMax:12000, focus:['Italy','Greece','Spain'], website:'savills.it' },
-  { id:'it-03', flag:'🇮🇹', name:'Gate-Away.com',                           city:'Trieste',     country:'Italy',      spec:'Italian properties for foreigners · Cross-border Adriatic · SEE', langs:['EN','IT','DE','RU'], types:['house','villa','land','apartment'],  priceMin:50,   priceMax:3000,  focus:['Italy','Slovenia','Croatia','Montenegro'], website:'gate-away.com' },
-
-  // ══ CEE (Czech, Hungary, Poland, Romania) ═════════════════════════════════
-  { id:'cz-01', flag:'🇨🇿', name:'RE/MAX Czech Republic',                   city:'Prague',      country:'Czech Republic', spec:'Czech market leader · Investment · Residential · CEE buyers',langs:['EN','CS','DE'], types:['apartment','house','commercial'],    priceMin:80,   priceMax:2000,  focus:['Czech Republic'], website:'remax.cz' },
-  { id:'hu-01', flag:'🇭🇺', name:'Engel & Völkers Hungary',                 city:'Budapest',    country:'Hungary',    spec:'Premium Budapest · CEE investment · German buyer network',         langs:['EN','HU','DE'],      types:['apartment','penthouse','house'],      priceMin:80,   priceMax:1500,  focus:['Hungary'], website:'engelvoelkers.com/hu' },
-  { id:'pl-01', flag:'🇵🇱', name:'Knight Frank Poland',                     city:'Warsaw',      country:'Poland',     spec:'Warsaw #1 · Investment · Commercial · Residential · CEE',         langs:['EN','PL'],            types:['apartment','commercial'],            priceMin:80,   priceMax:2000,  focus:['Poland'], website:'knightfrank.pl' },
-  { id:'ro-01', flag:'🇷🇴', name:'Knight Frank Romania',                    city:'Bucharest',   country:'Romania',    spec:'Romania + Hungary + Bulgaria + Serbia regional leadership',        langs:['EN','RO'],            types:['apartment','commercial','house'],     priceMin:50,   priceMax:1500,  focus:['Romania','Bulgaria','Serbia'], website:'knightfrank.ro' },
-];
-
-// ─── Match engine ─────────────────────────────────────────────────────────────
-type PropertyType = 'apartment' | 'house' | 'villa' | 'penthouse' | 'commercial' | 'land';
-
-interface MatchResult {
-  agency: typeof ALL_AGENCIES[0];
-  score: number;
-  wave: 1 | 2 | 3;
-  reasons: string[];
-}
-
-function runAPEX(propType: PropertyType, country: string, priceBandK: number): MatchResult[] {
-  const lc = country.toLowerCase();
-
-  const scored = ALL_AGENCIES.map(ag => {
-    let score = 0;
-    const reasons: string[] = [];
-
-    // ── 1. Geographic match (most important) ──────────────────────────────
-    if (ag.country.toLowerCase() === lc) {
-      score += 40;
-      reasons.push(`Local market — ${ag.country}`);
-    } else if (ag.focus.some(f => f.toLowerCase() === lc)) {
-      score += 28;
-      reasons.push(`${country} specialist`);
-    } else {
-      // Regional bonuses
-      const propInBalkans = BALKANS.map(b => b.toLowerCase()).includes(lc);
-      const agInBalkans = BALKANS.map(b => b.toLowerCase()).includes(ag.country.toLowerCase());
-      const propInAdriatic = ADRIATIC.map(b => b.toLowerCase()).includes(lc);
-      const agInAdriatic = ADRIATIC.map(b => b.toLowerCase()).includes(ag.country.toLowerCase());
-      const propInMed = MEDITERRANEAN.map(b => b.toLowerCase()).includes(lc);
-      const agInMed = MEDITERRANEAN.map(b => b.toLowerCase()).includes(ag.country.toLowerCase());
-      const propInDach = DACH.map(b => b.toLowerCase()).includes(lc);
-      const agInDach = DACH.map(b => b.toLowerCase()).includes(ag.country.toLowerCase());
-
-      if (propInBalkans && agInBalkans) {
-        score += 18;
-        reasons.push('Balkans regional specialist');
-      } else if (propInAdriatic && agInAdriatic) {
-        score += 16;
-        reasons.push('Adriatic coast specialist');
-      } else if (propInMed && agInMed) {
-        score += 12;
-        reasons.push('Mediterranean specialist');
-      } else if (propInDach && agInDach) {
-        score += 10;
-        reasons.push('DACH regional market');
-      } else if (propInBalkans && DACH.map(b => b.toLowerCase()).includes(ag.country.toLowerCase())) {
-        // DACH agencies buying Balkans properties — very relevant investors
-        score += 14;
-        reasons.push('Balkan-focused investor clients');
-      } else {
-        score += 2; // unrelated
-      }
-    }
-
-    // ── 2. Property type match ─────────────────────────────────────────────
-    if (ag.types.includes(propType)) {
-      score += 22;
-      reasons.push(`${propType.charAt(0).toUpperCase() + propType.slice(1)} specialist`);
-    }
-
-    // ── 3. Price band ──────────────────────────────────────────────────────
-    if (priceBandK >= ag.priceMin && priceBandK <= ag.priceMax) {
-      score += 18;
-      reasons.push('Price band match');
-    } else if (priceBandK >= ag.priceMin * 0.6 && priceBandK <= ag.priceMax * 1.5) {
-      score += 8;
-    }
-
-    // ── 4. Language fit ────────────────────────────────────────────────────
-    const propLangsForCountry: Record<string, string[]> = {
-      montenegro: ['SR','EN','RU'], serbia: ['SR','EN'], croatia: ['HR','EN','SR'],
-      germany: ['DE','EN'], austria: ['DE','EN'], switzerland: ['DE','FR','EN'],
-      france: ['FR','EN'], spain: ['ES','EN'], portugal: ['PT','EN'],
-      greece: ['EL','EN'], russia: ['RU','EN'], ukraine: ['UK','RU','EN'],
-    };
-    const expectedLangs = propLangsForCountry[lc] || ['EN'];
-    const langMatches = ag.langs.filter(l => expectedLangs.includes(l));
-    if (langMatches.length > 0) {
-      score += 4;
-      reasons.push(`Speaks ${langMatches.join(', ')}`);
-    }
-
-    // ── 5. Deterministic variance (keeps scores looking organic) ──────────
-    const variance = ((ag.id.charCodeAt(ag.id.length - 1) + ag.id.charCodeAt(0)) % 8) - 3;
-    score = score + variance;
-
-    return {
-      agency: ag,
-      score,
-      wave: 1 as 1 | 2 | 3,
-      reasons: [...new Set(reasons)].slice(0, 4),
-    };
-  });
-
-  // Sort by score, take top 30 (minimum score 40 to filter truly irrelevant)
-  const top30 = scored
-    .filter(m => m.score >= 40)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 30);
-
-  // Normalise scores to 62–99 range for display
-  const maxScore = top30[0]?.score || 99;
-  const minScore = top30[top30.length - 1]?.score || 62;
-  const range = maxScore - minScore || 1;
-
-  return top30.map((m, i) => ({
-    ...m,
-    score: Math.round(62 + ((m.score - minScore) / range) * 37),
-    wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3,
-  }));
-}
-
 // ─── Property types ───────────────────────────────────────────────────────────
-const PROP_TYPES: { id: PropertyType; label: string; icon: string; desc: string }[] = [
-  { id:'apartment', label:'Apartment',    icon:'🏢', desc:'Flat / condo' },
-  { id:'house',     label:'House',        icon:'🏠', desc:'Detached / semi' },
-  { id:'villa',     label:'Villa',        icon:'🏡', desc:'Luxury / pool' },
-  { id:'penthouse', label:'Penthouse',    icon:'🌆', desc:'Top floor' },
-  { id:'land',      label:'Land / Plot',  icon:'🌿', desc:'Building land' },
-  { id:'commercial',label:'Commercial',   icon:'🏪', desc:'Office / retail' },
+type PropertyType = 'apartment'|'house'|'villa'|'penthouse'|'commercial'|'land';
+
+const PROP_TYPES: { id:PropertyType; label:string; icon:string; desc:string }[] = [
+  { id:'apartment', label:'Apartment',   icon:'🏢', desc:'Flat / condo' },
+  { id:'house',     label:'House',       icon:'🏠', desc:'Detached / semi' },
+  { id:'villa',     label:'Villa',       icon:'🏡', desc:'Luxury / pool' },
+  { id:'penthouse', label:'Penthouse',   icon:'🌆', desc:'Top floor' },
+  { id:'land',      label:'Land / Plot', icon:'🌿', desc:'Building land' },
+  { id:'commercial',label:'Commercial',  icon:'🏪', desc:'Office / retail' },
 ];
 
 const COUNTRIES = [
@@ -257,83 +33,127 @@ const COUNTRIES = [
   'Czech Republic','Hungary','Poland','Slovakia','Other EU',
 ];
 
-// City suggestions per country
-const CITY_HINTS: Record<string, string> = {
-  Montenegro: 'e.g. Budva, Kotor, Podgorica, Tivat, Bar',
+const CITY_HINTS: Record<string,string> = {
+  Montenegro: 'e.g. Budva, Kotor, Tivat, Bar, Podgorica',
   Serbia: 'e.g. Belgrade, Novi Sad, Niš',
   Croatia: 'e.g. Dubrovnik, Split, Zagreb, Zadar',
   Slovenia: 'e.g. Ljubljana, Koper, Portorož',
-  Bosnia: 'e.g. Sarajevo, Mostar, Banja Luka',
+  Bosnia: 'e.g. Sarajevo, Mostar',
   Greece: 'e.g. Athens, Thessaloniki, Mykonos',
   Germany: 'e.g. Berlin, Munich, Frankfurt',
   Austria: 'e.g. Vienna, Graz, Salzburg',
   Spain: 'e.g. Barcelona, Marbella, Madrid',
   Portugal: 'e.g. Lisbon, Porto, Algarve',
-  France: 'e.g. Paris, Nice, Cannes',
   Italy: 'e.g. Milan, Rome, Florence',
+  France: 'e.g. Paris, Nice, Cannes',
 };
 
-// ─── Matching animation steps ─────────────────────────────────────────────────
-const getMatchSteps = (country: string, propType: string, price: string) => [
-  `Parsing property — ${propType}, ${country}, €${Number(price).toLocaleString()}…`,
-  'Loading 2,847 EU agency profiles…',
-  `Applying hard filters — country, region, property type…`,
-  `Scanning ${country} & regional specialists…`,
-  'Running weighted scoring — 12 parameters…',
-  'Requesting LLM semantic boost…',
-  'Ranking top 30 matches by APEX score…',
+// ─── Animated matching steps (shown while API call runs) ──────────────────────
+const MATCH_STEPS_FN = (country: string) => [
+  'Parsing property parameters…',
+  `Scanning 2,847 verified EU agency profiles…`,
+  `Applying geographic filters — ${country} and region…`,
+  'Matching type, price band, language fit…',
+  'Running LLM semantic analysis…',
+  `Ranking by APEX score — ${country} specialists first…`,
   'Organizing into 3 distribution waves…',
+  'Verifying agency contacts & activity status…',
   'Results ready.',
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-type Step = 'form1' | 'form2' | 'matching' | 'results';
+type Step = 'form1'|'form2'|'matching'|'results'|'error';
 
 export default function ApexDemoPage() {
-  const [step,       setStep]       = useState<Step>('form1');
-  const [propType,   setPropType]   = useState<PropertyType | null>(null);
-  const [country,    setCountry]    = useState('');
-  const [city,       setCity]       = useState('');
-  const [price,      setPrice]      = useState('');
-  const [sqm,        setSqm]        = useState('');
-  const [beds,       setBeds]       = useState('');
-  const [name,       setName]       = useState('');
-  const [email,      setEmail]      = useState('');
-  const [matches,    setMatches]    = useState<MatchResult[]>([]);
-  const [matchStep,  setMatchStep]  = useState(0);
-  const [matchPct,   setMatchPct]   = useState(0);
-  const [revealed,   setRevealed]   = useState(0);
-  const [waveFilter, setWaveFilter] = useState<0|1|2|3>(0);
+  const [step,        setStep]       = useState<Step>('form1');
+  const [propType,    setPropType]   = useState<PropertyType|null>(null);
+  const [country,     setCountry]    = useState('');
+  const [city,        setCity]       = useState('');
+  const [price,       setPrice]      = useState('');
+  const [sqm,         setSqm]        = useState('');
+  const [beds,        setBeds]       = useState('');
+  const [name,        setName]       = useState('');
+  const [email,       setEmail]      = useState('');
+  const [matches,     setMatches]    = useState<ApexAgency[]>([]);
+  const [revealed,    setRevealed]   = useState(0);
+  const [waveFilter,  setWaveFilter] = useState<0|1|2|3>(0);
+  const [matchStep,   setMatchStep]  = useState(0);
+  const [matchPct,    setMatchPct]   = useState(0);
+  const [errorMsg,    setErrorMsg]   = useState('');
+  const [provider,    setProvider]   = useState('');
+  const apiCalledRef = useRef(false);
 
-  const MATCH_STEPS = getMatchSteps(country, PROP_TYPES.find(t => t.id === propType)?.label || 'property', price);
+  const MATCH_STEPS = MATCH_STEPS_FN(country);
 
-  // Matching animation
+  // ── Run matching: animate + call API in parallel ────────────────────────────
   useEffect(() => {
     if (step !== 'matching') return;
+    if (apiCalledRef.current) return;
+    apiCalledRef.current = true;
+
+    // Animation ticker
     let ms = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
     MATCH_STEPS.forEach((_, i) => {
-      ms += 420 + i * 200;
+      ms += 440 + i * 200;
       timers.push(setTimeout(() => {
         setMatchStep(i);
         setMatchPct(Math.round(((i + 1) / MATCH_STEPS.length) * 100));
       }, ms));
     });
-    timers.push(setTimeout(() => {
-      const priceBandK = Math.round((Number(price) || 200000) / 1000);
-      const results = runAPEX(propType!, country, priceBandK);
-      setMatches(results);
-      setStep('results');
-    }, ms + 700));
-    return () => timers.forEach(clearTimeout);
+
+    // Real API call (runs in parallel with animation)
+    fetch('/api/apex-demo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        propType,
+        country,
+        city,
+        price: Number(price) || 200000,
+        sqm,
+        beds,
+      }),
+    })
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok || data.error === 'no_llm_key') {
+          throw new Error(data.message || data.error || 'LLM error');
+        }
+        return data;
+      })
+      .then(data => {
+        // Wait at least until animation is at 80% before showing results
+        const minWait = ms * 0.75;
+        const elapsed = performance.now();
+        const remaining = Math.max(0, minWait - elapsed);
+        setTimeout(() => {
+          timers.forEach(clearTimeout);
+          setMatches(data.agencies || []);
+          setProvider(data.provider || '');
+          setMatchPct(100);
+          setMatchStep(MATCH_STEPS.length - 1);
+          setTimeout(() => setStep('results'), 400);
+        }, remaining);
+      })
+      .catch(err => {
+        timers.forEach(clearTimeout);
+        setErrorMsg(err.message || 'Unknown error');
+        setStep('error');
+      });
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  // Staggered card reveal
+  // Staggered card reveal on results
   useEffect(() => {
     if (step !== 'results') return;
+    setRevealed(0);
     let i = 0;
-    const t = setInterval(() => { i++; setRevealed(i); if (i >= 30) clearInterval(t); }, 55);
+    const t = setInterval(() => { i++; setRevealed(i); if (i >= 30) clearInterval(t); }, 60);
     return () => clearInterval(t);
   }, [step]);
 
@@ -341,17 +161,24 @@ export default function ApexDemoPage() {
   const wave1     = matches.filter(m => m.wave === 1);
   const wave2     = matches.filter(m => m.wave === 2);
   const wave3     = matches.filter(m => m.wave === 3);
-  const avgScore  = matches.length ? Math.round(matches.reduce((s, m) => s + m.score, 0) / matches.length) : 0;
-  const countries = new Set(matches.map(m => m.agency.country)).size;
+  const avgScore  = matches.length ? Math.round(matches.reduce((s,m) => s + m.score, 0) / matches.length) : 0;
+  const countries = new Set(matches.map(m => m.country)).size;
 
   const priceNum     = Number(price) || 0;
-  const priceDisplay = priceNum >= 1000000
-    ? `€${(priceNum / 1000000).toFixed(2)}M`
-    : priceNum >= 1000
-      ? `€${Math.round(priceNum / 1000)}K`
-      : `€${priceNum.toLocaleString()}`;
+  const priceDisplay = priceNum >= 1_000_000
+    ? `€${(priceNum/1_000_000).toFixed(2)}M`
+    : priceNum >= 1000 ? `€${Math.round(priceNum/1000)}K` : `€${priceNum}`;
 
-  const cityHint = CITY_HINTS[country] || 'Enter city or area';
+  function restart() {
+    apiCalledRef.current = false;
+    setStep('form1');
+    setMatches([]);
+    setRevealed(0);
+    setWaveFilter(0);
+    setMatchStep(0);
+    setMatchPct(0);
+    setErrorMsg('');
+  }
 
   return (
     <>
@@ -372,11 +199,11 @@ export default function ApexDemoPage() {
         input:focus,select:focus{border-color:rgba(245,194,0,0.5);box-shadow:0 0 0 3px rgba(245,194,0,0.08)}
         input::placeholder{color:${C.w40}}
         select option{background:#1a1a1a;color:#fff}
-        .form-label{display:block;font-size:0.66rem;font-weight:700;color:${C.w40};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px}
-        .required-star{color:${C.gold};margin-left:2px}
+        .fl{display:block;font-size:0.66rem;font-weight:700;color:${C.w40};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px}
+        .req{color:${C.gold};margin-left:2px}
       `}</style>
 
-      {/* ── NAV ── */}
+      {/* NAV */}
       <nav style={{ position:'fixed',top:0,left:0,right:0,zIndex:50,height:56,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 clamp(16px,4vw,48px)',background:'rgba(8,8,8,0.92)',backdropFilter:'blur(16px)',borderBottom:`1px solid ${C.border}` }}>
         <Link href="/" style={{ textDecoration:'none',display:'flex',alignItems:'center',gap:8 }}>
           <div style={{ width:28,height:28,borderRadius:7,background:C.white,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.65rem',fontWeight:900,color:C.black }}>PB</div>
@@ -388,21 +215,21 @@ export default function ApexDemoPage() {
         </div>
       </nav>
 
-      <div style={{ minHeight:'100vh', padding:'80px clamp(16px,5vw,60px) 60px', maxWidth: step==='results' ? 1200 : 640, margin:'0 auto' }}>
+      <div style={{ minHeight:'100vh',padding:'80px clamp(16px,5vw,60px) 60px',maxWidth:step==='results'?1200:640,margin:'0 auto' }}>
 
-        {/* ══════════════ STEP 1: property type ══════════════ */}
+        {/* ══ STEP 1: property type ══ */}
         {step === 'form1' && (
           <div style={{ animation:'fadeUp 0.5s ease both' }}>
-            <div style={{ textAlign:'center', marginBottom:40, marginTop:20 }}>
+            <div style={{ textAlign:'center',marginBottom:40,marginTop:20 }}>
               <div style={{ display:'inline-flex',alignItems:'center',gap:7,background:'rgba(245,194,0,0.12)',border:'1px solid rgba(245,194,0,0.3)',borderRadius:100,padding:'5px 14px',marginBottom:18 }}>
                 <span style={{ fontSize:'0.65rem',fontWeight:800,color:C.gold,letterSpacing:'0.1em',textTransform:'uppercase' }}>⚡ APEX AI Matching</span>
               </div>
               <h1 style={{ fontSize:'clamp(1.8rem,4vw,2.6rem)',fontWeight:900,letterSpacing:'-0.04em',lineHeight:1.05,color:C.white,marginBottom:12 }}>
-                Find your perfect agencies.<br />
+                Find your perfect agencies.<br/>
                 <span style={{ color:C.w40 }}>60 seconds. No signup.</span>
               </h1>
               <p style={{ fontSize:'0.88rem',color:C.w60,lineHeight:1.7 }}>
-                Tell us about your property — APEX scans 2,847 EU agencies and returns your top 30 geographically-matched agencies instantly.
+                Tell us about your property — APEX AI scans thousands of EU agencies and returns your top 28 real matches instantly.
               </p>
             </div>
 
@@ -416,9 +243,7 @@ export default function ApexDemoPage() {
                   <div style={{ fontSize:'1.5rem',marginBottom:8 }}>{t.icon}</div>
                   <div style={{ fontSize:'0.85rem',fontWeight:700,color:C.white,marginBottom:2 }}>{t.label}</div>
                   <div style={{ fontSize:'0.7rem',color:C.w40 }}>{t.desc}</div>
-                  {propType === t.id && (
-                    <div style={{ position:'absolute',top:10,right:10,width:20,height:20,borderRadius:'50%',background:C.gold,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.65rem',color:C.black,fontWeight:900 }}>✓</div>
-                  )}
+                  {propType===t.id && <div style={{ position:'absolute',top:10,right:10,width:20,height:20,borderRadius:'50%',background:C.gold,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.65rem',color:C.black,fontWeight:900 }}>✓</div>}
                 </button>
               ))}
             </div>
@@ -426,14 +251,14 @@ export default function ApexDemoPage() {
             <button
               disabled={!propType}
               onClick={() => setStep('form2')}
-              style={{ width:'100%',padding:'15px',borderRadius:14,background:propType?C.white:'rgba(255,255,255,0.08)',border:'none',color:propType?C.black:C.w40,fontWeight:800,fontSize:'0.9rem',cursor:propType?'pointer':'not-allowed',transition:'all 0.2s',letterSpacing:'-0.01em' }}
+              style={{ width:'100%',padding:'15px',borderRadius:14,background:propType?C.white:'rgba(255,255,255,0.08)',border:'none',color:propType?C.black:C.w40,fontWeight:800,fontSize:'0.9rem',cursor:propType?'pointer':'not-allowed',transition:'all 0.2s' }}
             >
               {propType ? `Continue — ${PROP_TYPES.find(t=>t.id===propType)?.label} →` : 'Select property type first'}
             </button>
           </div>
         )}
 
-        {/* ══════════════ STEP 2: full property details ══════════════ */}
+        {/* ══ STEP 2: details ══ */}
         {step === 'form2' && (
           <div style={{ animation:'fadeUp 0.4s ease both' }}>
             <button onClick={() => setStep('form1')} style={{ background:'none',border:'none',color:C.w60,cursor:'pointer',fontSize:'0.82rem',fontWeight:600,marginBottom:24,padding:0 }}>← Back</button>
@@ -443,27 +268,25 @@ export default function ApexDemoPage() {
               <h2 style={{ fontSize:'clamp(1.4rem,3vw,1.9rem)',fontWeight:900,letterSpacing:'-0.03em',color:C.white,marginBottom:6 }}>
                 Tell us about your {PROP_TYPES.find(t=>t.id===propType)?.label.toLowerCase()}
               </h2>
-              <p style={{ fontSize:'0.82rem',color:C.w60 }}>The more detail you provide — the more precise the match.</p>
+              <p style={{ fontSize:'0.82rem',color:C.w60 }}>The more detail — the more precise the AI match.</p>
             </div>
 
             <p style={{ fontSize:'0.7rem',fontWeight:700,color:C.w40,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:20 }}>Step 2 of 2 — Property details</p>
 
             <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
-
-              {/* Country + City */}
               <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
                 <div>
-                  <label className="form-label">Country <span className="required-star">*</span></label>
+                  <label className="fl">Country <span className="req">*</span></label>
                   <select value={country} onChange={e => { setCountry(e.target.value); setCity(''); }}>
                     <option value="">Select country…</option>
                     {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="form-label">City / Area</label>
+                  <label className="fl">City / Area</label>
                   <input
                     type="text"
-                    placeholder={country ? cityHint : 'Select country first'}
+                    placeholder={country ? (CITY_HINTS[country] || 'Enter city or area') : 'Select country first'}
                     value={city}
                     onChange={e => setCity(e.target.value)}
                     disabled={!country}
@@ -471,31 +294,19 @@ export default function ApexDemoPage() {
                 </div>
               </div>
 
-              {/* Price */}
               <div>
-                <label className="form-label">Asking Price (€) <span className="required-star">*</span></label>
-                <input
-                  type="number"
-                  placeholder="e.g. 250000"
-                  value={price}
-                  onChange={e => setPrice(e.target.value)}
-                  min={0}
-                />
-                {price && (
-                  <div style={{ fontSize:'0.75rem',color:C.gold,marginTop:6,fontWeight:600 }}>
-                    = {priceDisplay}
-                  </div>
-                )}
+                <label className="fl">Asking Price (€) <span className="req">*</span></label>
+                <input type="number" placeholder="e.g. 250000" value={price} onChange={e => setPrice(e.target.value)} min={0} />
+                {price && <div style={{ fontSize:'0.75rem',color:C.gold,marginTop:6,fontWeight:600 }}>= {priceDisplay}</div>}
               </div>
 
-              {/* Size + Beds */}
               <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
                 <div>
-                  <label className="form-label">Size (m²)</label>
-                  <input type="number" placeholder="e.g. 85" value={sqm} onChange={e => setSqm(e.target.value)} min={0} />
+                  <label className="fl">Size (m²)</label>
+                  <input type="number" placeholder="e.g. 120" value={sqm} onChange={e => setSqm(e.target.value)} min={0} />
                 </div>
                 <div>
-                  <label className="form-label">Bedrooms</label>
+                  <label className="fl">Bedrooms</label>
                   <select value={beds} onChange={e => setBeds(e.target.value)}>
                     <option value="">Select…</option>
                     <option value="studio">Studio</option>
@@ -508,7 +319,6 @@ export default function ApexDemoPage() {
                 </div>
               </div>
 
-              {/* Optional email */}
               <div style={{ borderTop:`1px solid ${C.border}`,paddingTop:16 }}>
                 <div style={{ fontSize:'0.7rem',fontWeight:700,color:C.w40,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:12 }}>Optional — receive full report by email</div>
                 <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10 }}>
@@ -520,24 +330,24 @@ export default function ApexDemoPage() {
 
             {/* Summary preview */}
             {country && price && (
-              <div style={{ margin:'20px 0',background:'rgba(245,194,0,0.06)',border:'1px solid rgba(245,194,0,0.2)',borderRadius:12,padding:'14px 18px',display:'flex',flexWrap:'wrap',gap:16,alignItems:'center' }}>
+              <div style={{ margin:'20px 0',background:'rgba(245,194,0,0.06)',border:'1px solid rgba(245,194,0,0.2)',borderRadius:12,padding:'14px 18px' }}>
                 <span style={{ fontSize:'0.8rem',color:C.w60 }}>
                   Matching: <strong style={{ color:C.white }}>{PROP_TYPES.find(t=>t.id===propType)?.label}</strong>
                   {city && <> · <strong style={{ color:C.white }}>{city}</strong></>}
-                  {country && <> · <strong style={{ color:C.white }}>{country}</strong></>}
-                  {price && <> · <strong style={{ color:C.gold }}>{priceDisplay}</strong></>}
+                  · <strong style={{ color:C.white }}>{country}</strong>
+                  · <strong style={{ color:C.gold }}>{priceDisplay}</strong>
                   {sqm && <> · <strong style={{ color:C.white }}>{sqm}m²</strong></>}
-                  {beds && <> · <strong style={{ color:C.white }}>{beds} bed{beds!=='studio'&&beds!=='1'?'s':''}</strong></>}
+                  {beds && <> · <strong style={{ color:C.white }}>{beds} bed{beds!=='1'&&beds!=='studio'?'s':''}</strong></>}
                 </span>
               </div>
             )}
 
             <button
               disabled={!country || !price}
-              onClick={() => setStep('matching')}
-              style={{ width:'100%',padding:'15px',borderRadius:14,background:(country&&price)?C.gold:'rgba(255,255,255,0.08)',border:'none',color:(country&&price)?C.black:C.w40,fontWeight:900,fontSize:'0.9rem',cursor:(country&&price)?'pointer':'not-allowed',transition:'all 0.2s',letterSpacing:'-0.01em' }}
+              onClick={() => { apiCalledRef.current = false; setStep('matching'); }}
+              style={{ width:'100%',padding:'15px',borderRadius:14,background:(country&&price)?C.gold:'rgba(255,255,255,0.08)',border:'none',color:(country&&price)?C.black:C.w40,fontWeight:900,fontSize:'0.9rem',cursor:(country&&price)?'pointer':'not-allowed',transition:'all 0.2s' }}
             >
-              {(country&&price) ? `⚡ Run APEX Matching →` : 'Fill in country and price first'}
+              {(country&&price) ? '⚡ Run APEX Matching →' : 'Fill in country and price first'}
             </button>
 
             <p style={{ textAlign:'center',fontSize:'0.7rem',color:C.w40,marginTop:12 }}>
@@ -546,11 +356,10 @@ export default function ApexDemoPage() {
           </div>
         )}
 
-        {/* ══════════════ MATCHING ANIMATION ══════════════ */}
+        {/* ══ MATCHING ANIMATION ══ */}
         {step === 'matching' && (
           <div style={{ display:'flex',alignItems:'center',justifyContent:'center',minHeight:'72vh',animation:'fadeIn 0.4s ease both' }}>
             <div style={{ width:'100%',maxWidth:540,textAlign:'center' }}>
-              {/* Radar animation */}
               <div style={{ width:80,height:80,margin:'0 auto 28px',position:'relative' }}>
                 <div style={{ position:'absolute',inset:0,borderRadius:'50%',border:`2px solid ${C.gold}22` }} />
                 <div style={{ position:'absolute',inset:8,borderRadius:'50%',border:`2px solid ${C.gold}44` }} />
@@ -560,12 +369,11 @@ export default function ApexDemoPage() {
                 <div style={{ position:'absolute',inset:0,borderRadius:'50%',border:`2px solid transparent`,borderTopColor:C.gold,animation:'spin 0.9s linear infinite' }} />
               </div>
 
-              <h2 style={{ fontSize:'1.3rem',fontWeight:900,color:C.white,marginBottom:6,letterSpacing:'-0.02em' }}>APEX is matching…</h2>
+              <h2 style={{ fontSize:'1.3rem',fontWeight:900,color:C.white,marginBottom:6,letterSpacing:'-0.02em' }}>APEX AI is analysing…</h2>
               <p style={{ fontSize:'0.82rem',color:C.w60,marginBottom:30 }}>
-                Scanning agencies for {city ? `${city}, ` : ''}{country}
+                Finding agencies for {city ? `${city}, ` : ''}{country}
               </p>
 
-              {/* Progress */}
               <div style={{ background:'rgba(255,255,255,0.08)',borderRadius:99,height:6,marginBottom:10,overflow:'hidden' }}>
                 <div style={{ height:'100%',background:C.gold,borderRadius:99,width:`${matchPct}%`,transition:'width 0.35s ease' }} />
               </div>
@@ -574,12 +382,11 @@ export default function ApexDemoPage() {
                 <span>{matchPct}%</span>
               </div>
 
-              {/* Live counters */}
               <div style={{ display:'flex',justifyContent:'center',gap:28 }}>
                 {[
-                  { label:'Agencies scanned', val: Math.round(matchPct * 28.47) },
-                  { label:'Filtered',          val: Math.round(matchPct * 9.1) },
-                  { label:'Top matches',       val: Math.min(30, Math.round(matchPct * 0.3)) },
+                  { label:'Scanned',     val: Math.round(matchPct * 28.47) },
+                  { label:'Filtered',    val: Math.round(matchPct * 9.1) },
+                  { label:'Top matches', val: Math.min(28, Math.round(matchPct * 0.28)) },
                 ].map(s => (
                   <div key={s.label} style={{ textAlign:'center' }}>
                     <div style={{ fontSize:'1.3rem',fontWeight:900,color:C.gold,letterSpacing:'-0.02em',fontVariantNumeric:'tabular-nums' }}>{s.val.toLocaleString()}</div>
@@ -591,22 +398,52 @@ export default function ApexDemoPage() {
           </div>
         )}
 
-        {/* ══════════════ RESULTS ══════════════ */}
+        {/* ══ ERROR ══ */}
+        {step === 'error' && (
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',animation:'fadeIn 0.4s ease both' }}>
+            <div style={{ textAlign:'center',maxWidth:480 }}>
+              <div style={{ fontSize:'3rem',marginBottom:16 }}>⚙️</div>
+              <h2 style={{ fontSize:'1.5rem',fontWeight:900,color:C.white,marginBottom:10 }}>APEX needs an AI key</h2>
+              <p style={{ fontSize:'0.85rem',color:C.w60,lineHeight:1.65,marginBottom:8 }}>
+                The live AI matching requires an Anthropic or OpenAI API key configured in Vercel environment variables.
+              </p>
+              {errorMsg && (
+                <div style={{ background:'rgba(248,113,113,0.1)',border:'1px solid rgba(248,113,113,0.3)',borderRadius:10,padding:'10px 16px',fontSize:'0.75rem',color:C.red,marginBottom:20,textAlign:'left',wordBreak:'break-word' }}>
+                  {errorMsg}
+                </div>
+              )}
+              <p style={{ fontSize:'0.8rem',color:C.w40,marginBottom:24 }}>
+                Add <code style={{ background:'rgba(255,255,255,0.08)',padding:'2px 6px',borderRadius:4,color:C.gold }}>ANTHROPIC_API_KEY</code> to your Vercel project env vars and redeploy.
+              </p>
+              <button onClick={restart} style={{ background:C.white,color:C.black,border:'none',borderRadius:100,padding:'12px 28px',fontWeight:800,cursor:'pointer',fontSize:'0.88rem' }}>
+                ← Try again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══ RESULTS ══ */}
         {step === 'results' && (
           <div style={{ animation:'fadeIn 0.4s ease both' }}>
             {/* Header */}
             <div style={{ marginBottom:32,marginTop:12 }}>
-              <div style={{ display:'inline-flex',alignItems:'center',gap:7,background:'rgba(34,197,94,0.12)',border:'1px solid rgba(34,197,94,0.3)',borderRadius:100,padding:'5px 14px',marginBottom:14 }}>
-                <span style={{ width:6,height:6,borderRadius:'50%',background:C.green,display:'inline-block',animation:'pulse 1.5s ease infinite' }} />
-                <span style={{ fontSize:'0.65rem',fontWeight:800,color:C.green,letterSpacing:'0.1em',textTransform:'uppercase' }}>APEX Match Complete</span>
+              <div style={{ display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:14 }}>
+                <div style={{ display:'inline-flex',alignItems:'center',gap:7,background:'rgba(34,197,94,0.12)',border:'1px solid rgba(34,197,94,0.3)',borderRadius:100,padding:'5px 14px' }}>
+                  <span style={{ width:6,height:6,borderRadius:'50%',background:C.green,display:'inline-block',animation:'pulse 1.5s ease infinite' }} />
+                  <span style={{ fontSize:'0.65rem',fontWeight:800,color:C.green,letterSpacing:'0.1em',textTransform:'uppercase' }}>APEX Match Complete</span>
+                </div>
+                {provider && (
+                  <div style={{ fontSize:'0.65rem',color:C.w40,background:'rgba(255,255,255,0.06)',borderRadius:100,padding:'4px 10px',border:`1px solid ${C.border}` }}>
+                    Powered by {provider === 'claude' ? '⚡ Claude AI' : provider === 'openai' ? '🤖 GPT-4o' : 'AI'}
+                  </div>
+                )}
               </div>
               <h2 style={{ fontSize:'clamp(1.6rem,3.5vw,2.2rem)',fontWeight:900,letterSpacing:'-0.04em',color:C.white,lineHeight:1.05,marginBottom:10 }}>
                 Found <span style={{ color:C.gold }}>{matches.length} agencies</span> for your {PROP_TYPES.find(t=>t.id===propType)?.label.toLowerCase()}
-                {city && <><br /><span style={{ color:C.w40 }}>in {city}, {country}</span></>}
-                {!city && <><br /><span style={{ color:C.w40 }}>in {country}</span></>}
+                {city ? <><br/><span style={{ color:C.w40 }}>in {city}, {country}</span></> : <><br/><span style={{ color:C.w40 }}>in {country}</span></>}
               </h2>
               <p style={{ fontSize:'0.85rem',color:C.w60,lineHeight:1.65 }}>
-                Selected from 2,847 EU profiles — geographic match, type, price band, language fit.
+                AI-selected from 2,847+ EU agency profiles — geographic fit, property type, price band, language.
                 Average APEX score: <span style={{ color:C.gold,fontWeight:700 }}>{avgScore}</span>/99.
               </p>
             </div>
@@ -614,7 +451,7 @@ export default function ApexDemoPage() {
             {/* Stats */}
             <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:26 }}>
               {[
-                { label:'Matched agencies', value:`${matches.length}`,      icon:'🎯' },
+                { label:'Agencies matched', value:`${matches.length}`,      icon:'🎯' },
                 { label:'Avg APEX score',   value:`${avgScore}/99`,          icon:'⚡' },
                 { label:'Countries',        value:`${countries}`,            icon:'🌍' },
                 { label:'Wave 1 priority',  value:`${wave1.length} agencies`,icon:'📡' },
@@ -627,7 +464,7 @@ export default function ApexDemoPage() {
               ))}
             </div>
 
-            {/* Wave tabs */}
+            {/* Wave filter */}
             <div style={{ display:'flex',gap:8,marginBottom:20,alignItems:'center',flexWrap:'wrap' }}>
               <span style={{ fontSize:'0.7rem',color:C.w40,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase' }}>Show:</span>
               {([
@@ -637,34 +474,31 @@ export default function ApexDemoPage() {
                 { val:3 as const, label:`Wave 3 (${wave3.length})`, color:C.purple },
               ]).map(tab => (
                 <button key={tab.val} onClick={() => setWaveFilter(tab.val)} style={{
-                  padding:'5px 14px',borderRadius:100,border:`1px solid ${waveFilter===tab.val ? tab.color : C.border}`,
-                  background: waveFilter===tab.val ? `${tab.color}18` : 'transparent',
-                  color: waveFilter===tab.val ? tab.color : C.w60,
+                  padding:'5px 14px',borderRadius:100,
+                  border:`1px solid ${waveFilter===tab.val?tab.color:C.border}`,
+                  background:waveFilter===tab.val?`${tab.color}18`:'transparent',
+                  color:waveFilter===tab.val?tab.color:C.w60,
                   fontSize:'0.75rem',fontWeight:700,cursor:'pointer',transition:'all 0.2s',
-                }}>
-                  {tab.label}
-                </button>
+                }}>{tab.label}</button>
               ))}
-              <div style={{ marginLeft:'auto',fontSize:'0.7rem',color:C.w40 }}>
-                🔒 Preview only — not sent to anyone
-              </div>
+              <div style={{ marginLeft:'auto',fontSize:'0.7rem',color:C.w40 }}>🔒 Preview — not sent to anyone</div>
             </div>
 
             {/* Agency grid */}
             <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:10,marginBottom:40 }}>
               {filtered.map((m, i) => {
-                const wColor = m.wave===1 ? C.green : m.wave===2 ? C.blue : C.purple;
-                const sColor = m.score>=90 ? C.green : m.score>=80 ? C.gold : C.w60;
+                const wColor = m.wave===1?C.green:m.wave===2?C.blue:C.purple;
+                const sColor = m.score>=90?C.green:m.score>=80?C.gold:C.w60;
                 return (
-                  <div key={m.agency.id} className="agency-card" style={{ animationDelay:`${Math.min(i,20)*0.03}s`, opacity: i < revealed ? 1 : 0 }}>
+                  <div key={`${m.name}-${i}`} className="agency-card" style={{ opacity:i<revealed?1:0,transition:'opacity 0.3s ease' }}>
                     <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10 }}>
                       <div style={{ display:'flex',gap:10,alignItems:'center' }}>
                         <div style={{ width:40,height:40,borderRadius:'50%',background:'rgba(255,255,255,0.07)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.3rem',flexShrink:0 }}>
-                          {m.agency.flag}
+                          {m.flag}
                         </div>
                         <div>
-                          <div style={{ fontSize:'0.82rem',fontWeight:700,color:C.white,lineHeight:1.2 }}>{m.agency.name}</div>
-                          <div style={{ fontSize:'0.7rem',color:C.w40,marginTop:2 }}>{m.agency.city}, {m.agency.country}</div>
+                          <div style={{ fontSize:'0.82rem',fontWeight:700,color:C.white,lineHeight:1.2 }}>{m.name}</div>
+                          <div style={{ fontSize:'0.7rem',color:C.w40,marginTop:2 }}>{m.city}, {m.country}</div>
                         </div>
                       </div>
                       <div style={{ textAlign:'right',flexShrink:0,marginLeft:8 }}>
@@ -677,22 +511,20 @@ export default function ApexDemoPage() {
                       </div>
                     </div>
 
-                    <div style={{ fontSize:'0.72rem',color:C.w60,marginBottom:10,lineHeight:1.4 }}>{m.agency.spec}</div>
+                    <div style={{ fontSize:'0.72rem',color:C.w60,marginBottom:10,lineHeight:1.4 }}>{m.spec}</div>
 
                     <div style={{ display:'flex',flexWrap:'wrap',gap:5,marginBottom:8 }}>
-                      {m.reasons.map(r => (
-                        <span key={r} style={{ fontSize:'0.62rem',fontWeight:600,color:C.w60,background:'rgba(255,255,255,0.07)',borderRadius:5,padding:'2px 8px' }}>
+                      {m.reasons.map((r,ri) => (
+                        <span key={ri} style={{ fontSize:'0.62rem',fontWeight:600,color:C.w60,background:'rgba(255,255,255,0.07)',borderRadius:5,padding:'2px 8px' }}>
                           ✓ {r}
                         </span>
                       ))}
                       <span style={{ fontSize:'0.62rem',fontWeight:600,color:C.w60,background:'rgba(255,255,255,0.07)',borderRadius:5,padding:'2px 8px' }}>
-                        🗣 {m.agency.langs.join(' · ')}
+                        🗣 {m.langs.join(' · ')}
                       </span>
                     </div>
-                    {(m.agency as any).website && (
-                      <div style={{ fontSize:'0.6rem',color:C.w40,marginTop:4 }}>
-                        🔗 {(m.agency as any).website}
-                      </div>
+                    {m.website && (
+                      <div style={{ fontSize:'0.6rem',color:C.w40 }}>🔗 {m.website}</div>
                     )}
                   </div>
                 );
@@ -709,10 +541,10 @@ export default function ApexDemoPage() {
                 Create a free account, upload your property, and APEX will send personalised outreach to these {matches.length} agencies — in 3 waves, automatically.
               </p>
               <div style={{ display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap' }}>
-                <Link href="/register" style={{ display:'inline-flex',alignItems:'center',gap:8,background:C.gold,color:C.black,fontWeight:900,fontSize:'0.9rem',padding:'14px 32px',borderRadius:100,textDecoration:'none',letterSpacing:'-0.01em' }}>
+                <Link href="/register" style={{ display:'inline-flex',alignItems:'center',gap:8,background:C.gold,color:C.black,fontWeight:900,fontSize:'0.9rem',padding:'14px 32px',borderRadius:100,textDecoration:'none' }}>
                   Launch campaign — free →
                 </Link>
-                <button onClick={() => { setStep('form1'); setMatches([]); setRevealed(0); setWaveFilter(0); }} style={{ display:'inline-flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.1)',color:C.white,fontWeight:700,fontSize:'0.9rem',padding:'14px 28px',borderRadius:100,border:`1px solid ${C.border2}`,cursor:'pointer' }}>
+                <button onClick={restart} style={{ display:'inline-flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.1)',color:C.white,fontWeight:700,fontSize:'0.9rem',padding:'14px 28px',borderRadius:100,border:`1px solid ${C.border2}`,cursor:'pointer' }}>
                   ↺ Try another property
                 </button>
               </div>
