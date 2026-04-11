@@ -1,9 +1,49 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useWizardStore } from '@/store/wizard';
 import api from '@/lib/api';
 import clsx from 'clsx';
+
+// ── Voice dictation hook ──────────────────────────────────────────────────────
+function useSpeechRecognition(onResult: (text: string) => void) {
+  const [listening, setListening] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const recRef = useRef<any>(null);
+
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setSupported(!!SR);
+  }, []);
+
+  const start = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = 'ru-RU';  // default Russian; change to 'en-US' if needed
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e: any) => {
+      const transcript = Array.from(e.results)
+        .map((r: any) => r[0].transcript)
+        .join(' ');
+      onResult(transcript);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    rec.start();
+    recRef.current = rec;
+    setListening(true);
+  };
+
+  const stop = () => {
+    recRef.current?.stop();
+    setListening(false);
+  };
+
+  const toggle = () => (listening ? stop() : start());
+  return { listening, supported, toggle };
+}
 
 const PROXIMITY_TAGS = [
   { value: 'sea', label: '🌊 Sea' },
@@ -28,6 +68,10 @@ export function Step3Description() {
   const [enhancing, setEnhancing] = useState(false);
   const [featureInput, setFeatureInput] = useState('');
   const [showEnhanced, setShowEnhanced] = useState(!!step3.description_enhanced);
+
+  const { listening, supported, toggle: toggleMic } = useSpeechRecognition((transcript) => {
+    updateStep3({ description_raw: step3.description_raw + (step3.description_raw ? ' ' : '') + transcript });
+  });
 
   const handleEnhance = async () => {
     if (!step3.description_raw.trim()) return;
@@ -78,15 +122,46 @@ export function Step3Description() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-semibold text-gray-700">Property description *</label>
-          <span className="text-xs text-gray-400">{step3.description_raw.length} chars</span>
+          <div className="flex items-center gap-2">
+            {supported && (
+              <button
+                type="button"
+                onClick={toggleMic}
+                title={listening ? 'Stop recording' : 'Dictate by voice (RU/EN)'}
+                className={clsx(
+                  'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all',
+                  listening
+                    ? 'bg-red-500 border-red-500 text-white animate-pulse'
+                    : 'border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600'
+                )}
+              >
+                <span style={{ fontSize: 14 }}>{listening ? '⏹' : '🎙'}</span>
+                {listening ? 'Listening…' : 'Dictate'}
+              </button>
+            )}
+            <span className="text-xs text-gray-400">{step3.description_raw.length} chars</span>
+          </div>
         </div>
-        <textarea
-          value={step3.description_raw}
-          onChange={(e) => updateStep3({ description_raw: e.target.value })}
-          placeholder="Describe your property: location highlights, condition, renovation history, unique features, views, neighborhood vibe..."
-          rows={6}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        />
+        <div className="relative">
+          <textarea
+            value={step3.description_raw}
+            onChange={(e) => updateStep3({ description_raw: e.target.value })}
+            placeholder="Describe your property: location highlights, condition, renovation history, unique features, views, neighborhood vibe…  or press 🎙 to dictate"
+            rows={6}
+            className={clsx(
+              'w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 resize-none transition-all',
+              listening
+                ? 'border-red-400 ring-2 ring-red-200 focus:ring-red-300'
+                : 'border-gray-300 focus:ring-blue-500'
+            )}
+          />
+          {listening && (
+            <div className="absolute bottom-3 right-3 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <span className="text-xs text-red-500 font-medium">Recording</span>
+            </div>
+          )}
+        </div>
 
         {/* AI Enhance */}
         <div className="mt-3 flex items-center gap-3">

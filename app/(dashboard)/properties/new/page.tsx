@@ -265,7 +265,7 @@ export default function PropertiesNewPage() {
           ownerPhone,
           // Pass AI-generated description as letter body if available
           customLetter: aiPackData?.emailDraft || undefined,
-          demoMode: false,   // REAL sending — approved by owner
+          testMode: true,    // domain warmup: 1 real test email, rest simulated
         }),
       });
 

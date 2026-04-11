@@ -15,13 +15,15 @@ interface PropertyData {
 interface DistributeRequest {
   property: PropertyData; agencies: DistributeAgency[]
   ownerName: string; ownerEmail: string; ownerPhone?: string
-  letterLanguage?: string; customLetter?: string; demoMode?: boolean
+  letterLanguage?: string; customLetter?: string
+  demoMode?: boolean  // legacy: route all to DEMO_EMAIL
+  testMode?: boolean  // domain warmup: 1 real test email, rest simulated in UI only
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: DistributeRequest = await req.json()
-    const { property, agencies, ownerName, ownerEmail, ownerPhone, customLetter, demoMode } = body
+    const { property, agencies, ownerName, ownerEmail, ownerPhone, customLetter, demoMode, testMode } = body
 
     if (!agencies?.length || !property) {
       return NextResponse.json({ error: 'Missing property or agencies' }, { status: 400 })
@@ -33,12 +35,27 @@ export async function POST(req: NextRequest) {
     }
 
     const DEMO_EMAIL = 'contact@win-winsolution.com'
-    const results: { agency_id: string; agency_name: string; email: string; status: 'sent' | 'failed'; error?: string }[] = []
+    const results: { agency_id: string; agency_name: string; email: string; status: 'sent' | 'failed'; simulated?: boolean; error?: string }[] = []
 
-    for (const agency of agencies) {
-      const recipientEmail = demoMode ? DEMO_EMAIL : agency.email
+    for (let i = 0; i < agencies.length; i++) {
+      const agency = agencies[i]
       const subject = buildSubject(property, agency)
       const htmlBody = buildEmailHTML(property, agency, ownerName, ownerEmail, ownerPhone, customLetter)
+
+      // testMode: only send first agency as real (to DEMO_EMAIL for verification),
+      // rest are logged as "sent" in UI without actual API call (domain warmup)
+      const isTestOnly = testMode && i > 0
+      const isFull     = !demoMode && !testMode
+
+      if (isTestOnly) {
+        // Simulate: add 150ms delay so UI progress feels real, no Resend call
+        await new Promise(r => setTimeout(r, 150))
+        results.push({ agency_id: agency.id, agency_name: agency.name, email: agency.email, status: 'sent', simulated: true })
+        continue
+      }
+
+      // Real send: testMode idx=0 → DEMO_EMAIL, demoMode → DEMO_EMAIL, full → real email
+      const recipientEmail = (demoMode || testMode) ? DEMO_EMAIL : agency.email
 
       try {
         const res = await fetch('https://api.resend.com/emails', {
@@ -48,8 +65,8 @@ export async function POST(req: NextRequest) {
             from: 'PropBlaze Platform <onboarding@resend.dev>',
             to: [recipientEmail],
             reply_to: ownerEmail || DEMO_EMAIL,
-            bcc: (!demoMode && ownerEmail !== DEMO_EMAIL) ? [DEMO_EMAIL] : undefined,
-            subject,
+            bcc: isFull && ownerEmail !== DEMO_EMAIL ? [DEMO_EMAIL] : undefined,
+            subject: testMode ? `[TEST] ${subject}` : subject,
             html: htmlBody,
           }),
         })
@@ -68,10 +85,12 @@ export async function POST(req: NextRequest) {
     // Telegram notification
     const tgToken = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN
     const tgChat  = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID  || process.env.TELEGRAM_CHAT_ID
-    const sent    = results.filter(r => r.status === 'sent').length
-    const failed  = results.filter(r => r.status === 'failed').length
+    const sent      = results.filter(r => r.status === 'sent').length
+    const failed    = results.filter(r => r.status === 'failed').length
+    const simulated = results.filter(r => r.simulated).length
 
     if (tgToken && tgChat) {
+      const modeLabel = demoMode ? '⚠️ DEMO MODE' : testMode ? `🧪 TEST MODE (1 real + ${simulated} simulated)` : '✅ Full real send'
       const msg = [
         `🚀 <b>APEX Distribution launched!</b>`,
         `📍 <b>${property.type}</b> · ${property.city}, ${property.country}`,
@@ -79,9 +98,9 @@ export async function POST(req: NextRequest) {
         property.price ? `💶 €${property.price.toLocaleString('de-DE')}` : '',
         property.parcelNumber ? `📜 Parcela ${property.parcelNumber}, KO ${property.cadastralMunicipality || ''}` : '',
         ``,
-        `📡 <b>Sent: ${sent}</b>${failed > 0 ? ` | ⚠️ Failed: ${failed}` : ''}`,
+        `📡 <b>Sent: ${sent}</b> (${agencies.length} total)${failed > 0 ? ` | ⚠️ Failed: ${failed}` : ''}`,
         `📨 Replies → ${ownerEmail}`,
-        demoMode ? `⚠️ DEMO MODE` : `✅ Real emails sent`,
+        modeLabel,
       ].filter(Boolean).join('\n')
       try {
         await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
@@ -92,7 +111,7 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    return NextResponse.json({ success: true, sent, failed, total: agencies.length, results, demo_mode: demoMode ?? false })
+    return NextResponse.json({ success: true, sent, failed, simulated, total: agencies.length, results, test_mode: testMode ?? false, demo_mode: demoMode ?? false })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
