@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   email: string;
-  role: 'owner' | 'admin' | 'superadmin';
+  role: 'owner' | 'agency' | 'staff' | 'admin' | 'superadmin';
   status: 'active' | 'inactive' | 'suspended';
   email_verified: boolean;
   phone_verified: boolean;

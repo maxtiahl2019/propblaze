@@ -438,11 +438,10 @@ function RegisterPageInner() {
   const [step, setStep] = useState<Step>(searchParams.get('role') ? 'form' : 'role');
 
   useEffect(() => {
-    if (DEMO_MODE) { router.replace('/dashboard'); return; }
-    if (isAuthenticated) router.replace('/dashboard');
+    if (!DEMO_MODE && isAuthenticated) router.replace('/dashboard');
   }, [isAuthenticated, router]);
 
-  if (DEMO_MODE || isAuthenticated) {
+  if (!DEMO_MODE && isAuthenticated) {
     return (
       <div style={{ minHeight: '100vh', background: '#070708', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 24, height: 24, border: '2px solid #e67e22', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />

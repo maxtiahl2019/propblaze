@@ -846,7 +846,7 @@ export default function LandingPage() {
             onMouseEnter={e=>{(e.target as HTMLElement).style.color='#fff'}}
             onMouseLeave={e=>{(e.target as HTMLElement).style.color='rgba(255,255,255,0.6)'}}
           >Sign in</Link>
-          <Link href="/properties/new" style={{
+          <Link href="/apex-demo" style={{
             background: C.white, color: C.black,
             fontSize: '0.8rem', fontWeight: 800,
             padding: '9px 22px', borderRadius: 100,
@@ -857,7 +857,7 @@ export default function LandingPage() {
             onMouseEnter={e => { (e.target as HTMLElement).style.background = C.accent; }}
             onMouseLeave={e => { (e.target as HTMLElement).style.background = C.white; }}
           >
-            Sell property →
+            ⚡ Match agencies →
           </Link>
         </div>
       </nav>
@@ -972,8 +972,8 @@ export default function LandingPage() {
               display: 'flex', flexWrap: 'wrap', gap: 14,
               animation: 'fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.5s both',
             }}>
-              <Link href="/properties/new" className="btn-primary">
-                <span>List your property free</span>
+              <Link href="/apex-demo" className="btn-primary">
+                <span>⚡ Find my agencies — free</span>
                 <span style={{ fontSize: '1.1rem' }}>→</span>
               </Link>
               <a href="#how-it-works" className="btn-secondary">
@@ -1303,11 +1303,11 @@ export default function LandingPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
           {plans.map((p, i) => (
-            <div key={i} className={`plan-card fade-in-el ${p.featured ? 'featured' : ''}`} style={{ transitionDelay: `${i * 60}ms`, position: 'relative' }}>
+            <div key={i} className={`plan-card ${p.featured ? 'featured' : ''}`} style={{ position: 'relative', animation: `fadeUp 0.5s ease ${i * 0.08}s both` }}>
               {/* Badge */}
-              {'badge' in p && p.badge && (
+              {(p as any).badge && (
                 <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: C.accent, color: C.black, fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.1em', padding: '3px 12px', borderRadius: 100, whiteSpace: 'nowrap' }}>
-                  {p.badge}
+                  {String((p as any).badge)}
                 </div>
               )}
               <div style={{ marginBottom: 6, fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.12em', color: p.featured ? C.black : C.white40 }}>

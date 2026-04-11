@@ -3,41 +3,36 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth, DEMO_MODE } from '@/store/auth';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
-  bg:       '#F8FAFC',
+  bg:       '#F3F2EF',   // LinkedIn warm gray
   white:    '#FFFFFF',
-  border:   '#E2E8F0',
-  text:     '#0F172A',
-  text2:    '#475569',
-  text3:    '#94A3B8',
-  green:    '#16A34A',
-  greenBg:  '#DCFCE7',
-  blue:     '#2563EB',
-  blueBg:   '#EFF6FF',
-  purple:   '#7C3AED',
-  purpleBg: '#F3E8FF',
+  border:   '#E0DDD8',
+  text:     '#191919',
+  text2:    '#666666',
+  text3:    '#999999',
+  blue:     '#0A66C2',   // LinkedIn blue
+  blueBg:   '#EEF3F8',
+  blueDark: '#004182',
+  green:    '#057642',
+  greenBg:  '#F0FAF4',
   gold:     '#CA8A04',
-  goldBg:   '#FEF9C3',
-  red:      '#DC2626',
-  shadow:   '0 1px 4px rgba(0,0,0,0.07)',
+  goldBg:   '#FEFCE8',
+  purple:   '#7C3AED',
+  purpleBg: '#F5F3FF',
+  msgMe:    '#0A66C2',
+  msgThem:  '#FFFFFF',
+  shadow:   '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)',
 };
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Attachment {
-  name: string;
-  size: string;
-  type: 'pdf' | 'image' | 'doc' | 'other';
-  url?: string;
-}
+interface Attachment { name: string; size: string; type: 'pdf'|'image'|'doc'|'other' }
 
 interface Message {
   id: string;
-  from: 'me' | 'agency';
+  from: 'me'|'agency';
   text: string;
   time: string;
   attachments?: Attachment[];
-  read?: boolean;
+  system?: boolean;
 }
 
 interface Contact {
@@ -51,426 +46,354 @@ interface Contact {
   lastMsg: string;
   time: string;
   unread: number;
-  status: 'active' | 'pending' | 'subscribed';
+  status: 'active'|'subscribed'|'pending';
   messages: Message[];
 }
 
-// ─── Demo contacts (from wave log or subscribed agencies) ─────────────────────
 const DEMO_CONTACTS: Contact[] = [
   {
-    id: 'c1', flag: '🇦🇹', name: 'Magnus Realty GmbH', city: 'Vienna', country: 'Austria',
-    score: 94, wave: 1, status: 'active',
-    time: '2h ago', unread: 2, lastMsg: 'Can you share the floor plan?',
-    messages: [
-      { id: 'm1', from: 'agency', text: 'Hello! We have qualified buyers looking for Belgrade apartments in this price range. Very interested in this listing.', time: '3h ago' },
-      { id: 'm2', from: 'agency', text: 'Can you share the floor plan and arrange a virtual tour? We represent clients from Austria and Germany.', time: '2h ago' },
+    id:'c1', flag:'🇦🇹', name:'Magnus Realty GmbH', city:'Vienna', country:'Austria',
+    score:94, wave:1, status:'active', time:'2h ago', unread:2, lastMsg:'Can you share the floor plan?',
+    messages:[
+      { id:'sys1', from:'me', text:'APEX outreach sent · Wave 1 · Score 94', time:'Apr 11, 09:43', system:true },
+      { id:'m1', from:'agency', text:'Hello! We have qualified buyers looking for Belgrade apartments in this price range. Very interested.', time:'Apr 11, 11:20' },
+      { id:'m2', from:'agency', text:'Can you share the floor plan and arrange a virtual tour? We represent clients from Austria and Germany.', time:'Apr 11, 13:45' },
     ],
   },
   {
-    id: 'c2', flag: '🇲🇪', name: 'Adriatic Real Estate', city: 'Podgorica', country: 'Montenegro',
-    score: 91, wave: 1, status: 'active',
-    time: '5h ago', unread: 1, lastMsg: 'Motivated buyer — €140K cash offer.',
-    messages: [
-      { id: 'm3', from: 'agency', text: 'We have a motivated buyer offering €140,000 cash. Quick close possible — 30 days. Owner direct contact preferred.', time: '5h ago' },
+    id:'c2', flag:'🇲🇪', name:'Adriatic Real Estate', city:'Podgorica', country:'Montenegro',
+    score:91, wave:1, status:'active', time:'5h ago', unread:1, lastMsg:'Motivated buyer — €140K cash.',
+    messages:[
+      { id:'sys2', from:'me', text:'APEX outreach sent · Wave 1 · Score 91', time:'Apr 11, 09:43', system:true },
+      { id:'m3', from:'agency', text:'We have a motivated buyer offering €140,000 cash. Quick close possible — 30 days.', time:'Apr 11, 10:12' },
     ],
   },
   {
-    id: 'c3', flag: '🇦🇹', name: 'Euro Prime Properties', city: 'Vienna', country: 'Austria',
-    score: 88, wave: 1, status: 'active',
-    time: '1d ago', unread: 0, lastMsg: 'Listing live on our platform. 50k monthly visitors.',
-    messages: [
-      { id: 'm4', from: 'agency', text: 'Professional photos received. Listing is going live today on our platform (50k monthly visitors).', time: '1d ago' },
-      { id: 'm5', from: 'me', text: 'Great, thank you! Please keep me updated on any buyer interest.', time: '22h ago' },
-      { id: 'm6', from: 'agency', text: 'Of course! We typically close within 45–60 days for Serbian properties at this price point. I\'m attaching our recent sales report.', time: '20h ago',
-        attachments: [{ name: 'sales-report-Q1-2026.pdf', size: '1.2 MB', type: 'pdf' }] },
+    id:'c3', flag:'🇦🇹', name:'Euro Prime Properties', city:'Vienna', country:'Austria',
+    score:88, wave:1, status:'active', time:'1d ago', unread:0, lastMsg:'Listing live — 50k monthly visitors.',
+    messages:[
+      { id:'sys3', from:'me', text:'APEX outreach sent · Wave 1 · Score 88', time:'Apr 10, 09:43', system:true },
+      { id:'m4', from:'agency', text:'Professional photos received. Listing is live on our platform — 50k monthly visitors.', time:'Apr 10, 14:22' },
+      { id:'m5', from:'me', text:'Thank you! Please keep me updated on any buyer interest.', time:'Apr 10, 16:30' },
+      { id:'m6', from:'agency', text:'Of course! We typically close within 45–60 days for Serbian properties at this price point.', time:'Apr 10, 17:00',
+        attachments:[{ name:'sales-report-Q1-2026.pdf', size:'1.2 MB', type:'pdf' }] },
     ],
   },
   {
-    id: 'c4', flag: '🇩🇪', name: 'Berlin Invest Group', city: 'Berlin', country: 'Germany',
-    score: 85, wave: 2, status: 'active',
-    time: '2d ago', unread: 0, lastMsg: 'Call set for Tuesday 14:00 CET.',
-    messages: [
-      { id: 'm7', from: 'agency', text: 'We have set up a call for Tuesday 14:00 CET. Our investor portfolio manager will discuss the property directly.', time: '2d ago' },
-      { id: 'm8', from: 'me', text: 'Tuesday 14:00 works. Looking forward to the call.', time: '2d ago' },
+    id:'c4', flag:'🇩🇪', name:'Berlin Invest Group', city:'Berlin', country:'Germany',
+    score:85, wave:2, status:'active', time:'2d ago', unread:0, lastMsg:'Call set for Tuesday 14:00 CET.',
+    messages:[
+      { id:'sys4', from:'me', text:'APEX outreach sent · Wave 2 · Score 85', time:'Apr 9, 09:43', system:true },
+      { id:'m7', from:'agency', text:'Our portfolio manager would like to discuss this property. Can we schedule a call for Tuesday 14:00 CET?', time:'Apr 9, 16:11' },
+      { id:'m8', from:'me', text:'Tuesday 14:00 works perfectly. Looking forward to it.', time:'Apr 9, 18:44' },
     ],
   },
   {
-    id: 'c5', flag: '🇷🇸', name: 'Beograd Properties', city: 'Belgrade', country: 'Serbia',
-    score: 87, wave: 1, status: 'subscribed',
-    time: '6h ago', unread: 0, lastMsg: 'Documents sent. Awaiting your review.',
-    messages: [
-      { id: 'm9', from: 'agency', text: 'We received your listing. Our team reviewed and attached due diligence documents for your review.', time: '6h ago',
-        attachments: [{ name: 'due-diligence-notes.pdf', size: '800 KB', type: 'pdf' }, { name: 'buyer-profile.docx', size: '240 KB', type: 'doc' }] },
+    id:'c5', flag:'🇷🇸', name:'Beograd Properties d.o.o.', city:'Belgrade', country:'Serbia',
+    score:87, wave:1, status:'subscribed', time:'6h ago', unread:0, lastMsg:'Documents attached for review.',
+    messages:[
+      { id:'sys5', from:'me', text:'APEX outreach sent · Wave 1 · Score 87', time:'Apr 11, 09:43', system:true },
+      { id:'m9', from:'agency', text:'We reviewed your listing. Attaching due diligence notes for your review.', time:'Apr 11, 11:55',
+        attachments:[{ name:'due-diligence-notes.pdf', size:'800 KB', type:'pdf' }, { name:'buyer-profile.docx', size:'240 KB', type:'doc' }] },
     ],
   },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function fileType(name: string): Attachment['type'] {
-  const ext = name.split('.').pop()?.toLowerCase() ?? '';
-  if (['pdf'].includes(ext)) return 'pdf';
-  if (['jpg','jpeg','png','gif','webp','heic'].includes(ext)) return 'image';
-  if (['doc','docx','odt'].includes(ext)) return 'doc';
-  return 'other';
-}
-
-function fileSize(bytes: number): string {
-  if (bytes >= 1_000_000) return `${(bytes/1_000_000).toFixed(1)} MB`;
-  return `${Math.round(bytes/1000)} KB`;
-}
-
-function AttachmentIcon({ type }: { type: Attachment['type'] }) {
-  if (type === 'pdf')   return <span style={{ fontSize: '1.1rem' }}>📄</span>;
-  if (type === 'image') return <span style={{ fontSize: '1.1rem' }}>🖼️</span>;
-  if (type === 'doc')   return <span style={{ fontSize: '1.1rem' }}>📝</span>;
-  return <span style={{ fontSize: '1.1rem' }}>📎</span>;
-}
-
-function ScoreBadge({ score, wave }: { score?: number; wave?: number }) {
-  if (!score) return null;
-  const [color, bg] = score >= 92 ? [C.green, C.greenBg] : score >= 85 ? [C.blue, C.blueBg] : [C.gold, C.goldBg];
-  return (
-    <div style={{ display: 'flex', gap: 5 }}>
-      <span style={{ fontSize: '0.63rem', fontWeight: 800, color, background: bg, padding: '2px 7px', borderRadius: 5 }}>
-        APEX {score}
-      </span>
-      {wave && (
-        <span style={{ fontSize: '0.63rem', fontWeight: 700, color: C.purple, background: C.purpleBg, padding: '2px 7px', borderRadius: 5 }}>
-          Wave {wave}
-        </span>
-      )}
-    </div>
-  );
-}
-
-// ─── Build contacts from real wave log or use DEMO ────────────────────────────
 function buildContacts(): Contact[] {
   try {
     const raw = localStorage.getItem('pb_wave_log');
     if (!raw) return DEMO_CONTACTS;
     const log: any[] = JSON.parse(raw);
     if (!log.length) return DEMO_CONTACTS;
-    // For real data: create a contact stub per agency, use DEMO messages for the first few
-    return log.map((entry, i) => ({
-      id: entry.id,
-      flag: '🌍',
-      name: entry.name,
-      city: '',
-      country: '',
-      score: entry.score,
-      wave: entry.wave,
-      status: 'active' as const,
-      time: entry.sent_at ? new Date(entry.sent_at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'recently',
-      unread: i < 2 ? 1 : 0,
-      lastMsg: 'Outreach sent — awaiting reply',
-      messages: [
-        { id: `${entry.id}-sys`, from: 'me' as const, text: `APEX outreach sent to ${entry.name} (Wave ${entry.wave}, score ${entry.score})`, time: entry.sent_at ? new Date(entry.sent_at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'recently' },
-      ],
-    }));
-  } catch {
-    return DEMO_CONTACTS;
-  }
+    // Merge real wave log with demo contact details for first 5
+    return log.map((entry, i) => {
+      const demo = DEMO_CONTACTS[i];
+      if (demo) return { ...demo, id: entry.id, name: entry.name, score: entry.score, wave: entry.wave };
+      return {
+        id: entry.id, flag:'🌍', name: entry.name, city:'', country:'',
+        score: entry.score, wave: entry.wave, status:'active' as const,
+        time: new Date(entry.sent_at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),
+        unread: i < 2 ? 1 : 0, lastMsg:'Outreach sent — awaiting reply',
+        messages:[{ id:`sys-${entry.id}`, from:'me' as const, text:`APEX outreach sent · Wave ${entry.wave} · Score ${entry.score}`, time: new Date(entry.sent_at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}), system:true }],
+      };
+    });
+  } catch { return DEMO_CONTACTS; }
 }
 
-// ─── Attachment pill ─────────────────────────────────────────────────────────
-function AttachPill({ att }: { att: Attachment }) {
-  return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 10px', marginTop: 6 }}>
-      <AttachmentIcon type={att.type} />
-      <div>
-        <div style={{ fontSize: '0.74rem', fontWeight: 600, color: C.text }}>{att.name}</div>
-        <div style={{ fontSize: '0.65rem', color: C.text3 }}>{att.size}</div>
-      </div>
-      <button style={{ marginLeft: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.text3, fontSize: '0.7rem', padding: '2px 6px', borderRadius: 5, transition: 'all 0.15s' }}>⬇</button>
-    </div>
-  );
+function fileType(name: string): Attachment['type'] {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  if (ext==='pdf') return 'pdf';
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'image';
+  if (['doc','docx','odt'].includes(ext)) return 'doc';
+  return 'other';
 }
+function fileSize(b: number) { return b>=1e6 ? `${(b/1e6).toFixed(1)} MB` : `${Math.round(b/1000)} KB`; }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ChatPage() {
   const { user } = useAuth();
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [search, setSearch] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [contacts, setContacts]   = useState<Contact[]>([]);
+  const [activeId, setActiveId]   = useState<string|null>(null);
+  const [messages, setMessages]   = useState<Message[]>([]);
+  const [input,    setInput]      = useState('');
+  const [atts,     setAtts]       = useState<Attachment[]>([]);
+  const [search,   setSearch]     = useState('');
+  const fileRef  = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textRef  = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const cts = DEMO_MODE ? DEMO_CONTACTS : buildContacts();
     setContacts(cts);
-    if (cts.length) {
-      setActiveId(cts[0].id);
-      setMessages(cts[0].messages);
-    }
+    if (cts.length) { setActiveId(cts[0].id); setMessages(cts[0].messages); }
   }, []);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
 
   const active = contacts.find(c => c.id === activeId);
+  const totalUnread = contacts.reduce((s,c) => s+c.unread, 0);
+  const filtered = contacts.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.country.toLowerCase().includes(search.toLowerCase()));
 
-  function selectContact(id: string) {
-    const c = contacts.find(x => x.id === id);
+  function select(id: string) {
+    const c = contacts.find(x=>x.id===id);
     if (!c) return;
-    setActiveId(id);
-    setMessages(c.messages);
-    // Clear unread
-    setContacts(prev => prev.map(x => x.id === id ? { ...x, unread: 0 } : x));
+    setActiveId(id); setMessages(c.messages);
+    setContacts(p => p.map(x => x.id===id ? {...x,unread:0} : x));
   }
 
-  function sendMessage() {
-    if (!input.trim() && !attachments.length) return;
-    const msg: Message = {
-      id: `msg-${Date.now()}`,
-      from: 'me',
-      text: input.trim(),
-      time: 'Just now',
-      attachments: attachments.length ? [...attachments] : undefined,
-    };
-    const newMsgs = [...messages, msg];
-    setMessages(newMsgs);
-    setContacts(prev => prev.map(c => c.id === activeId
-      ? { ...c, messages: newMsgs, lastMsg: input || 'Attachment sent', time: 'Just now' }
-      : c
-    ));
-    setInput('');
-    setAttachments([]);
+  function send() {
+    if (!input.trim() && !atts.length) return;
+    const msg: Message = { id:`m-${Date.now()}`, from:'me', text:input.trim(), time:'Just now', attachments:atts.length?[...atts]:undefined };
+    const next = [...messages, msg];
+    setMessages(next);
+    setContacts(p => p.map(c => c.id===activeId ? {...c,messages:next,lastMsg:input||'Attachment',time:'Just now'} : c));
+    setInput(''); setAtts([]);
   }
 
-  function handleFiles(files: FileList | null) {
-    if (!files) return;
-    const newAtts: Attachment[] = Array.from(files).map(f => ({
-      name: f.name,
-      size: fileSize(f.size),
-      type: fileType(f.name),
-      url: URL.createObjectURL(f),
-    }));
-    setAttachments(prev => [...prev, ...newAtts]);
-  }
-
-  const filtered = contacts.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.country.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const totalUnread = contacts.reduce((s, c) => s + c.unread, 0);
+  function scoreColor(s?: number) { if(!s)return C.text3; return s>=90?C.green:s>=82?C.blue:C.gold; }
+  function waveBg(w?: number) { return w===1?C.greenBg:w===2?C.blueBg:C.purpleBg; }
+  function waveColor(w?: number) { return w===1?C.green:w===2?C.blue:C.purple; }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: C.bg, fontFamily: "'Inter',system-ui,sans-serif", overflow: 'hidden' }}>
+    <div style={{ display:'flex', height:'100vh', background:C.bg, fontFamily:"'Inter',-apple-system,system-ui,sans-serif", overflow:'hidden' }}>
+      <style>{`
+        .chat-input:focus{outline:none;}
+        .send-btn:hover{background:${C.blueDark}!important;}
+        .contact-row:hover{background:#ECEAE6;}
+        .att-icon{font-size:1rem}
+        @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+      `}</style>
 
-      {/* ── LEFT: Contacts sidebar ─────────────────────────────────────── */}
-      <div style={{ width: 300, minWidth: 300, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', background: C.white }}>
+      {/* ─────────── LEFT PANEL ─────────── */}
+      <div style={{ width:320, minWidth:320, background:C.white, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column' }}>
+
         {/* Header */}
-        <div style={{ padding: '18px 16px 12px', borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ padding:'16px 16px 12px', borderBottom:`1px solid ${C.border}` }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
             <div>
-              <h2 style={{ fontSize: '1rem', fontWeight: 800, color: C.text, letterSpacing: '-0.01em' }}>
-                Messages
-                {totalUnread > 0 && (
-                  <span style={{ marginLeft: 8, background: C.green, color: C.white, fontSize: '0.65rem', fontWeight: 700, padding: '1px 7px', borderRadius: 99 }}>{totalUnread}</span>
-                )}
+              <h2 style={{ fontSize:'1rem', fontWeight:800, color:C.text, letterSpacing:'-0.01em', display:'flex', alignItems:'center', gap:8 }}>
+                Messaging
+                {totalUnread>0 && <span style={{ background:C.blue, color:C.white, fontSize:'0.62rem', fontWeight:700, padding:'1px 7px', borderRadius:99 }}>{totalUnread}</span>}
               </h2>
-              <p style={{ fontSize: '0.72rem', color: C.text3, marginTop: 2 }}>{contacts.length} agencies in your campaigns</p>
+              <p style={{ fontSize:'0.72rem', color:C.text3, marginTop:2 }}>{contacts.length} agency contacts</p>
             </div>
+            <div style={{ width:32, height:32, borderRadius:'50%', background:C.bg, border:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:'1rem' }}>✏️</div>
           </div>
           {/* Search */}
-          <div style={{ position: 'relative' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.text3} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+          <div style={{ position:'relative' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.text3} strokeWidth="2" style={{ position:'absolute',left:10,top:'50%',transform:'translateY(-50%)' }}>
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search agencies…"
-              style={{ width: '100%', padding: '8px 10px 8px 32px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: '0.8rem', background: C.bg, color: C.text, outline: 'none' }}
-            />
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search messages" style={{ width:'100%', padding:'8px 10px 8px 32px', border:`1px solid ${C.border}`, borderRadius:20, fontSize:'0.8rem', background:C.bg, color:C.text, outline:'none', fontFamily:'inherit' }}/>
           </div>
         </div>
 
-        {/* Contacts list */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        {/* Filter chips */}
+        <div style={{ display:'flex', gap:8, padding:'10px 16px', borderBottom:`1px solid ${C.border}`, overflowX:'auto' }}>
+          {['All','Wave 1','Wave 2','Wave 3'].map(f => (
+            <span key={f} style={{ fontSize:'0.72rem', fontWeight:600, color:C.blue, background:C.blueBg, borderRadius:99, padding:'3px 12px', whiteSpace:'nowrap', cursor:'pointer', border:`1px solid ${C.border}` }}>{f}</span>
+          ))}
+        </div>
+
+        {/* Contact list */}
+        <div style={{ flex:1, overflowY:'auto' }}>
           {filtered.map(c => (
-            <div
-              key={c.id}
-              onClick={() => selectContact(c.id)}
-              style={{
-                padding: '12px 16px',
-                cursor: 'pointer',
-                background: activeId === c.id ? C.blueBg : 'transparent',
-                borderLeft: activeId === c.id ? `3px solid ${C.blue}` : '3px solid transparent',
-                borderBottom: `1px solid ${C.border}`,
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { if (activeId !== c.id) (e.currentTarget as HTMLDivElement).style.background = C.bg; }}
-              onMouseLeave={e => { if (activeId !== c.id) (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <div key={c.id} className="contact-row" onClick={() => select(c.id)} style={{
+              padding:'12px 16px', cursor:'pointer',
+              background: activeId===c.id ? C.bg : 'transparent',
+              borderBottom:`1px solid ${C.border}`,
+              borderLeft: activeId===c.id ? `3px solid ${C.blue}` : '3px solid transparent',
+              transition:'all 0.12s',
+            }}>
+              <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                 {/* Avatar */}
-                <div style={{ width: 38, height: 38, borderRadius: '50%', background: activeId === c.id ? C.blue : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>
+                <div style={{ width:44, height:44, borderRadius:'50%', background: activeId===c.id ? C.blueBg : '#E9E5E0', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.2rem', flexShrink:0, position:'relative' }}>
                   {c.flag}
+                  {/* Online dot */}
+                  {c.unread>0 && <div style={{ position:'absolute', bottom:1, right:1, width:11, height:11, borderRadius:'50%', background:C.green, border:'2px solid #fff' }} />}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>{c.name}</span>
-                    <span style={{ fontSize: '0.65rem', color: C.text3, flexShrink: 0 }}>{c.time}</span>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:2 }}>
+                    <span style={{ fontSize:'0.85rem', fontWeight: c.unread>0 ? 700 : 600, color:C.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:160 }}>{c.name}</span>
+                    <span style={{ fontSize:'0.65rem', color:C.text3, flexShrink:0, marginLeft:6 }}>{c.time}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 3 }}>
-                    <span style={{ fontSize: '0.74rem', color: C.text3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 170 }}>{c.lastMsg}</span>
-                    {c.unread > 0 && (
-                      <span style={{ background: C.green, color: C.white, fontSize: '0.6rem', fontWeight: 700, padding: '1px 6px', borderRadius: 99, flexShrink: 0 }}>{c.unread}</span>
-                    )}
+                  <div style={{ fontSize:'0.74rem', color: c.unread>0 ? C.text : C.text2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:220, fontWeight: c.unread>0 ? 600 : 400, marginBottom:5 }}>
+                    {c.lastMsg}
                   </div>
-                  <div style={{ marginTop: 5 }}>
-                    <ScoreBadge score={c.score} wave={c.wave} />
+                  <div style={{ display:'flex', gap:5, alignItems:'center' }}>
+                    {c.score && <span style={{ fontSize:'0.62rem', fontWeight:800, color:scoreColor(c.score), background:`${scoreColor(c.score)}15`, padding:'1px 7px', borderRadius:4 }}>APEX {c.score}</span>}
+                    {c.wave && <span style={{ fontSize:'0.62rem', fontWeight:700, color:waveColor(c.wave), background:waveBg(c.wave), padding:'1px 7px', borderRadius:4 }}>W{c.wave}</span>}
+                    {c.unread>0 && <span style={{ marginLeft:'auto', background:C.blue, color:C.white, fontSize:'0.6rem', fontWeight:700, padding:'1px 6px', borderRadius:99 }}>{c.unread}</span>}
                   </div>
                 </div>
               </div>
             </div>
           ))}
-
-          {filtered.length === 0 && (
-            <div style={{ padding: 32, textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: 8 }}>💬</div>
-              <p style={{ fontSize: '0.8rem', color: C.text3 }}>No agencies found</p>
+          {filtered.length===0 && (
+            <div style={{ padding:'40px 16px', textAlign:'center' }}>
+              <div style={{ fontSize:'2rem', marginBottom:8 }}>💬</div>
+              <p style={{ fontSize:'0.82rem', color:C.text3 }}>No conversations found</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── RIGHT: Chat panel ──────────────────────────────────────────── */}
+      {/* ─────────── RIGHT PANEL ─────────── */}
       {active ? (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, background:C.white }}>
 
-          {/* Chat header */}
-          <div style={{ padding: '14px 24px', borderBottom: `1px solid ${C.border}`, background: C.white, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 42, height: 42, borderRadius: '50%', background: C.blueBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+          {/* Chat header — LinkedIn style */}
+          <div style={{ padding:'12px 20px', borderBottom:`1px solid ${C.border}`, background:C.white, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:48, height:48, borderRadius:'50%', background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem', border:`1px solid ${C.border}` }}>
                 {active.flag}
               </div>
               <div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: C.text }}>{active.name}</div>
-                <div style={{ fontSize: '0.72rem', color: C.text3 }}>
-                  {active.city}{active.city && ', '}{active.country}
-                  {active.status === 'active' && ' · In your campaign'}
-                  {active.status === 'subscribed' && ' · Agency subscriber'}
+                <div style={{ fontSize:'0.95rem', fontWeight:700, color:C.text }}>{active.name}</div>
+                <div style={{ fontSize:'0.74rem', color:C.text3, display:'flex', alignItems:'center', gap:6, marginTop:1 }}>
+                  {active.city&&`${active.city}, `}{active.country}
+                  {active.status==='active' && <span style={{ color:C.green }}>· In campaign</span>}
+                  {active.status==='subscribed' && <span style={{ color:C.blue }}>· Agency subscriber</span>}
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ScoreBadge score={active.score} wave={active.wave} />
-              {/* Status dot */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: C.greenBg, border: `1px solid rgba(22,163,74,0.2)`, borderRadius: 100, padding: '4px 10px' }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.green }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: C.green }}>Active</span>
-              </div>
+            {/* Right: badges + actions */}
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              {active.score && <span style={{ fontSize:'0.68rem', fontWeight:800, color:scoreColor(active.score), background:`${scoreColor(active.score)}15`, padding:'4px 10px', borderRadius:6 }}>APEX {active.score}</span>}
+              {active.wave && <span style={{ fontSize:'0.68rem', fontWeight:700, color:waveColor(active.wave), background:waveBg(active.wave), padding:'4px 10px', borderRadius:6 }}>Wave {active.wave}</span>}
+              <div style={{ width:1, height:20, background:C.border, margin:'0 4px' }} />
+              <button style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:20, padding:'6px 14px', fontSize:'0.75rem', fontWeight:700, color:C.blue, cursor:'pointer' }}>View profile</button>
             </div>
           </div>
 
           {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {messages.map(msg => (
-              <div key={msg.id} style={{ display: 'flex', justifyContent: msg.from === 'me' ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '72%' }}>
-                  <div style={{
-                    padding: '10px 14px',
-                    borderRadius: msg.from === 'me' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                    background: msg.from === 'me' ? C.blue : C.white,
-                    color: msg.from === 'me' ? C.white : C.text,
-                    fontSize: '0.85rem',
-                    lineHeight: 1.55,
-                    border: msg.from === 'agency' ? `1px solid ${C.border}` : 'none',
-                    boxShadow: C.shadow,
-                  }}>
-                    {msg.text}
-                  </div>
-                  {msg.attachments?.map((att, i) => (
-                    <AttachPill key={i} att={att} />
-                  ))}
-                  <div style={{ fontSize: '0.65rem', color: C.text3, marginTop: 4, textAlign: msg.from === 'me' ? 'right' : 'left' }}>
-                    {msg.time}
+          <div style={{ flex:1, overflowY:'auto', padding:'20px 60px', display:'flex', flexDirection:'column', gap:10, background:'#F9F9F9' }}>
+            {messages.map((msg, i) => {
+              if (msg.system) return (
+                <div key={msg.id} style={{ textAlign:'center', margin:'8px 0' }}>
+                  <span style={{ fontSize:'0.68rem', color:C.text3, background:C.bg, border:`1px solid ${C.border}`, borderRadius:99, padding:'3px 14px', display:'inline-flex', alignItems:'center', gap:6 }}>
+                    <span>📡</span> {msg.text} · {msg.time}
+                  </span>
+                </div>
+              );
+              const isMe = msg.from==='me';
+              return (
+                <div key={msg.id} style={{ display:'flex', flexDirection:'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation:'msgIn 0.2s ease both', animationDelay:`${i*0.02}s` }}>
+                  <div style={{ display:'flex', gap:10, alignItems:'flex-end', flexDirection: isMe ? 'row-reverse' : 'row', maxWidth:'72%' }}>
+                    {!isMe && (
+                      <div style={{ width:36, height:36, borderRadius:'50%', background:'#E9E5E0', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0, marginBottom:4 }}>
+                        {active.flag}
+                      </div>
+                    )}
+                    <div>
+                      {!isMe && i===0 && <div style={{ fontSize:'0.72rem', fontWeight:700, color:C.text2, marginBottom:4 }}>{active.name}</div>}
+                      <div style={{
+                        padding:'10px 14px',
+                        borderRadius: isMe ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
+                        background: isMe ? C.msgMe : C.msgThem,
+                        color: isMe ? C.white : C.text,
+                        fontSize:'0.875rem', lineHeight:1.55,
+                        boxShadow: isMe ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+                        border: isMe ? 'none' : `1px solid ${C.border}`,
+                      }}>
+                        {msg.text}
+                      </div>
+                      {/* Attachments */}
+                      {msg.attachments?.map((att, j) => (
+                        <div key={j} style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.white, border:`1px solid ${C.border}`, borderRadius:10, padding:'8px 12px', marginTop:6, cursor:'pointer', transition:'all 0.15s', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
+                          <span className="att-icon">{att.type==='pdf'?'📄':att.type==='image'?'🖼️':'📝'}</span>
+                          <div>
+                            <div style={{ fontSize:'0.75rem', fontWeight:600, color:C.text }}>{att.name}</div>
+                            <div style={{ fontSize:'0.65rem', color:C.text3 }}>{att.size}</div>
+                          </div>
+                          <span style={{ fontSize:'0.7rem', color:C.blue, fontWeight:600 }}>⬇</span>
+                        </div>
+                      ))}
+                      <div style={{ fontSize:'0.65rem', color:C.text3, marginTop:4, textAlign: isMe ? 'right' : 'left' }}>{msg.time}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={bottomRef} />
           </div>
 
-          {/* Attachments preview */}
-          {attachments.length > 0 && (
-            <div style={{ padding: '8px 24px', borderTop: `1px solid ${C.border}`, background: C.white, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {attachments.map((att, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '5px 10px', fontSize: '0.75rem', color: C.text2 }}>
-                  <AttachmentIcon type={att.type} />
+          {/* Attachment preview bar */}
+          {atts.length>0 && (
+            <div style={{ padding:'8px 20px', background:C.white, borderTop:`1px solid ${C.border}`, display:'flex', flexWrap:'wrap', gap:8 }}>
+              {atts.map((att,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:6, background:C.bg, border:`1px solid ${C.border}`, borderRadius:8, padding:'5px 10px', fontSize:'0.75rem', color:C.text2 }}>
+                  <span>{att.type==='pdf'?'📄':att.type==='image'?'🖼️':'📝'}</span>
                   <span>{att.name}</span>
-                  <span style={{ color: C.text3 }}>({att.size})</span>
-                  <button onClick={() => setAttachments(a => a.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.text3, fontSize: '0.9rem', padding: 0, lineHeight: 1 }}>×</button>
+                  <button onClick={()=>setAtts(a=>a.filter((_,j)=>j!==i))} style={{ background:'none',border:'none',cursor:'pointer',color:C.text3,fontSize:'1rem',padding:0,lineHeight:1 }}>×</button>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Input bar */}
-          <div style={{ padding: '12px 24px 16px', borderTop: `1px solid ${C.border}`, background: C.white, display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-            {/* Attach button */}
-            <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              title="Attach file"
-              style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = C.blueBg; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = C.bg; }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.text2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
-
-            {/* Text input */}
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              placeholder={`Message ${active.name}…`}
-              rows={1}
-              style={{
-                flex: 1, padding: '10px 14px', border: `1px solid ${C.border}`, borderRadius: 12,
-                fontSize: '0.875rem', color: C.text, background: C.bg, outline: 'none', resize: 'none',
-                fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
-                transition: 'border-color 0.15s',
-              }}
-              onFocus={e => { e.currentTarget.style.borderColor = C.blue; }}
-              onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
-            />
-
-            {/* Send button */}
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() && !attachments.length}
-              style={{
-                width: 40, height: 40, borderRadius: 10,
-                background: input.trim() || attachments.length ? C.blue : C.bg,
-                border: 'none', cursor: input.trim() || attachments.length ? 'pointer' : 'not-allowed',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, transition: 'all 0.2s',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={input.trim() || attachments.length ? C.white : C.text3} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-            </button>
+          {/* Input bar — LinkedIn style */}
+          <div style={{ padding:'12px 20px 16px', background:C.white, borderTop:`1px solid ${C.border}` }}>
+            <div style={{ display:'flex', gap:10, alignItems:'flex-end', background:C.bg, border:`1px solid ${C.border}`, borderRadius:24, padding:'8px 8px 8px 16px' }}>
+              <textarea
+                ref={textRef}
+                value={input}
+                onChange={e=>setInput(e.target.value)}
+                onKeyDown={e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }}
+                placeholder={`Write a message…`}
+                rows={1}
+                className="chat-input"
+                style={{ flex:1, border:'none', background:'transparent', fontSize:'0.875rem', color:C.text, fontFamily:'inherit', lineHeight:1.5, resize:'none', maxHeight:100, overflowY:'auto', padding:'4px 0' }}
+              />
+              <div style={{ display:'flex', gap:4, alignItems:'center', flexShrink:0 }}>
+                {/* Attach */}
+                <input ref={fileRef} type="file" multiple style={{ display:'none' }} onChange={e=>{ const files=e.target.files; if(!files)return; setAtts(p=>[...p,...Array.from(files).map(f=>({name:f.name,size:fileSize(f.size),type:fileType(f.name)}))]); }}/>
+                <button onClick={()=>fileRef.current?.click()} style={{ width:36,height:36,borderRadius:'50%',border:'none',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s',color:C.text3 }}
+                  onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background=C.bg;}}
+                  onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent';}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+                {/* Emoji */}
+                <button style={{ width:36,height:36,borderRadius:'50%',border:'none',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.1rem',color:C.text3 }}>🙂</button>
+                {/* Send */}
+                <button onClick={send} disabled={!input.trim()&&!atts.length} className="send-btn" style={{ width:36,height:36,borderRadius:'50%',border:'none',background: (input.trim()||atts.length) ? C.blue : C.border, cursor:(input.trim()||atts.length)?'pointer':'not-allowed',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',flexShrink:0 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div style={{ display:'flex', justifyContent:'center', marginTop:8 }}>
+              <span style={{ fontSize:'0.65rem', color:C.text3 }}>Press Enter to send · Shift+Enter for new line</span>
+            </div>
           </div>
         </div>
       ) : (
-        /* Empty state */
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: '3rem' }}>💬</div>
-          <p style={{ fontSize: '1rem', fontWeight: 700, color: C.text }}>No conversations yet</p>
-          <p style={{ fontSize: '0.82rem', color: C.text3, maxWidth: 300, textAlign: 'center', lineHeight: 1.6 }}>
-            Agencies contacted via APEX distribution can message you here. Run your first campaign to get started.
+        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:12, background:'#F9F9F9' }}>
+          <div style={{ fontSize:'3rem' }}>💬</div>
+          <p style={{ fontSize:'1rem', fontWeight:700, color:C.text }}>Select a conversation</p>
+          <p style={{ fontSize:'0.82rem', color:C.text3, maxWidth:280, textAlign:'center', lineHeight:1.6 }}>
+            Choose an agency from the list to start messaging
           </p>
         </div>
       )}

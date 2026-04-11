@@ -79,7 +79,9 @@ export default function PropertiesPage() {
   useEffect(() => {
     if (!DEMO_MODE) store.fetchProperties();
     try {
-      const stored = JSON.parse(localStorage.getItem('pb_wizard_props') || '[]');
+      const raw = JSON.parse(localStorage.getItem('pb_wizard_props') || '[]');
+      // pb_wizard_props can be stored as a single object OR an array
+      const stored = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' && raw.id ? [raw] : []);
       setLocalProps(stored);
     } catch { setLocalProps([]); }
   }, []);
