@@ -487,25 +487,45 @@ export default function LandingPage() {
         overflow: 'hidden',
       }}>
 
-        {/* Background grid pattern */}
+        {/* ── Hero video background ── */}
+        <video
+          autoPlay muted loop playsInline
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'cover', zIndex: 0,
+            opacity: 0.28,
+            animation: 'fadeIn 2s ease 0.3s both',
+          }}
+        >
+          <source src="/hero-interior.mp4" type="video/mp4" />
+        </video>
+
+        {/* Dark gradient over video — keeps text readable */}
         <div style={{
-          position: 'absolute', inset: 0, zIndex: 0,
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: `linear-gradient(135deg, rgba(8,8,8,0.92) 0%, rgba(8,8,8,0.65) 50%, rgba(8,8,8,0.82) 100%)`,
+        }} />
+
+        {/* Subtle grid texture overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2,
           backgroundImage: `linear-gradient(${C.border} 1px, transparent 1px), linear-gradient(90deg, ${C.border} 1px, transparent 1px)`,
           backgroundSize: '60px 60px',
-          maskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%)',
+          maskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%, transparent 40%, black 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%, transparent 40%, black 100%)',
+          opacity: 0.4,
         }} />
 
-        {/* Glow */}
+        {/* Gold glow */}
         <div style={{
-          position: 'absolute', top: '20%', left: '10%',
-          width: 600, height: 600,
-          background: 'radial-gradient(circle, rgba(245,194,0,0.06) 0%, transparent 70%)',
-          zIndex: 0, pointerEvents: 'none',
+          position: 'absolute', top: '20%', left: '5%',
+          width: 500, height: 500,
+          background: 'radial-gradient(circle, rgba(245,194,0,0.08) 0%, transparent 70%)',
+          zIndex: 2, pointerEvents: 'none',
         }} />
 
         <div style={{
-          position: 'relative', zIndex: 1,
+          position: 'relative', zIndex: 3,
           maxWidth: 1280, margin: '0 auto', width: '100%',
           display: 'grid',
           gridTemplateColumns: 'minmax(0,1fr) minmax(0,auto)',
@@ -790,6 +810,35 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* ── Product demo video ── */}
+          <div className="fade-in-el" style={{ marginTop: 48 }}>
+            <div style={{
+              position: 'relative', borderRadius: 20, overflow: 'hidden',
+              border: `1px solid ${C.border2}`,
+              boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+              background: C.black3,
+            }}>
+              {/* Browser chrome */}
+              <div style={{
+                background: C.black3, borderBottom: `1px solid ${C.border}`,
+                padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57' }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FEBC2E' }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840' }} />
+                <div style={{ flex: 1, height: 22, borderRadius: 6, background: C.border, marginLeft: 12, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
+                  <span style={{ fontSize: '0.65rem', color: C.white40 }}>propblaze.io/dashboard</span>
+                </div>
+              </div>
+              <video
+                autoPlay muted loop playsInline
+                style={{ display: 'block', width: '100%', maxHeight: 480, objectFit: 'cover' }}
+              >
+                <source src="/product-demo.mp4" type="video/mp4" />
+              </video>
+            </div>
           </div>
         </div>
       </section>
