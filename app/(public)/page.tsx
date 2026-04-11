@@ -3,31 +3,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-// ─── Luxury Splash Screen ─────────────────────────────────────────────────────
+// ─── Luxury Splash Screen — cinematic video background ────────────────────────
 function SplashScreen({ onDone }: { onDone: () => void }) {
   const [phase, setPhase] = useState<'in' | 'hold' | 'out'>('in');
+  const [videoReady, setVideoReady] = useState(false);
   const letters = 'PROPBLAZE'.split('');
 
   useEffect(() => {
-    // hold after letters animate in
-    const t1 = setTimeout(() => setPhase('hold'), 900);
-    // start fade-out
-    const t2 = setTimeout(() => setPhase('out'), 2600);
-    // unmount
-    const t3 = setTimeout(() => onDone(), 3350);
+    const t1 = setTimeout(() => setPhase('hold'), 1000);
+    const t2 = setTimeout(() => setPhase('out'), 5500);   // longer — enjoy the video
+    const t3 = setTimeout(() => onDone(), 6300);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Video becomes ready slightly after mount
+  useEffect(() => {
+    const t = setTimeout(() => setVideoReady(true), 300);
+    return () => clearTimeout(t);
   }, []);
 
   return (
     <>
       <style>{`
         @keyframes splashLetterIn {
-          from { opacity:0; transform:translateY(40px) skewY(6deg); }
+          from { opacity:0; transform:translateY(40px) skewY(5deg); }
           to   { opacity:1; transform:translateY(0) skewY(0deg); }
         }
         @keyframes splashTagIn {
-          from { opacity:0; transform:translateY(12px); }
+          from { opacity:0; transform:translateY(10px); }
           to   { opacity:1; transform:translateY(0); }
         }
         @keyframes splashBarIn {
@@ -35,95 +39,161 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
           to   { transform:scaleX(1); }
         }
         @keyframes splashLogoIn {
-          from { opacity:0; transform:scale(0.7); }
+          from { opacity:0; transform:scale(0.75); }
           to   { opacity:1; transform:scale(1); }
         }
+        @keyframes videoPan {
+          from { transform:translate(-50%,-50%) scale(1.08); }
+          to   { transform:translate(-50%,-50%) scale(1.0); }
+        }
       `}</style>
+
       <div
-        onClick={() => { setPhase('out'); setTimeout(onDone, 750); }}
+        onClick={() => { setPhase('out'); setTimeout(onDone, 700); }}
         style={{
           position: 'fixed', inset: 0, zIndex: 9999,
-          background: '#080808',
+          background: '#000',
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer',
+          overflow: 'hidden',
           opacity: phase === 'out' ? 0 : 1,
-          transition: phase === 'out' ? 'opacity 0.75s cubic-bezier(0.16,1,0.3,1)' : 'none',
+          transition: phase === 'out' ? 'opacity 0.8s cubic-bezier(0.16,1,0.3,1)' : 'none',
           fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif',
         }}
       >
-        {/* PB logo mark */}
+        {/* ── Cinematic YouTube background ── */}
         <div style={{
-          width: 52, height: 52, borderRadius: 14,
-          background: '#FFFFFF',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1rem', fontWeight: 900, color: '#080808',
-          letterSpacing: '-0.02em',
-          marginBottom: 36,
-          animation: 'splashLogoIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both',
-          animationDelay: '0.1s',
+          position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0,
+          opacity: videoReady ? 1 : 0,
+          transition: 'opacity 1.2s ease',
         }}>
-          PB
+          <iframe
+            src="https://www.youtube.com/embed/UBdgfwoZpNE?autoplay=1&mute=1&loop=1&playlist=UBdgfwoZpNE&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&disablekb=1&fs=0"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            style={{
+              position: 'absolute',
+              top: '50%', left: '50%',
+              // Cover entire viewport regardless of 16:9 ratio
+              width: 'max(100vw, 177.78vh)',
+              height: 'max(100vh, 56.25vw)',
+              transform: 'translate(-50%,-50%)',
+              border: 'none',
+              pointerEvents: 'none',
+              animation: 'videoPan 8s ease-out both',
+            }}
+          />
         </div>
 
-        {/* PROPBLAZE letters */}
-        <div style={{ display: 'flex', gap: 0, overflow: 'hidden' }}>
-          {letters.map((l, i) => (
-            <span
-              key={i}
-              style={{
+        {/* ── Dark cinematic gradient overlay ── */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.30) 40%, rgba(0,0,0,0.65) 100%)',
+        }} />
+
+        {/* ── Vignette edges ── */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          boxShadow: 'inset 0 0 120px rgba(0,0,0,0.7)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* ── Brand content ── */}
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 24px' }}>
+          {/* Logo mark */}
+          <div style={{
+            width: 56, height: 56, borderRadius: 14,
+            background: 'rgba(255,255,255,0.95)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1rem', fontWeight: 900, color: '#080808',
+            letterSpacing: '-0.02em',
+            margin: '0 auto 32px',
+            animation: 'splashLogoIn 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.3s both',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          }}>
+            PB
+          </div>
+
+          {/* PROPBLAZE letter reveal */}
+          <div style={{ display: 'flex', gap: 1, overflow: 'hidden', justifyContent: 'center' }}>
+            {letters.map((l, i) => (
+              <span key={i} style={{
                 display: 'inline-block',
-                fontSize: 'clamp(3rem,8vw,6rem)',
+                fontSize: 'clamp(2.8rem,8vw,5.5rem)',
                 fontWeight: 900,
                 letterSpacing: '-0.04em',
                 lineHeight: 1,
                 color: '#FFFFFF',
-                animation: 'splashLetterIn 0.55s cubic-bezier(0.22,1,0.36,1) both',
-                animationDelay: `${0.25 + i * 0.06}s`,
-              }}
-            >
-              {l}
-            </span>
-          ))}
-        </div>
+                textShadow: '0 2px 24px rgba(0,0,0,0.5)',
+                animation: 'splashLetterIn 0.6s cubic-bezier(0.22,1,0.36,1) both',
+                animationDelay: `${0.45 + i * 0.055}s`,
+              }}>
+                {l}
+              </span>
+            ))}
+          </div>
 
-        {/* Tagline */}
-        <p style={{
-          marginTop: 18,
-          fontSize: '0.8rem',
-          fontWeight: 500,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.38)',
-          animation: 'splashTagIn 0.5s ease both',
-          animationDelay: '1.0s',
-        }}>
-          AI-Powered Property Distribution
-        </p>
+          {/* Tagline */}
+          <p style={{
+            marginTop: 16,
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            letterSpacing: '0.28em',
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.55)',
+            textShadow: '0 1px 8px rgba(0,0,0,0.6)',
+            animation: 'splashTagIn 0.6s ease 1.3s both',
+          }}>
+            AI-Powered Property Distribution
+          </p>
 
-        {/* Progress bar */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          height: 2,
-          background: 'rgba(255,255,255,0.08)',
-          overflow: 'hidden',
-        }}>
+          {/* Gold accent line */}
           <div style={{
-            height: '100%',
-            background: '#F5C200',
-            transformOrigin: 'left',
-            animation: 'splashBarIn 2.5s linear 0.2s both',
+            width: 48, height: 2, background: '#F5C200',
+            margin: '20px auto 0',
+            animation: 'splashTagIn 0.5s ease 1.6s both',
+            boxShadow: '0 0 12px rgba(245,194,0,0.5)',
           }} />
         </div>
 
-        {/* Skip hint */}
+        {/* ── Progress bar (bottom) ── */}
         <div style={{
-          position: 'absolute', bottom: 28, right: 32,
-          fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)',
-          letterSpacing: '0.08em', textTransform: 'uppercase',
-          animation: 'splashTagIn 0.5s ease 1.2s both',
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: 2, background: 'rgba(255,255,255,0.08)',
+          overflow: 'hidden', zIndex: 2,
         }}>
-          Tap to skip
+          <div style={{
+            height: '100%', background: '#F5C200',
+            transformOrigin: 'left',
+            animation: 'splashBarIn 5.4s linear 0.4s both',
+            boxShadow: '0 0 8px rgba(245,194,0,0.6)',
+          }} />
+        </div>
+
+        {/* ── Location badge ── */}
+        <div style={{
+          position: 'absolute', bottom: 32, left: 32,
+          fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)',
+          letterSpacing: '0.12em', textTransform: 'uppercase',
+          zIndex: 2,
+          animation: 'splashTagIn 0.5s ease 1.8s both',
+          textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span style={{ opacity: 0.6 }}>📍</span> Adriatic Coast, Europe
+        </div>
+
+        {/* ── Skip hint ── */}
+        <div style={{
+          position: 'absolute', bottom: 32, right: 32,
+          fontSize: '0.65rem', color: 'rgba(255,255,255,0.28)',
+          letterSpacing: '0.1em', textTransform: 'uppercase',
+          zIndex: 2,
+          animation: 'splashTagIn 0.5s ease 1.5s both',
+        }}>
+          Click to skip
         </div>
       </div>
     </>
