@@ -3,238 +3,165 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-// ─── FIND / Cuberto editorial design tokens ────────────────────────────────
+// ─── Design tokens ─────────────────────────────────────────────────────────
 const C = {
-  black:   '#080808',
-  black2:  '#111111',
-  black3:  '#1A1A1A',
-  white:   '#FFFFFF',
-  white90: 'rgba(255,255,255,0.9)',
-  white60: 'rgba(255,255,255,0.6)',
-  white40: 'rgba(255,255,255,0.4)',
-  white20: 'rgba(255,255,255,0.2)',
-  white10: 'rgba(255,255,255,0.08)',
-  accent:  '#F5C200',   // gold accent — used sparingly
-  green:   '#22C55E',
-  border:  'rgba(255,255,255,0.1)',
-  border2: 'rgba(255,255,255,0.18)',
+  black:  '#0E0E0E',
+  black2: '#141414',
+  black3: '#1C1C1C',
+  white:  '#FFFFFF',
+  w80:    'rgba(255,255,255,0.80)',
+  w60:    'rgba(255,255,255,0.60)',
+  w40:    'rgba(255,255,255,0.40)',
+  w20:    'rgba(255,255,255,0.20)',
+  w10:    'rgba(255,255,255,0.08)',
+  border: 'rgba(255,255,255,0.10)',
+  bdr2:   'rgba(255,255,255,0.18)',
+  gold:   '#F5C200',
+  green:  '#22C55E',
 };
 
+// ─── Keyframes ─────────────────────────────────────────────────────────────
 function GlobalStyles() {
   return (
     <style>{`
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      body {
-        background: ${C.black};
-        color: ${C.white};
-        font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', Arial, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        overflow-x: hidden;
-      }
-      ::selection { background: ${C.accent}; color: ${C.black}; }
+      *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+      html { scroll-behavior:smooth; }
+      body { background:${C.black}; color:${C.white}; font-family:-apple-system,BlinkMacSystemFont,'Inter','Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+      ::selection { background:${C.gold}; color:${C.black}; }
 
-      @keyframes fadeUp {
-        from { opacity:0; transform:translateY(40px); }
-        to   { opacity:1; transform:translateY(0); }
-      }
-      @keyframes fadeIn {
-        from { opacity:0; }
-        to   { opacity:1; }
-      }
-      @keyframes slideLeft {
-        from { opacity:0; transform:translateX(60px); }
-        to   { opacity:1; transform:translateX(0); }
-      }
-      @keyframes revealWidth {
-        from { width: 0; }
-        to   { width: 100%; }
-      }
-      @keyframes tickerScroll {
-        from { transform: translateX(0); }
-        to   { transform: translateX(-50%); }
-      }
-      @keyframes imgDrift {
-        0%,100% { transform:scale(1.04) translate(0,0); }
-        33%     { transform:scale(1.06) translate(-8px,-5px); }
-        66%     { transform:scale(1.05) translate(5px,8px); }
-      }
-      @keyframes dotPulse {
-        0%,100% { transform:scale(1); opacity:1; }
-        50%     { transform:scale(1.4); opacity:0.7; }
-      }
-      @keyframes countUp {
-        from { opacity:0; transform:translateY(12px); }
-        to   { opacity:1; transform:translateY(0); }
-      }
+      @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+      @keyframes fadeUp  { from{opacity:0;transform:translateY(36px)} to{opacity:1;transform:none} }
+      @keyframes scaleIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:none} }
+      @keyframes pulse   { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.7} }
+      @keyframes ticker  { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+      @keyframes imgZoom { from{transform:scale(1)} to{transform:scale(1.07)} }
 
-      /* Ticker */
-      .ticker-inner { display:flex; gap:0; white-space:nowrap; animation:tickerScroll 28s linear infinite; }
-      .ticker-inner:hover { animation-play-state:paused; }
-
-      /* Nav link hover */
-      .nav-link {
-        font-size:0.8rem;
-        font-weight:600;
-        color:${C.white60};
-        letter-spacing:0.08em;
-        text-transform:uppercase;
-        text-decoration:none;
-        transition:color 0.2s;
+      /* MOOF-style service band */
+      .service-band {
         position:relative;
-      }
-      .nav-link:hover { color:${C.white}; }
-
-      /* CTA button */
-      .btn-primary {
-        display:inline-flex; align-items:center; gap:10px;
-        background:${C.white};
-        color:${C.black};
-        font-weight:800;
-        font-size:0.875rem;
-        letter-spacing:0.02em;
-        padding:16px 32px;
-        border-radius:100px;
-        border:none;
+        border-top:1px solid ${C.border};
+        overflow:hidden;
         cursor:pointer;
-        text-decoration:none;
-        transition:all 0.25s cubic-bezier(0.16,1,0.3,1);
+        transition:background 0.4s ease;
+        display:flex; align-items:center;
+        min-height:180px;
+        padding:0 clamp(24px,5vw,80px);
+        gap:clamp(24px,4vw,60px);
       }
-      .btn-primary:hover {
-        background:${C.accent};
-        transform:translateY(-2px);
-        box-shadow:0 12px 40px rgba(245,194,0,0.35);
+      .service-band .band-bg {
+        position:absolute; inset:0; z-index:0;
+        background-size:cover; background-position:center;
+        opacity:0;
+        transition:opacity 0.6s cubic-bezier(0.16,1,0.3,1);
       }
-      .btn-secondary {
-        display:inline-flex; align-items:center; gap:10px;
-        background:transparent;
-        color:${C.white60};
-        font-weight:600;
-        font-size:0.875rem;
-        letter-spacing:0.02em;
-        padding:16px 28px;
-        border-radius:100px;
-        border:1px solid ${C.border2};
-        cursor:pointer;
-        text-decoration:none;
-        transition:all 0.25s;
+      .service-band::after {
+        content:'';
+        position:absolute; inset:0; z-index:1;
+        background:linear-gradient(90deg, rgba(14,14,14,0.88) 0%, rgba(14,14,14,0.65) 50%, rgba(14,14,14,0.3) 100%);
+        opacity:0;
+        transition:opacity 0.5s;
       }
-      .btn-secondary:hover { color:${C.white}; border-color:${C.white40}; }
+      .service-band:hover .band-bg { opacity:1; }
+      .service-band:hover::after { opacity:1; }
+      .service-band:hover .band-word { color:${C.white}; }
+      .service-band:hover .band-arrow { transform:translateX(8px); opacity:1; }
+      .service-band > * { position:relative; z-index:2; }
 
-      /* Prop image card hover */
-      .prop-card { overflow:hidden; position:relative; border-radius:16px; cursor:pointer; }
-      .prop-card img { transition:transform 0.7s cubic-bezier(0.16,1,0.3,1); display:block; width:100%; height:100%; object-fit:cover; }
+      .band-num {
+        width:44px; height:44px; border-radius:50%;
+        border:1px solid ${C.bdr2};
+        display:flex; align-items:center; justify-content:center;
+        font-size:0.75rem; font-weight:700; color:${C.w60};
+        flex-shrink:0;
+        transition:border-color 0.3s, color 0.3s;
+      }
+      .service-band:hover .band-num { border-color:${C.white}; color:${C.white}; }
+
+      .band-desc { flex:0 0 220px; }
+      .band-word {
+        font-size:clamp(4rem,9vw,9rem);
+        font-weight:900;
+        letter-spacing:-0.04em;
+        line-height:1;
+        color:${C.w40};
+        transition:color 0.4s;
+        flex:1;
+        font-style:italic;
+      }
+      .band-arrow {
+        font-size:2rem; color:${C.w40};
+        transform:translateX(0); opacity:0.4;
+        transition:transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.3s;
+        flex-shrink:0;
+      }
+
+      /* Feature card */
+      .feat-card {
+        background:${C.black2};
+        border:1px solid ${C.border};
+        border-radius:20px; padding:32px;
+        transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+      }
+      .feat-card:hover { border-color:${C.bdr2}; transform:translateY(-4px); background:#181818; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+
+      /* Prop card */
+      .prop-card { border-radius:16px; overflow:hidden; position:relative; cursor:pointer; }
+      .prop-card img { display:block; width:100%; height:100%; object-fit:cover; transition:transform 0.7s cubic-bezier(0.16,1,0.3,1); }
       .prop-card:hover img { transform:scale(1.06); }
-      .prop-card .overlay {
-        position:absolute; inset:0;
-        background:linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 50%);
-        opacity:0; transition:opacity 0.35s;
-      }
+      .prop-card .overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 55%); opacity:0; transition:opacity 0.35s; }
       .prop-card:hover .overlay { opacity:1; }
 
-      /* Feature card hover */
-      .feature-card {
-        background:${C.black2};
-        border:1px solid ${C.border};
-        border-radius:20px;
-        padding:32px;
-        transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
-      }
-      .feature-card:hover {
-        border-color:${C.border2};
-        transform:translateY(-4px);
-        background:#161616;
-        box-shadow:0 20px 60px rgba(0,0,0,0.5);
-      }
-
-      /* Step circle */
-      .step-num {
-        width:52px; height:52px; border-radius:50%;
-        border:1px solid ${C.border2};
-        display:flex; align-items:center; justify-content:center;
-        font-size:1.1rem; font-weight:800; color:${C.white60};
-        flex-shrink:0;
-        transition:all 0.25s;
-      }
-
-      /* Scroll FadeIn */
-      .fade-in-el {
-        opacity:0;
-        transform:translateY(32px);
-        transition:opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1);
-      }
-      .fade-in-el.visible {
-        opacity:1;
-        transform:translateY(0);
-      }
-
-      /* Divider */
-      .divider { border:none; border-top:1px solid ${C.border}; }
-
       /* Plan card */
-      .plan-card {
-        background:${C.black2};
-        border:1px solid ${C.border};
-        border-radius:24px;
-        padding:36px 32px;
-        transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
-      }
-      .plan-card:hover {
-        border-color:${C.border2};
-        transform:translateY(-4px);
-        box-shadow:0 24px 80px rgba(0,0,0,0.5);
-      }
-      .plan-card.featured {
-        background:${C.white};
-        border-color:${C.white};
-      }
-      .plan-card.featured * { color:${C.black} !important; }
-      .plan-card.featured .plan-btn {
-        background:${C.black};
-        color:${C.white};
-      }
+      .plan-card { background:${C.black2}; border:1px solid ${C.border}; border-radius:24px; padding:36px 32px; transition:all 0.3s cubic-bezier(0.16,1,0.3,1); }
+      .plan-card:hover { border-color:${C.bdr2}; transform:translateY(-4px); box-shadow:0 24px 80px rgba(0,0,0,0.5); }
+      .plan-card.featured { background:${C.white}; border-color:${C.white}; }
+
+      /* Fade-in on scroll */
+      .fi { opacity:0; transform:translateY(28px); transition:opacity 0.85s cubic-bezier(0.16,1,0.3,1),transform 0.85s cubic-bezier(0.16,1,0.3,1); }
+      .fi.vis { opacity:1; transform:none; }
+
+      /* Ticker */
+      .tick { display:flex; gap:0; white-space:nowrap; animation:ticker 28s linear infinite; }
+      .tick:hover { animation-play-state:paused; }
+
+      /* Buttons */
+      .btn-w { display:inline-flex; align-items:center; gap:10px; background:${C.white}; color:${C.black}; font-weight:800; font-size:0.875rem; letter-spacing:0.01em; padding:15px 30px; border-radius:100px; border:none; cursor:pointer; text-decoration:none; transition:all 0.25s cubic-bezier(0.16,1,0.3,1); }
+      .btn-w:hover { background:${C.gold}; transform:translateY(-2px); box-shadow:0 12px 36px rgba(245,194,0,0.3); }
+      .btn-o { display:inline-flex; align-items:center; gap:10px; background:transparent; color:${C.w60}; font-weight:600; font-size:0.875rem; padding:15px 28px; border-radius:100px; border:1px solid ${C.bdr2}; cursor:pointer; text-decoration:none; transition:all 0.25s; }
+      .btn-o:hover { color:${C.white}; border-color:${C.w40}; }
     `}</style>
   );
 }
 
-// ─── Scroll observer hook ─────────────────────────────────────────────────
-function useFadeIn() {
+// ─── Scroll observer ───────────────────────────────────────────────────────
+function useScrollFade() {
   useEffect(() => {
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add('visible');
-      });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.fade-in-el').forEach(el => obs.observe(el));
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.fi').forEach(el => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 }
 
-// ─── Animated stat ─────────────────────────────────────────────────────────
+// ─── Animated counter ─────────────────────────────────────────────────────
 function Stat({ val, label }: { val: string; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [vis, setVis] = useState(false);
+  const [v, setV] = useState(false);
   useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVis(true); }, { threshold: 0.5 });
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setV(true); }, { threshold: 0.5 });
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
   return (
     <div ref={ref} style={{ textAlign: 'center' }}>
-      <div style={{
-        fontSize: 'clamp(2.4rem,5vw,3.2rem)',
-        fontWeight: 900,
-        color: C.white,
-        letterSpacing: '-0.03em',
-        lineHeight: 1,
-        animation: vis ? 'countUp 0.7s cubic-bezier(0.16,1,0.3,1) both' : 'none',
-      }}>{val}</div>
-      <div style={{ fontSize: '0.75rem', color: C.white40, marginTop: 10, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 'clamp(2.2rem,5vw,3rem)', fontWeight: 900, letterSpacing: '-0.04em', color: C.white, animation: v ? 'fadeUp 0.7s ease both' : 'none' }}>{val}</div>
+      <div style={{ fontSize: '0.72rem', color: C.w40, marginTop: 8, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</div>
     </div>
   );
 }
 
-// ─── Agency animation (hero right) ────────────────────────────────────────
+// ─── APEX animation card ───────────────────────────────────────────────────
 function ApexCard() {
   const [step, setStep] = useState(0);
   const agencies = [
@@ -244,401 +171,206 @@ function ApexCard() {
     { name: 'Knight Frank', city: 'Belgrade', score: 88 },
     { name: 'Fine & Country', city: 'Budva', score: 85 },
   ];
-
   useEffect(() => {
-    const timers = [
-      setTimeout(() => setStep(1), 800),
-      setTimeout(() => setStep(2), 2200),
-      setTimeout(() => setStep(3), 4000),
-    ];
-    return () => timers.forEach(clearTimeout);
+    const ts = [setTimeout(() => setStep(1), 900), setTimeout(() => setStep(2), 2400), setTimeout(() => setStep(3), 4200)];
+    return () => ts.forEach(clearTimeout);
   }, []);
-
   return (
-    <div style={{
-      background: C.black2,
-      border: `1px solid ${C.border2}`,
-      borderRadius: 24,
-      padding: 28,
-      width: '100%',
-      maxWidth: 380,
-      animation: 'slideLeft 1s cubic-bezier(0.16,1,0.3,1) 0.6s both',
-      boxShadow: '0 40px 100px rgba(0,0,0,0.7)',
-    }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div style={{ background: C.black2, border: `1px solid ${C.bdr2}`, borderRadius: 24, padding: 28, width: '100%', maxWidth: 360, boxShadow: '0 40px 100px rgba(0,0,0,0.7)', animation: 'scaleIn 1s cubic-bezier(0.16,1,0.3,1) 0.5s both' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div>
-          <div style={{ fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: C.white40, marginBottom: 4 }}>
-            APEX AI Matching
-          </div>
-          <div style={{ fontSize: '1rem', fontWeight: 800, color: C.white }}>
-            Apartament · Budva
-          </div>
+          <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: C.w40, marginBottom: 3 }}>APEX AI Matching</div>
+          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: C.white }}>Apartament · Budva</div>
         </div>
-        <div style={{
-          background: step >= 3 ? '#16A34A' : step >= 2 ? C.accent : C.border,
-          color: step >= 3 ? '#fff' : step >= 2 ? C.black : C.white60,
-          fontSize: '0.7rem', fontWeight: 700,
-          padding: '5px 12px', borderRadius: 99,
-          transition: 'all 0.4s',
-        }}>
+        <div style={{ background: step >= 3 ? '#16A34A' : step >= 2 ? C.gold : C.border, color: step >= 3 ? '#fff' : step >= 2 ? C.black : C.w60, fontSize: '0.68rem', fontWeight: 700, padding: '5px 12px', borderRadius: 99, transition: 'all 0.4s' }}>
           {step >= 3 ? '✓ Sent' : step >= 2 ? 'Matching…' : 'Analysing…'}
         </div>
       </div>
-
-      {/* Step 1 — analysis */}
       {step >= 1 && (
-        <div style={{
-          background: C.black3, borderRadius: 12, padding: '12px 16px', marginBottom: 12,
-          animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both',
-        }}>
-          <div style={{ fontSize: '0.72rem', color: C.white40, marginBottom: 8 }}>Property analysis</div>
-          {[
-            { label: 'Location score', val: 94, w: '94%' },
-            { label: 'Market demand', val: 88, w: '88%' },
-            { label: 'Price accuracy', val: 97, w: '97%' },
-          ].map(r => (
-            <div key={r.label} style={{ marginBottom: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: C.white60, marginBottom: 3 }}>
-                <span>{r.label}</span><span style={{ color: C.white }}>{r.val}</span>
-              </div>
+        <div style={{ background: C.black3, borderRadius: 10, padding: '12px 14px', marginBottom: 10, animation: 'fadeUp 0.5s ease both' }}>
+          <div style={{ fontSize: '0.68rem', color: C.w40, marginBottom: 8 }}>Property analysis</div>
+          {[{ l: 'Location score', v: '94%' }, { l: 'Market demand', v: '88%' }, { l: 'Price accuracy', v: '97%' }].map(r => (
+            <div key={r.l} style={{ marginBottom: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: C.w60, marginBottom: 3 }}><span>{r.l}</span><span style={{ color: C.white }}>{r.v.replace('%', '')}</span></div>
               <div style={{ height: 3, background: C.border, borderRadius: 99 }}>
-                <div style={{
-                  height: '100%', borderRadius: 99, width: r.w,
-                  background: `linear-gradient(90deg, #3B5BDB, #7048E8)`,
-                  animation: 'revealWidth 1s cubic-bezier(0.16,1,0.3,1) 0.3s both',
-                }} />
+                <div style={{ height: '100%', borderRadius: 99, width: r.v, background: 'linear-gradient(90deg,#3B5BDB,#7048E8)', transition: 'width 1s ease' }} />
               </div>
             </div>
           ))}
         </div>
       )}
-
-      {/* Step 2 — agencies */}
       {step >= 2 && (
-        <div style={{
-          animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both',
-        }}>
-          <div style={{ fontSize: '0.72rem', color: C.white40, marginBottom: 8 }}>Top matches — Wave 1</div>
-          {agencies.map((ag, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '8px 0',
-              borderBottom: i < agencies.length - 1 ? `1px solid ${C.border}` : 'none',
-              animation: `fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) ${i * 120}ms both`,
-            }}>
+        <div style={{ animation: 'fadeUp 0.5s ease both' }}>
+          <div style={{ fontSize: '0.68rem', color: C.w40, marginBottom: 8 }}>Top matches — Wave 1</div>
+          {agencies.map((a, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 4 ? `1px solid ${C.border}` : 'none', animation: `fadeUp 0.4s ease ${i * 100}ms both` }}>
               <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: C.white }}>{ag.name}</div>
-                <div style={{ fontSize: '0.68rem', color: C.white40 }}>{ag.city}</div>
+                <div style={{ fontSize: '0.78rem', fontWeight: 600, color: C.white }}>{a.name}</div>
+                <div style={{ fontSize: '0.65rem', color: C.w40 }}>{a.city}</div>
               </div>
-              <div style={{
-                fontSize: '0.8rem', fontWeight: 800,
-                color: ag.score >= 95 ? C.accent : C.white,
-              }}>{ag.score}</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: a.score >= 95 ? C.gold : C.white }}>{a.score}</div>
             </div>
           ))}
         </div>
       )}
-
-      {/* Step 3 — sent */}
       {step >= 3 && (
-        <div style={{
-          marginTop: 16, padding: '12px 16px',
-          background: 'rgba(22,163,74,0.1)',
-          border: '1px solid rgba(22,163,74,0.25)',
-          borderRadius: 12,
-          animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both',
-        }}>
-          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: C.green }}>
-            ✓ 5 agencies reached · Replies → your email
-          </div>
-          <div style={{ fontSize: '0.68rem', color: C.white40, marginTop: 4 }}>
-            All replies forwarded directly to you
-          </div>
+        <div style={{ marginTop: 14, padding: '11px 14px', background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 10, animation: 'fadeUp 0.5s ease both' }}>
+          <div style={{ fontSize: '0.76rem', fontWeight: 700, color: C.green }}>✓ 5 agencies reached · Replies → your email</div>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Main page ─────────────────────────────────────────────────────────────
+// ─── Page ──────────────────────────────────────────────────────────────────
 export default function LandingPage() {
-  useFadeIn();
-  const [menuOpen, setMenuOpen] = useState(false);
+  useScrollFade();
 
-  // Property showcase images (using high-quality Unsplash)
+  const bands = [
+    {
+      num: '01',
+      word: 'Analyse',
+      desc: 'AI evaluates your property across location, market demand, and price accuracy.',
+      img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80',
+      href: '/properties/new',
+    },
+    {
+      num: '02',
+      word: 'Match',
+      desc: 'APEX scores 2,000+ agencies. You get the top 30 ranked by fit, not alphabet.',
+      img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80',
+      href: '/properties/new',
+    },
+    {
+      num: '03',
+      word: 'Distribute',
+      desc: 'Personalised outreach in 3 languages goes out in waves. All replies → your inbox.',
+      img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80',
+      href: '/properties/new',
+    },
+    {
+      num: '04',
+      word: 'Sell',
+      desc: 'Agencies compete to find your buyer. You connect directly — zero commission to us.',
+      img: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1200&q=80',
+      href: '/properties/new',
+    },
+  ];
+
   const props = [
-    { img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80', label: 'Villa · Côte d\'Azur', price: '€3.2M' },
-    { img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80', label: 'Penthouse · Lisbon', price: '€1.8M' },
-    { img: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80', label: 'Apartment · Belgrade', price: '€420K' },
-    { img: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&q=80', label: 'House · Montenegro', price: '€680K' },
-    { img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80', label: 'Loft · Berlin', price: '€890K' },
-    { img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=600&q=80', label: 'Villa · Ibiza', price: '€5.1M' },
+    { img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=700&q=80', label: 'Villa · Côte d\'Azur', price: '€3.2M', type: 'Villa' },
+    { img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=700&q=80', label: 'Penthouse · Lisbon', price: '€1.8M', type: 'Penthouse' },
+    { img: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=700&q=80', label: 'Apartment · Belgrade', price: '€420K', type: 'Apartment' },
+    { img: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=700&q=80', label: 'House · Montenegro', price: '€680K', type: 'House' },
+    { img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=700&q=80', label: 'Loft · Berlin', price: '€890K', type: 'Loft' },
+    { img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=700&q=80', label: 'Villa · Ibiza', price: '€5.1M', type: 'Villa' },
   ];
 
   const features = [
-    { icon: '🤖', title: 'APEX AI Matching', desc: 'Our engine scores 2,000+ agencies across 12 parameters — geography, price band, language, response rate. You get the 30 best fits, not a spray.' },
-    { icon: '✍️', title: 'AI Sales Pack', desc: 'One description → 3 professional translations (EN, RU, SR), formatted sales brief, and personalised cover letters. Done in seconds.' },
-    { icon: '📡', title: 'Wave Distribution', desc: 'Three waves of 10 agencies each. Wave 2 launches if no response after 5 days. Every reply goes straight to your inbox — zero middlemen.' },
-    { icon: '✅', title: 'Owner Control', desc: 'You approve every outreach before it sends. See exactly which agencies, their match score, and why. Full transparency, always.' },
-    { icon: '🔒', title: 'GDPR-Ready Privacy', desc: 'All documents AES-256 encrypted on EU servers. Contacts visible to agencies only after your explicit approval. Compliant by design.' },
-    { icon: '📊', title: 'Real-Time Dashboard', desc: 'Track opens, responses, agency interest in one clean view. Know which agencies replied, when, and with what offer.' },
-  ];
-
-  const steps = [
-    { num: '01', title: 'List your property', desc: 'Upload photos, describe your property, add legal details. Our wizard takes 5 minutes.' },
-    { num: '02', title: 'AI builds your pack', desc: 'APEX analyses your property, finds the top 30 matching agencies and writes personalised outreach in 3 languages.' },
-    { num: '03', title: 'You approve everything', desc: 'Review the agency list and draft letters. One click to launch — or edit anything you like.' },
-    { num: '04', title: 'Agencies compete for you', desc: 'Wave 1 goes out. Replies land in your inbox. Interested? Connect directly. No platform fees on the deal.' },
+    { icon: '🤖', title: 'APEX AI Matching', desc: 'Scores 2,000+ EU agencies on 12 parameters. You get the 30 best fits, not a spray-and-pray list.' },
+    { icon: '✍️', title: 'AI Sales Pack', desc: 'One description → 3 professional translations (EN, RU, SR) + personalised cover letters per agency.' },
+    { icon: '📡', title: 'Wave Distribution', desc: '3 waves of 10 agencies each. Wave 2 launches automatically if Wave 1 has no response in 5 days.' },
+    { icon: '✅', title: 'Owner Approval', desc: 'You review every agency and letter before anything sends. Full control, zero surprises.' },
+    { icon: '🔒', title: 'GDPR-Ready', desc: 'AES-256 encryption, EU servers, explicit consent flows. Built for the European market.' },
+    { icon: '📊', title: 'Live Dashboard', desc: 'See which agencies opened, replied, and showed buyer interest — all in real time.' },
   ];
 
   const plans = [
-    {
-      name: 'STARTER',
-      price: '€59',
-      period: '/month',
-      desc: 'Perfect for single properties',
-      features: ['1 active listing', 'APEX matching (Wave 1)', 'AI sales pack (3 languages)', 'Email distribution', 'Basic dashboard'],
-      cta: 'Start free trial',
-      featured: false,
-    },
-    {
-      name: 'PRO',
-      price: '€129',
-      period: '/month',
-      desc: 'For serious sellers',
-      features: ['3 active listings', 'Full 3-wave distribution', 'WhatsApp + Email outreach', 'Priority AI matching', 'Advanced analytics', 'Document vault'],
-      cta: 'Get started',
-      featured: true,
-    },
-    {
-      name: 'AGENCY',
-      price: '€349',
-      period: '/month',
-      desc: 'For portfolios & developers',
-      features: ['Unlimited listings', 'White-label outreach', 'API access', 'Dedicated account manager', 'Custom matching rules', 'Bulk import'],
-      cta: 'Contact sales',
-      featured: false,
-    },
+    { name: 'STARTER', price: '€59', period: '/mo', desc: 'One property, full reach', features: ['1 active listing', 'APEX Wave 1 (10 agencies)', 'AI pack (3 languages)', 'Email distribution', 'Dashboard'], cta: 'Start free', featured: false },
+    { name: 'PRO', price: '€129', period: '/mo', desc: 'Serious sellers', features: ['3 active listings', 'Full 3-wave (30 agencies)', 'WhatsApp + Email', 'Priority AI matching', 'Analytics + vault'], cta: 'Get started', featured: true },
+    { name: 'AGENCY', price: '€349', period: '/mo', desc: 'Portfolios & developers', features: ['Unlimited listings', 'White-label outreach', 'API access', 'Account manager', 'Custom rules'], cta: 'Contact sales', featured: false },
   ];
 
   return (
     <>
       <GlobalStyles />
 
-      {/* ── NAV ──────────────────────────────────────────────────────────── */}
+      {/* ── NAV ─────────────────────────────────────────────────────────── */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        padding: '0 clamp(20px,5vw,60px)',
-        height: 64,
+        height: 60, padding: '0 clamp(20px,5vw,60px)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'rgba(8,8,8,0.85)',
+        background: 'rgba(14,14,14,0.9)',
         backdropFilter: 'blur(20px)',
         borderBottom: `1px solid ${C.border}`,
         animation: 'fadeIn 0.8s ease both',
       }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: C.white,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.75rem', fontWeight: 900, color: C.black,
-            letterSpacing: '-0.02em',
-          }}>PB</div>
-          <span style={{ fontSize: '1rem', fontWeight: 800, color: C.white, letterSpacing: '-0.02em' }}>
-            PropBlaze
-          </span>
-        </div>
-
-        {/* Desktop nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 36 }} className="desktop-nav">
-          {['Features', 'How it works', 'Pricing'].map(item => (
-            <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="nav-link">{item}</a>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: C.white, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900, color: C.black }}>PB</div>
+          <span style={{ fontSize: '0.95rem', fontWeight: 800, color: C.white, letterSpacing: '-0.02em' }}>PropBlaze</span>
+        </Link>
+        <div style={{ display: 'flex', gap: 32 }}>
+          {['Features', 'How it works', 'Pricing'].map(n => (
+            <a key={n} href={`#${n.toLowerCase().replace(/ /g,'-')}`} style={{ fontSize: '0.75rem', fontWeight: 600, color: C.w60, letterSpacing: '0.07em', textTransform: 'uppercase', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.color = C.white; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.color = C.w60; }}
+            >{n}</a>
           ))}
         </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/login" className="nav-link" style={{ display: 'none' }}>Sign in</Link>
-          <Link href="/properties/new" style={{
-            background: C.white, color: C.black,
-            fontSize: '0.8rem', fontWeight: 800,
-            padding: '9px 22px', borderRadius: 100,
-            textDecoration: 'none',
-            transition: 'all 0.2s',
-            letterSpacing: '0.02em',
-          }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.background = C.accent; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.background = C.white; }}
-          >
-            Sell property →
-          </Link>
-        </div>
+        <Link href="/properties/new" style={{ background: C.white, color: C.black, fontSize: '0.78rem', fontWeight: 800, padding: '8px 20px', borderRadius: 100, textDecoration: 'none', transition: 'background 0.2s', letterSpacing: '0.01em' }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.background = C.gold; }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.background = C.white; }}
+        >Sell property →</Link>
       </nav>
 
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section style={{
-        minHeight: '100vh',
-        padding: 'clamp(100px,15vh,140px) clamp(20px,5vw,80px) clamp(60px,10vh,100px)',
-        display: 'flex',
-        alignItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <section style={{ minHeight: '100vh', padding: 'clamp(100px,15vh,130px) clamp(20px,5vw,80px) clamp(60px,8vh,80px)', display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
 
-        {/* ── Hero video background ── */}
-        <video
-          autoPlay muted loop playsInline
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', zIndex: 0,
-            opacity: 0.28,
-            animation: 'fadeIn 2s ease 0.3s both',
-          }}
-        >
+        {/* Hero video bg */}
+        <video autoPlay muted loop playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0, opacity: 0.22, animation: 'fadeIn 2.5s ease 0.5s both' }}>
           <source src="/hero-interior.mp4" type="video/mp4" />
         </video>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'linear-gradient(135deg,rgba(14,14,14,0.93) 0%,rgba(14,14,14,0.6) 50%,rgba(14,14,14,0.8) 100%)' }} />
+        {/* Grid texture */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 2, backgroundImage: `linear-gradient(${C.border} 1px,transparent 1px),linear-gradient(90deg,${C.border} 1px,transparent 1px)`, backgroundSize: '60px 60px', maskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%,transparent 40%,black 100%)', WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%,transparent 40%,black 100%)', opacity: 0.35 }} />
 
-        {/* Dark gradient over video — keeps text readable */}
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 1,
-          background: `linear-gradient(135deg, rgba(8,8,8,0.92) 0%, rgba(8,8,8,0.65) 50%, rgba(8,8,8,0.82) 100%)`,
-        }} />
-
-        {/* Subtle grid texture overlay */}
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 2,
-          backgroundImage: `linear-gradient(${C.border} 1px, transparent 1px), linear-gradient(90deg, ${C.border} 1px, transparent 1px)`,
-          backgroundSize: '60px 60px',
-          maskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%, transparent 40%, black 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%, transparent 40%, black 100%)',
-          opacity: 0.4,
-        }} />
-
-        {/* Gold glow */}
-        <div style={{
-          position: 'absolute', top: '20%', left: '5%',
-          width: 500, height: 500,
-          background: 'radial-gradient(circle, rgba(245,194,0,0.08) 0%, transparent 70%)',
-          zIndex: 2, pointerEvents: 'none',
-        }} />
-
-        <div style={{
-          position: 'relative', zIndex: 3,
-          maxWidth: 1280, margin: '0 auto', width: '100%',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0,1fr) minmax(0,auto)',
-          gap: 'clamp(40px,6vw,80px)',
-          alignItems: 'center',
-        }}>
-
-          {/* Left — copy */}
+        <div style={{ position: 'relative', zIndex: 3, maxWidth: 1280, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,auto)', gap: 'clamp(32px,5vw,72px)', alignItems: 'center' }}>
           <div>
-            {/* Tag */}
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: C.black2, border: `1px solid ${C.border2}`,
-              borderRadius: 100, padding: '7px 16px', marginBottom: 28,
-              animation: 'fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both',
-            }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, animation: 'dotPulse 2s ease infinite' }} />
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: C.white60, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                AI-powered · EU market · 2,000+ agencies
-              </span>
+            {/* Badge */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.black2, border: `1px solid ${C.bdr2}`, borderRadius: 100, padding: '7px 16px', marginBottom: 28, animation: 'fadeUp 0.7s ease 0.1s both' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, animation: 'pulse 2s ease infinite' }} />
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: C.w60, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AI · 2,000+ agencies · 16 EU markets</span>
             </div>
 
-            {/* Headline */}
-            <h1 style={{
-              fontSize: 'clamp(3rem,8vw,7rem)',
-              fontWeight: 900,
-              letterSpacing: '-0.04em',
-              lineHeight: 0.92,
-              color: C.white,
-              marginBottom: 32,
-              animation: 'fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both',
-            }}>
+            <h1 style={{ fontSize: 'clamp(3rem,8vw,7.5rem)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 0.9, marginBottom: 32, animation: 'fadeUp 0.8s ease 0.2s both' }}>
               SELL<br />
-              <span style={{ color: C.white40 }}>SMARTER.</span><br />
-              <span style={{
-                background: `linear-gradient(135deg, ${C.accent} 0%, #FF9500 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>FASTER.</span>
+              <span style={{ color: C.w40 }}>SMARTER.</span><br />
+              <span style={{ background: `linear-gradient(135deg,${C.gold} 0%,#FF9500 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>FASTER.</span>
             </h1>
 
-            {/* Sub */}
-            <p style={{
-              fontSize: 'clamp(1rem,2vw,1.2rem)',
-              color: C.white60,
-              lineHeight: 1.65,
-              maxWidth: 520,
-              marginBottom: 44,
-              fontWeight: 400,
-              animation: 'fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.35s both',
-            }}>
-              PropBlaze finds the <strong style={{ color: C.white }}>top 30 agencies</strong> for your property across Europe,
-              writes personalised outreach in 3 languages, and distributes in waves — all in under 10 minutes.
+            <p style={{ fontSize: 'clamp(1rem,1.8vw,1.15rem)', color: C.w60, lineHeight: 1.7, maxWidth: 500, marginBottom: 44, animation: 'fadeUp 0.8s ease 0.35s both' }}>
+              PropBlaze finds the <strong style={{ color: C.white }}>top 30 agencies</strong> for your property across Europe, writes personalised outreach in 3 languages, and distributes in waves — all in under 10 minutes.
             </p>
 
-            {/* CTAs */}
-            <div style={{
-              display: 'flex', flexWrap: 'wrap', gap: 14,
-              animation: 'fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.5s both',
-            }}>
-              <Link href="/properties/new" className="btn-primary">
-                <span>List your property free</span>
-                <span style={{ fontSize: '1.1rem' }}>→</span>
-              </Link>
-              <a href="#how-it-works" className="btn-secondary">
-                See how it works
-              </a>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 44, animation: 'fadeUp 0.8s ease 0.5s both' }}>
+              <Link href="/properties/new" className="btn-w">List your property free →</Link>
+              <a href="#how-it-works" className="btn-o">See how it works</a>
             </div>
 
-            {/* Trust row */}
-            <div style={{
-              display: 'flex', flexWrap: 'wrap', gap: 24, marginTop: 44,
-              animation: 'fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.65s both',
-            }}>
-              {[
-                { icon: '🇪🇺', text: 'GDPR compliant' },
-                { icon: '🔒', text: 'AES-256 encrypted' },
-                { icon: '⚡', text: 'Live in 10 min' },
-                { icon: '✋', text: 'No sale, no charge' },
-              ].map(t => (
-                <div key={t.text} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ fontSize: '0.85rem' }}>{t.icon}</span>
-                  <span style={{ fontSize: '0.75rem', color: C.white40, fontWeight: 500 }}>{t.text}</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, animation: 'fadeUp 0.8s ease 0.65s both' }}>
+              {[['🇪🇺','GDPR ready'],['🔒','AES-256'],['⚡','Live in 10 min'],['✋','No sale, no charge']].map(([i,t]) => (
+                <div key={t as string} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ fontSize: '0.85rem' }}>{i}</span>
+                  <span style={{ fontSize: '0.73rem', color: C.w40, fontWeight: 500 }}>{t}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right — APEX card */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 320 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 300 }}>
             <ApexCard />
           </div>
         </div>
       </section>
 
       {/* ── TICKER ───────────────────────────────────────────────────────── */}
-      <div style={{
-        borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`,
-        background: C.black2, overflow: 'hidden', height: 44,
-        display: 'flex', alignItems: 'center',
-      }}>
-        <div className="ticker-inner">
+      <div style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, background: C.black2, overflow: 'hidden', height: 42, display: 'flex', alignItems: 'center' }}>
+        <div className="tick">
           {[...Array(2)].map((_, x) => (
             <React.Fragment key={x}>
-              {['Montenegro', 'Serbia', 'Croatia', 'Slovenia', 'Portugal', 'Spain', 'Germany', 'Austria', 'France', 'Italy', 'Greece', 'Bulgaria', 'Romania', 'Czech Republic', 'Hungary', 'Poland'].map(c => (
-                <span key={c} style={{
-                  padding: '0 28px', fontSize: '0.72rem', fontWeight: 700,
-                  color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}>
-                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.border2, flexShrink: 0 }} />
-                  {c}
+              {['Montenegro','Serbia','Croatia','Portugal','Spain','Germany','Austria','France','Italy','Greece','Bulgaria','Romania','Poland','Czech Republic','Hungary','Slovenia'].map(c => (
+                <span key={c} style={{ padding: '0 28px', fontSize: '0.7rem', fontWeight: 700, color: C.w40, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 3, height: 3, borderRadius: '50%', background: C.bdr2, flexShrink: 0 }} />{c}
                 </span>
               ))}
             </React.Fragment>
@@ -646,356 +378,149 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ── PROPERTY SHOWCASE ────────────────────────────────────────────── */}
-      <section style={{
-        padding: 'clamp(60px,10vw,120px) clamp(20px,5vw,80px)',
-        maxWidth: 1400, margin: '0 auto',
-      }}>
-        <div className="fade-in-el" style={{ marginBottom: 48, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
-              EU Coverage
-            </p>
-            <h2 style={{ fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: 900, letterSpacing: '-0.03em', color: C.white, lineHeight: 1 }}>
-              Every market.<br />
-              <span style={{ color: C.white40 }}>Every type.</span>
-            </h2>
-          </div>
-          <Link href="/properties/new" style={{ color: C.white60, fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', borderBottom: `1px solid ${C.border2}`, paddingBottom: 2 }}>
-            List yours →
-          </Link>
+      {/* ── SERVICE BANDS (MOOF style) ─────────────────────────────────── */}
+      <section id="how-it-works" style={{ borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: 'clamp(48px,8vw,80px) clamp(20px,5vw,80px) 0' }} className="fi">
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: C.w40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</p>
+          <h2 style={{ fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: 900, letterSpacing: '-0.04em', color: C.white, marginBottom: 0, lineHeight: 1 }}>
+            Four steps.<br /><span style={{ color: C.w40 }}>One platform.</span>
+          </h2>
         </div>
 
-        {/* Masonry grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gridTemplateRows: 'repeat(2, 260px)',
-          gap: 12,
-        }}>
-          {props.map((p, i) => (
-            <div
-              key={i}
-              className="prop-card fade-in-el"
-              style={{
-                gridColumn: i === 0 ? 'span 2' : i === 3 ? 'span 2' : undefined,
-                animationDelay: `${i * 80}ms`,
-                transitionDelay: `${i * 60}ms`,
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.img} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover', animation: 'imgDrift 18s ease-in-out infinite', animationDelay: `${i * 2}s` }} />
-              <div className="overlay" />
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0,
-                padding: '20px 20px 18px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-              }}>
-                <div style={{ opacity: 0, transition: 'opacity 0.35s' }} className="card-info">
-                  <div style={{ fontSize: '0.75rem', color: C.white60, marginBottom: 3 }}>{p.label}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: C.white }}>{p.price}</div>
-                </div>
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          {bands.map((b, i) => (
+            <Link key={i} href={b.href} className="service-band" style={{ textDecoration: 'none' }}>
+              <div className="band-bg" style={{ backgroundImage: `url(${b.img})` }} />
+              <div className="band-num">{b.num}</div>
+              <div className="band-desc" style={{ padding: '28px 0' }}>
+                <p style={{ fontSize: '0.82rem', color: C.w60, lineHeight: 1.6, margin: 0 }}>{b.desc}</p>
               </div>
-              {/* Always-visible subtle label */}
-              <div style={{
-                position: 'absolute', bottom: 16, left: 16,
-                background: 'rgba(0,0,0,0.55)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: 8, padding: '5px 12px',
-                fontSize: '0.72rem', fontWeight: 600, color: C.white,
-              }}>
+              <div className="band-word">{b.word}</div>
+              <div className="band-arrow">→</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── STATS ───────────────────────────────────────────────────────── */}
+      <section style={{ borderBottom: `1px solid ${C.border}`, padding: 'clamp(48px,8vw,80px) clamp(20px,5vw,80px)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
+          {[['2,000+','Agencies'],['16','EU markets'],['<10','Minutes to live'],['3','Languages']].map(([v,l]) => (
+            <div key={l as string} className="fi"><Stat val={v as string} label={l as string} /></div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── PROPERTY SHOWCASE ────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(60px,10vw,120px) clamp(20px,5vw,80px)', maxWidth: 1400, margin: '0 auto' }}>
+        <div className="fi" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <p style={{ fontSize: '0.7rem', fontWeight: 700, color: C.w40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>EU Coverage</p>
+            <h2 style={{ fontSize: 'clamp(1.8rem,3.5vw,2.6rem)', fontWeight: 900, letterSpacing: '-0.04em', color: C.white, lineHeight: 1 }}>Every market.<br /><span style={{ color: C.w40 }}>Every type.</span></h2>
+          </div>
+          <Link href="/properties/new" style={{ color: C.w60, fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', borderBottom: `1px solid ${C.bdr2}`, paddingBottom: 2 }}>List yours →</Link>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(2,240px)', gap: 10 }}>
+          {props.map((p, i) => (
+            <Link key={i} href="/properties/new" className="prop-card fi" style={{ gridColumn: (i === 0 || i === 3) ? 'span 2' : undefined, textDecoration: 'none', transitionDelay: `${i * 50}ms` }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.img} alt={p.label} />
+              <div className="overlay" />
+              <div style={{ position: 'absolute', bottom: 14, left: 14, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: 8, padding: '5px 12px', fontSize: '0.7rem', fontWeight: 600, color: C.white }}>
                 {p.label} · {p.price}
               </div>
-            </div>
+              <div style={{ position: 'absolute', top: 12, right: 12, background: C.black3, borderRadius: 7, padding: '3px 10px', fontSize: '0.65rem', fontWeight: 700, color: C.w60 }}>{p.type}</div>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* ── STATS ─────────────────────────────────────────────────────────── */}
-      <section style={{
-        borderTop: `1px solid ${C.border}`,
-        borderBottom: `1px solid ${C.border}`,
-        padding: 'clamp(48px,8vw,80px) clamp(20px,5vw,80px)',
-      }}>
-        <div style={{
-          maxWidth: 1100, margin: '0 auto',
-          display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32,
-        }}>
-          {[
-            { val: '2,000+', label: 'Agencies in database' },
-            { val: '16',     label: 'EU markets covered' },
-            { val: '<10',    label: 'Minutes to go live' },
-            { val: '3',      label: 'Languages auto-translated' },
-          ].map(s => (
-            <div key={s.label} className="fade-in-el">
-              <Stat val={s.val} label={s.label} />
-            </div>
-          ))}
+      {/* ── FEATURES ─────────────────────────────────────────────────────── */}
+      <section id="features" style={{ borderTop: `1px solid ${C.border}`, padding: 'clamp(80px,12vw,140px) clamp(20px,5vw,80px)', maxWidth: 1280, margin: '0 auto' }}>
+        <div className="fi" style={{ marginBottom: 56 }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: C.w40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Platform features</p>
+          <h2 style={{ fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: 900, letterSpacing: '-0.04em', color: C.white, lineHeight: 1 }}>Everything you need.<br /><span style={{ color: C.w40 }}>Nothing you don't.</span></h2>
         </div>
-      </section>
-
-      {/* ── FEATURES ──────────────────────────────────────────────────────── */}
-      <section id="features" style={{
-        padding: 'clamp(80px,12vw,140px) clamp(20px,5vw,80px)',
-        maxWidth: 1280, margin: '0 auto',
-      }}>
-        <div className="fade-in-el" style={{ marginBottom: 60, maxWidth: 540 }}>
-          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>
-            Platform features
-          </p>
-          <h2 style={{ fontSize: 'clamp(2.2rem,4.5vw,3.2rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1, color: C.white }}>
-            Everything you need.<br />
-            <span style={{ color: C.white40 }}>Nothing you don't.</span>
-          </h2>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 14,
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 12 }}>
           {features.map((f, i) => (
-            <div key={i} className="feature-card fade-in-el" style={{ transitionDelay: `${i * 60}ms` }}>
-              <div style={{ fontSize: '1.8rem', marginBottom: 18 }}>{f.icon}</div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: C.white, marginBottom: 10, letterSpacing: '-0.01em' }}>
-                {f.title}
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: C.white60, lineHeight: 1.7 }}>
-                {f.desc}
-              </p>
+            <div key={i} className="feat-card fi" style={{ transitionDelay: `${i * 50}ms` }}>
+              <div style={{ fontSize: '1.7rem', marginBottom: 16 }}>{f.icon}</div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: C.white, marginBottom: 10, letterSpacing: '-0.01em' }}>{f.title}</h3>
+              <p style={{ fontSize: '0.84rem', color: C.w60, lineHeight: 1.7 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
-      <section id="how-it-works" style={{
-        borderTop: `1px solid ${C.border}`,
-        padding: 'clamp(80px,12vw,140px) clamp(20px,5vw,80px)',
-        background: C.black2,
-      }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div className="fade-in-el" style={{ marginBottom: 64, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
-            <div>
-              <p style={{ fontSize: '0.72rem', fontWeight: 700, color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>
-                Simple process
-              </p>
-              <h2 style={{ fontSize: 'clamp(2.2rem,4.5vw,3.2rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1, color: C.white }}>
-                Four steps<br /><span style={{ color: C.white40 }}>to sold.</span>
-              </h2>
-            </div>
-            <div style={{ fontSize: '0.85rem', color: C.white40 }}>Average time: under 10 minutes</div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 1, background: C.border }}>
-            {steps.map((s, i) => (
-              <div key={i} className="fade-in-el" style={{
-                background: C.black2, padding: '36px 32px',
-                transitionDelay: `${i * 80}ms`,
-              }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  border: `1px solid ${C.border2}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.72rem', fontWeight: 900, color: C.white40,
-                  letterSpacing: '0.05em', marginBottom: 24,
-                }}>
-                  {s.num}
-                </div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: C.white, marginBottom: 12, letterSpacing: '-0.01em' }}>
-                  {s.title}
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: C.white40, lineHeight: 1.7 }}>
-                  {s.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* ── Product demo video ── */}
-          <div className="fade-in-el" style={{ marginTop: 48 }}>
-            <div style={{
-              position: 'relative', borderRadius: 20, overflow: 'hidden',
-              border: `1px solid ${C.border2}`,
-              boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-              background: C.black3,
-            }}>
-              {/* Browser chrome */}
-              <div style={{
-                background: C.black3, borderBottom: `1px solid ${C.border}`,
-                padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57' }} />
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FEBC2E' }} />
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840' }} />
-                <div style={{ flex: 1, height: 22, borderRadius: 6, background: C.border, marginLeft: 12, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-                  <span style={{ fontSize: '0.65rem', color: C.white40 }}>propblaze.io/dashboard</span>
-                </div>
-              </div>
-              <video
-                autoPlay muted loop playsInline
-                style={{ display: 'block', width: '100%', maxHeight: 480, objectFit: 'cover' }}
-              >
-                <source src="/product-demo.mp4" type="video/mp4" />
-              </video>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── BIG EDITORIAL QUOTE ───────────────────────────────────────────── */}
-      <section style={{
-        padding: 'clamp(80px,12vw,120px) clamp(20px,5vw,80px)',
-        maxWidth: 1200, margin: '0 auto',
-        textAlign: 'center',
-      }}>
-        <div className="fade-in-el">
-          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 24 }}>
-            The owner's advantage
-          </p>
-          <h2 style={{
-            fontSize: 'clamp(2rem,5vw,4.5rem)',
-            fontWeight: 900,
-            letterSpacing: '-0.04em',
-            lineHeight: 1.05,
-            color: C.white,
-            maxWidth: 900,
-            margin: '0 auto 32px',
-          }}>
+      {/* ── EDITORIAL QUOTE ──────────────────────────────────────────────── */}
+      <section style={{ borderTop: `1px solid ${C.border}`, padding: 'clamp(80px,12vw,120px) clamp(20px,5vw,80px)', textAlign: 'center' }}>
+        <div className="fi" style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: C.w40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>The owner's advantage</p>
+          <h2 style={{ fontSize: 'clamp(2rem,5vw,4.5rem)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05, color: C.white, marginBottom: 28 }}>
             "Your property deserves more than one agency's network."
           </h2>
-          <p style={{ fontSize: '1rem', color: C.white40, maxWidth: 540, margin: '0 auto 40px', lineHeight: 1.7 }}>
-            PropBlaze gives you the reach of 30 specialised agencies simultaneously —
-            without paying any of them until you find your buyer.
+          <p style={{ fontSize: '1rem', color: C.w40, maxWidth: 500, margin: '0 auto 36px', lineHeight: 1.7 }}>
+            PropBlaze gives you the reach of 30 specialised agencies simultaneously — without paying any of them until you find your buyer.
           </p>
-          <Link href="/properties/new" className="btn-primary" style={{ display: 'inline-flex' }}>
-            Start selling today →
-          </Link>
+          <Link href="/properties/new" className="btn-w" style={{ display: 'inline-flex' }}>Start selling today →</Link>
         </div>
       </section>
 
-      {/* ── PRICING ───────────────────────────────────────────────────────── */}
-      <section id="pricing" style={{
-        borderTop: `1px solid ${C.border}`,
-        padding: 'clamp(80px,12vw,140px) clamp(20px,5vw,80px)',
-        maxWidth: 1200, margin: '0 auto',
-      }}>
-        <div className="fade-in-el" style={{ textAlign: 'center', marginBottom: 60 }}>
-          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>
-            Pricing
-          </p>
-          <h2 style={{ fontSize: 'clamp(2.2rem,4.5vw,3.2rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1, color: C.white }}>
-            Simple. Transparent.
-          </h2>
-          <p style={{ fontSize: '1rem', color: C.white40, marginTop: 16 }}>Cancel anytime. Mark as Sold → billing stops immediately.</p>
+      {/* ── PRICING ──────────────────────────────────────────────────────── */}
+      <section id="pricing" style={{ borderTop: `1px solid ${C.border}`, padding: 'clamp(80px,12vw,140px) clamp(20px,5vw,80px)', maxWidth: 1200, margin: '0 auto' }}>
+        <div className="fi" style={{ textAlign: 'center', marginBottom: 56 }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: C.w40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Pricing</p>
+          <h2 style={{ fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: 900, letterSpacing: '-0.04em', color: C.white, lineHeight: 1 }}>Simple. Transparent.</h2>
+          <p style={{ fontSize: '0.95rem', color: C.w40, marginTop: 14 }}>Cancel anytime · Mark as Sold → billing stops immediately</p>
         </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 12 }}>
           {plans.map((p, i) => (
-            <div key={i} className={`plan-card fade-in-el ${p.featured ? 'featured' : ''}`} style={{ transitionDelay: `${i * 80}ms` }}>
-              <div style={{ marginBottom: 6, fontSize: '0.68rem', fontWeight: 900, letterSpacing: '0.12em', color: p.featured ? C.black : C.white40 }}>
-                {p.name}
+            <div key={i} className={`plan-card fi ${p.featured ? 'featured' : ''}`} style={{ transitionDelay: `${i * 70}ms` }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.12em', color: p.featured ? C.black : C.w40, marginBottom: 14 }}>{p.name}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 6 }}>
+                <span style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.04em', color: p.featured ? C.black : C.white }}>{p.price}</span>
+                <span style={{ fontSize: '0.8rem', color: p.featured ? C.black : C.w40 }}>{p.period}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, margin: '16px 0 6px' }}>
-                <span style={{ fontSize: '2.4rem', fontWeight: 900, letterSpacing: '-0.04em', color: p.featured ? C.black : C.white }}>
-                  {p.price}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: p.featured ? C.black : C.white40 }}>{p.period}</span>
-              </div>
-              <p style={{ fontSize: '0.8rem', color: p.featured ? C.black : C.white40, marginBottom: 28 }}>{p.desc}</p>
-
-              <div style={{ marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: '0.78rem', color: p.featured ? C.black : C.w40, marginBottom: 24 }}>{p.desc}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 28 }}>
                 {p.features.map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.82rem', color: p.featured ? C.black : C.white60 }}>
-                    <span style={{ color: p.featured ? C.black : C.green, fontSize: '0.8rem' }}>✓</span>
-                    {f}
+                  <div key={f} style={{ display: 'flex', gap: 9, fontSize: '0.8rem', color: p.featured ? C.black : C.w60, alignItems: 'center' }}>
+                    <span style={{ color: p.featured ? C.black : C.green }}>✓</span>{f}
                   </div>
                 ))}
               </div>
-
-              <Link
-                href="/properties/new"
-                className="plan-btn"
-                style={{
-                  display: 'block', textAlign: 'center',
-                  padding: '14px 24px', borderRadius: 100,
-                  fontSize: '0.85rem', fontWeight: 800,
-                  textDecoration: 'none',
-                  background: p.featured ? C.black : 'transparent',
-                  color: p.featured ? C.white : C.white60,
-                  border: p.featured ? 'none' : `1px solid ${C.border2}`,
-                  transition: 'all 0.2s',
-                }}
-              >
+              <Link href="/properties/new" style={{ display: 'block', textAlign: 'center', padding: '13px', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, textDecoration: 'none', background: p.featured ? C.black : 'transparent', color: p.featured ? C.white : C.w60, border: p.featured ? 'none' : `1px solid ${C.bdr2}`, transition: 'all 0.2s' }}>
                 {p.cta}
               </Link>
             </div>
           ))}
         </div>
-
-        <p className="fade-in-el" style={{ textAlign: 'center', marginTop: 32, fontSize: '0.78rem', color: C.white40 }}>
-          7-day free trial · No credit card required · EU VAT included where applicable
-        </p>
+        <p className="fi" style={{ textAlign: 'center', marginTop: 28, fontSize: '0.75rem', color: C.w40 }}>7-day free trial · No credit card required</p>
       </section>
 
-      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-      <footer style={{
-        borderTop: `1px solid ${C.border}`,
-        padding: 'clamp(60px,10vw,100px) clamp(20px,5vw,80px) clamp(32px,5vw,48px)',
-        background: C.black,
-      }}>
+      {/* ── FOOTER ───────────────────────────────────────────────────────── */}
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: 'clamp(60px,10vw,100px) clamp(20px,5vw,80px) clamp(32px,5vw,48px)', background: C.black }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-
-          {/* Top row */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-            flexWrap: 'wrap', gap: 40, marginBottom: 64,
-          }}>
-            {/* Brand */}
-            <div style={{ maxWidth: 320 }}>
-              <div style={{
-                fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: 900,
-                letterSpacing: '-0.05em', lineHeight: 1,
-                color: C.white, marginBottom: 20,
-              }}>
-                PROP<br />BLAZE
-              </div>
-              <p style={{ fontSize: '0.85rem', color: C.white40, lineHeight: 1.7 }}>
-                AI-powered property distribution. Reach 30+ specialised EU agencies in one click.
-              </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 40, marginBottom: 60 }}>
+            <div style={{ maxWidth: 300 }}>
+              <div style={{ fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 900, letterSpacing: '-0.05em', lineHeight: 1, color: C.white, marginBottom: 18 }}>PROP<br />BLAZE</div>
+              <p style={{ fontSize: '0.85rem', color: C.w40, lineHeight: 1.7 }}>AI-powered property distribution. Reach 30+ EU agencies in one click.</p>
             </div>
-
-            {/* Links */}
-            <div style={{ display: 'flex', gap: 60, flexWrap: 'wrap' }}>
-              {[
-                { title: 'Product', links: ['Features', 'How it works', 'Pricing', 'APEX Engine'] },
-                { title: 'Legal', links: ['Privacy Policy', 'Terms of Service', 'GDPR', 'Cookie Policy'] },
-                { title: 'Company', links: ['About', 'Contact', 'Blog', 'Careers'] },
-              ].map(col => (
-                <div key={col.title}>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{col.title}</div>
-                  {col.links.map(l => (
-                    <a key={l} href="#" style={{ display: 'block', fontSize: '0.85rem', color: C.white60, textDecoration: 'none', marginBottom: 10, transition: 'color 0.2s' }}
-                      onMouseEnter={e => { (e.target as HTMLElement).style.color = C.white; }}
-                      onMouseLeave={e => { (e.target as HTMLElement).style.color = C.white60; }}
-                    >{l}</a>
-                  ))}
+            <div style={{ display: 'flex', gap: 56, flexWrap: 'wrap' }}>
+              {[{ t: 'Product', l: ['Features', 'How it works', 'Pricing', 'APEX Engine'] }, { t: 'Legal', l: ['Privacy Policy', 'Terms', 'GDPR', 'Cookies'] }, { t: 'Company', l: ['About', 'Contact', 'Blog'] }].map(col => (
+                <div key={col.t}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: C.w40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>{col.t}</div>
+                  {col.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: '0.84rem', color: C.w60, textDecoration: 'none', marginBottom: 9, transition: 'color 0.2s' }} onMouseEnter={e => { (e.target as HTMLElement).style.color = C.white; }} onMouseLeave={e => { (e.target as HTMLElement).style.color = C.w60; }}>{l}</a>)}
                 </div>
               ))}
             </div>
           </div>
-
-          <hr className="divider" style={{ marginBottom: 28 }} />
-
-          {/* Bottom row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <p style={{ fontSize: '0.75rem', color: C.white40 }}>
-              © 2026 PropBlaze. All rights reserved. Built for EU property owners.
-            </p>
-            <div style={{ display: 'flex', gap: 20 }}>
-              {['🇪🇺 GDPR Ready', '🔒 AES-256', '⚡ Powered by APEX AI'].map(t => (
-                <span key={t} style={{ fontSize: '0.72rem', color: C.white40, fontWeight: 500 }}>{t}</span>
-              ))}
+          <hr style={{ border: 'none', borderTop: `1px solid ${C.border}`, marginBottom: 26 }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <p style={{ fontSize: '0.72rem', color: C.w40 }}>© 2026 PropBlaze. All rights reserved.</p>
+            <div style={{ display: 'flex', gap: 18 }}>
+              {['🇪🇺 GDPR Ready', '🔒 AES-256', '⚡ APEX AI'].map(t => <span key={t} style={{ fontSize: '0.72rem', color: C.w40 }}>{t}</span>)}
             </div>
           </div>
         </div>
