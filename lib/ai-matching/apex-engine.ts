@@ -293,7 +293,10 @@ function normalizeCountryToISO(country: string): string {
 // ─── Stealth classifier ───────────────────────────────────────────────────────
 // An agency is "stealth" if it works quietly at premium level
 
-function classifyChannel(agency: Agency, dna: PropertyDNA): AgencyChannel {
+// FIX P0-4: classifyChannel now uses property country (not demand_markets[0])
+// Previously was comparing agency country to buyer country (RU for ME) — causing all
+// Montenegro agencies to be misclassified as cross_border instead of local.
+function classifyChannel(agency: Agency, prop: WizardProperty, dna: PropertyDNA): AgencyChannel {
   const isStealthEligible = dna.price_band === 'luxury' || dna.price_band === 'ultra' || dna.price_band === 'premium'
   const isStealthAgency =
     agency.quality_score >= 92 &&
@@ -303,18 +306,20 @@ function classifyChannel(agency: Agency, dna: PropertyDNA): AgencyChannel {
 
   if (isStealthEligible && isStealthAgency) return 'stealth'
 
-  const countryISO = normalizeCountryToISO(dna.demand_markets[0] ?? '')
+  // LOCAL = agency is in the SAME country as the property (or neighbouring)
+  const propCountryISO = normalizeCountryToISO(prop.country)
   const isLocal =
-    agency.country === normalizeCountryToISO(dna.demand_markets[0] ?? '') ||
+    agency.country === propCountryISO ||
     (agency.regions ?? []).some(r =>
-      r.toLowerCase().includes(countryISO.toLowerCase())
+      r.toLowerCase().includes(prop.city?.toLowerCase() ?? '')
     )
 
   const isCrossBorder =
     agency.buyer_markets.length >= 3 &&
     agency.historical.cross_border_deals_12m >= 5
 
-  if (isCrossBorder && !isLocal) return 'cross_border'
+  if (isLocal) return 'local'
+  if (isCrossBorder) return 'cross_border'
   return 'local'
 }
 
@@ -538,7 +543,7 @@ export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGEN
 
   // Score each agency in all three channels
   const scored: APEXAgencyResult[] = filtered.map(agency => {
-    const channel = classifyChannel(agency, dna)
+    const channel = classifyChannel(agency, prop, dna)
     const fatigue = computeFatiguePenalty(agency)
 
     const local_score = scoreLocal(agency, prop, dna)

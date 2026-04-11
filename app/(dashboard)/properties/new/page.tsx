@@ -7,24 +7,27 @@ import { DEMO_AGENCY_POOL } from '@/lib/ai-matching/demo-agencies';
 // DEMO_AGENCY_POOL contains real agency data — in production replaced by /api/agencies
 
 const CSS_VARS = {
-  bg: '#080810',
-  surface: 'rgba(255,255,255,0.04)',
-  surface2: 'rgba(255,255,255,0.07)',
-  surface3: 'rgba(255,255,255,0.10)',
-  border: 'rgba(255,255,255,0.09)',
-  border2: 'rgba(255,255,255,0.16)',
-  text: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.65)',
-  textTertiary: 'rgba(255,255,255,0.35)',
-  primary: '#F5C200',
-  primaryHover: '#E0B000',
-  primaryLight: 'rgba(245,194,0,0.12)',
-  green: '#22C55E',
-  greenDim: 'rgba(34,197,94,0.12)',
-  red: '#EF4444',
+  bg: '#F8FAFC',
+  surface: '#FFFFFF',
+  surface2: '#F1F5F9',
+  surface3: '#E8EDF4',
+  border: '#E2E8F0',
+  border2: '#CBD5E1',
+  text: '#0F172A',
+  textSecondary: '#475569',
+  textTertiary: '#94A3B8',
+  primary: '#16A34A',
+  primaryHover: '#15803D',
+  primaryLight: 'rgba(22,163,74,0.08)',
+  green: '#16A34A',
+  greenDim: '#DCFCE7',
+  red: '#DC2626',
   blue: '#3B5BDB',
-  inputBg: '#0E0E1C',
+  inputBg: '#FFFFFF',
 };
+
+// DEMO MODE: all emails route to Win-Win Solution
+const DEMO_EMAIL = 'contact@win-winsolution.com';
 
 interface PropertyData {
   type: string;
@@ -148,7 +151,7 @@ export default function PropertiesNewPage() {
           property.price > 0
         );
       case 1:
-        return !!(shortDesc.length >= 10 && aiPackData);
+        return shortDesc.length >= 10;
       case 2:
         return true;   // Photos optional
       case 3:
@@ -165,17 +168,27 @@ export default function PropertiesNewPage() {
     // Simulate AI generation (2 seconds)
     await new Promise((r) => setTimeout(r, 2000));
 
+    const isLand = property.type === 'Land' || property.type === 'Commercial';
     const pack: AIPackData = {
-      headline: `Luxury ${property.type} in ${property.city} — Premium ${property.mode === 'sale' ? 'Investment' : 'Rental'} Opportunity`,
-      description: `This stunning ${property.type} in ${property.city}, ${property.country} offers ${property.areaSqm}m² of sophisticated living space. Located in one of the most sought-after areas, this property combines modern comfort with timeless elegance. The open-plan living areas are perfectly designed for contemporary lifestyles, featuring premium finishes throughout. With ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms, this residence is ideal for families and investors alike. The property boasts excellent natural light, high ceilings, and a thoughtfully curated layout that maximizes both functionality and aesthetics.\n\nEach room has been meticulously designed with attention to detail, featuring quality materials and state-of-the-art amenities. The location provides easy access to shopping, dining, cultural venues, and excellent public transportation links. Whether you're looking for a primary residence, vacation home, or investment property, this exceptional offering delivers outstanding value and lifestyle benefits.\n\nThis is a rare opportunity to acquire a premium property in a thriving market. The area has demonstrated strong appreciation and rental demand. Contact us today to schedule an exclusive viewing and discover why this property represents an excellent choice for discerning buyers.`,
-      keyFeatures: [
-        `${property.areaSqm}m² of premium living space`,
-        `${property.bedrooms} spacious bedrooms with ensuite bathrooms`,
-        `${property.bathrooms} modern bathrooms with luxury finishes`,
-        'Open-plan living areas with high ceilings',
-        'Modern kitchen with integrated appliances',
-        'Prime location in ${property.city}',
-      ],
+      headline: `${property.type} in ${property.city} — ${property.mode === 'sale' ? 'Investment Opportunity' : 'For Rent'} · ${property.areaSqm}m²`,
+      description: isLand
+        ? `This ${property.areaSqm}m² ${property.type.toLowerCase()} plot in ${property.city}, ${property.country} represents a strategic acquisition opportunity. Located in a high-demand area with strong development potential, the site offers excellent infrastructure access and clear ownership documentation. Zoning supports ${property.type === 'Land' ? 'residential and commercial development' : 'commercial operations'}.\n\nThe location benefits from ongoing regional investment, infrastructure development, and growing interest from international buyers. Price: ${property.price.toLocaleString()} ${property.currency}. Immediate viewing and documentation available upon request.`
+        : `This stunning ${property.type} in ${property.city}, ${property.country} offers ${property.areaSqm}m² of sophisticated living space. Located in one of the most sought-after areas, this property combines modern comfort with timeless elegance. With ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms, this residence is ideal for families and investors alike.\n\nEach room has been meticulously designed with attention to detail, featuring quality materials and state-of-the-art amenities. The location provides easy access to shopping, dining, and cultural venues. Price: ${property.price.toLocaleString()} ${property.currency}.`,
+      keyFeatures: isLand
+        ? [
+            `${property.areaSqm}m² plot with clear title`,
+            `Prime location in ${property.city}, ${property.country}`,
+            'Full ownership documentation available',
+            'Strong development potential',
+            'Infrastructure access (road, utilities)',
+          ]
+        : [
+            `${property.areaSqm}m² of premium living space`,
+            `${property.bedrooms} spacious bedrooms`,
+            `${property.bathrooms} modern bathrooms`,
+            'Open-plan living areas with high ceilings',
+            `Prime location in ${property.city}`,
+          ],
       investmentHighlights: [
         'Strong property appreciation in the area',
         'High rental yield potential and demand',
@@ -409,12 +422,19 @@ export default function PropertiesNewPage() {
   }
 
   const STEPS = ['Property Details', 'AI Packaging', 'Photos', 'Documents', 'Launch'];
+  const isLandOrCommercial = property.type === 'Land' || property.type === 'Commercial';
 
   return (
-    <div style={{ minHeight: '100vh', background: CSS_VARS.bg, padding: '40px 24px 100px', fontFamily: "'Inter',system-ui,sans-serif", color: CSS_VARS.text }}>
+    <div style={{ minHeight: '100vh', background: CSS_VARS.bg, padding: '24px 24px 100px', fontFamily: "'Inter',system-ui,sans-serif", color: CSS_VARS.text }}>
+
+      {/* DEMO MODE Banner */}
+      <div style={{ maxWidth: 800, margin: '0 auto 16px', padding: '8px 14px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#92400E', fontWeight: 600 }}>
+        <span>🧪</span>
+        <span>DEMO MODE — All agency emails are routed to <strong>{DEMO_EMAIL}</strong>. No real agencies contacted.</span>
+      </div>
 
       {/* Header */}
-      <div style={{ maxWidth: 800, margin: '0 auto 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ maxWidth: 800, margin: '0 auto 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: '0.65rem', fontWeight: 700, color: CSS_VARS.primary, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
             New Listing
@@ -602,67 +622,51 @@ export default function PropertiesNewPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isLandOrCommercial ? '1fr 1fr' : '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  Area (m²)
+                  {isLandOrCommercial ? 'Plot / Floor Area (m²)' : 'Area (m²)'}
                 </label>
                 <input
                   type="number"
                   placeholder="0"
                   value={property.areaSqm || ''}
                   onChange={(e) => setProperty({ ...property, areaSqm: parseFloat(e.target.value) || 0 })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${CSS_VARS.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: CSS_VARS.text,
-                    boxSizing: 'border-box',
-                  }}
+                  style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box', background: CSS_VARS.inputBg }}
                 />
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  Bedrooms
-                </label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={property.bedrooms || ''}
-                  onChange={(e) => setProperty({ ...property, bedrooms: parseInt(e.target.value) || 0 })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${CSS_VARS.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: CSS_VARS.text,
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  Bathrooms
-                </label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={property.bathrooms || ''}
-                  onChange={(e) => setProperty({ ...property, bathrooms: parseInt(e.target.value) || 0 })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${CSS_VARS.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: CSS_VARS.text,
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
+              {isLandOrCommercial ? (
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
+                    Land Use / Zoning
+                  </label>
+                  <select
+                    value={(property as any).zoning || ''}
+                    onChange={(e) => setProperty({ ...property, ...(property as any), zoning: e.target.value } as any)}
+                    style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, background: CSS_VARS.inputBg }}
+                  >
+                    <option value="">Select zoning</option>
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="agricultural">Agricultural</option>
+                    <option value="mixed">Mixed use</option>
+                    <option value="industrial">Industrial</option>
+                  </select>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Bedrooms</label>
+                    <input type="number" placeholder="0" value={property.bedrooms || ''} onChange={(e) => setProperty({ ...property, bedrooms: parseInt(e.target.value) || 0 })}
+                      style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box', background: CSS_VARS.inputBg }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Bathrooms</label>
+                    <input type="number" placeholder="0" value={property.bathrooms || ''} onChange={(e) => setProperty({ ...property, bathrooms: parseInt(e.target.value) || 0 })}
+                      style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box', background: CSS_VARS.inputBg }} />
+                  </div>
+                </>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -731,15 +735,26 @@ export default function PropertiesNewPage() {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: `1px solid ${CSS_VARS.border}`,
+                  border: `1px solid ${shortDesc.length > 0 && shortDesc.length < 10 ? CSS_VARS.red : CSS_VARS.border}`,
                   borderRadius: 8,
                   fontSize: 13,
                   color: CSS_VARS.text,
                   minHeight: 100,
                   fontFamily: 'inherit',
                   boxSizing: 'border-box',
+                  background: CSS_VARS.inputBg,
                 }}
               />
+              {shortDesc.length > 0 && shortDesc.length < 10 && (
+                <p style={{ fontSize: 11, color: CSS_VARS.red, marginTop: 4 }}>
+                  ⚠ Type at least {10 - shortDesc.length} more characters to unlock AI generation
+                </p>
+              )}
+              {shortDesc.length === 0 && (
+                <p style={{ fontSize: 11, color: CSS_VARS.textTertiary, marginTop: 4 }}>
+                  Min. 10 characters → then click Generate AI Pack below
+                </p>
+              )}
             </div>
 
             <button
