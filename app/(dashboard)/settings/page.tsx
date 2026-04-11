@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '@/lib/i18n/LangContext';
 import { useAuth } from '@/store/auth';
+import { useRouter } from 'next/navigation';
 import type { Lang } from '@/lib/i18n/translations';
 
 const C = {
@@ -67,8 +68,12 @@ const inpStyle: React.CSSProperties = {
 
 export default function SettingsPage() {
   const { lang, setLang } = useTranslation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [emailNotif, setEmailNotif] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [telegramNotif, setTelegramNotif] = useState(true);
   const [whatsappNotif, setWhatsappNotif] = useState(false);
   const [autoWave2, setAutoWave2] = useState(true);
@@ -92,6 +97,21 @@ export default function SettingsPage() {
     return user?.email ?? '';
   });
   const [saved, setSaved] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== 'DELETE') return;
+    setDeleteLoading(true);
+    try {
+      // Clear all local data
+      const keysToRemove = ['pb_wizard_props', 'pb_telegram', 'pb_whatsapp', 'pb_comm_lang', 'pb_report_email', 'pb_lang'];
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      // Sign out from Supabase + clear auth store
+      logout();
+      router.push('/login?deleted=1');
+    } catch {
+      setDeleteLoading(false);
+    }
+  };
 
   const saveProfile = () => {
     localStorage.setItem('pb_telegram', telegramHandle);
@@ -257,7 +277,14 @@ export default function SettingsPage() {
             emoji="🗑️"
             label="Delete Account"
             desc="Permanently delete your account and all data"
-            right={<span style={{ color: C.red, fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}>Delete</span>}
+            right={
+              <span
+                onClick={() => setShowDeleteModal(true)}
+                style={{ color: C.red, fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Delete
+              </span>
+            }
           />
         </Section>
 
@@ -266,6 +293,65 @@ export default function SettingsPage() {
         </div>
         <div style={{ height: 40 }} />
       </div>
+
+      {/* ── DELETE ACCOUNT MODAL ── */}
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 999,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }} onClick={e => { if (e.target === e.currentTarget) setShowDeleteModal(false); }}>
+          <div style={{
+            background: C.white, borderRadius: 16, padding: 28, maxWidth: 420, width: '100%',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+          }}>
+            <div style={{ fontSize: 36, marginBottom: 12, textAlign: 'center' }}>⚠️</div>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: C.text, textAlign: 'center', margin: '0 0 8px' }}>
+              Delete your account?
+            </h2>
+            <p style={{ fontSize: '0.8rem', color: C.text2, textAlign: 'center', lineHeight: 1.5, margin: '0 0 20px' }}>
+              This will permanently delete all your properties, campaigns, and data. <strong>This cannot be undone.</strong>
+            </p>
+            <div style={{ background: C.redBg, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: 8, padding: '10px 14px', marginBottom: 18 }}>
+              <p style={{ fontSize: '0.75rem', color: C.red, margin: 0, fontWeight: 600 }}>
+                Type <strong>DELETE</strong> to confirm
+              </p>
+            </div>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              placeholder="Type DELETE here"
+              style={{ ...inpStyle, marginBottom: 16, border: `1px solid ${deleteConfirm === 'DELETE' ? C.red : C.border}` }}
+            />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }}
+                style={{
+                  flex: 1, padding: '11px', borderRadius: 9, fontWeight: 700, fontSize: '0.875rem',
+                  background: C.bg, color: C.text2, border: `1px solid ${C.border}`, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirm !== 'DELETE' || deleteLoading}
+                style={{
+                  flex: 1, padding: '11px', borderRadius: 9, fontWeight: 700, fontSize: '0.875rem',
+                  background: deleteConfirm === 'DELETE' ? C.red : '#FCA5A5',
+                  color: C.white, border: 'none',
+                  cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed',
+                  opacity: deleteLoading ? 0.7 : 1,
+                }}
+              >
+                {deleteLoading ? 'Deleting…' : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

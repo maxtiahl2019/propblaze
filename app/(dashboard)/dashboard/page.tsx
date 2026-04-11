@@ -57,9 +57,9 @@ const PROP_IMAGES = [
 
 function getGreeting() {
   const h = new Date().getHours()
-  if (h < 12) return 'Доброе утро'
-  if (h < 18) return 'Добрый день'
-  return 'Добрый вечер'
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
 }
 
 export default function DashboardPage() {
@@ -97,10 +97,10 @@ export default function DashboardPage() {
   const unread = DEMO_ACTIVITY.filter(a => a.unread).length
 
   const kpis = [
-    { label: 'Объектов',    value: allProps.length,    icon: '🏠', color: C.green,  bg: C.greenBg,  link: '/properties' },
-    { label: 'Агентств',    value: totalAgencies || 10, icon: '📡', color: C.blue,   bg: C.blueBg,   link: '/distribution' },
-    { label: 'Лидов',       value: DEMO_ACTIVITY.length, icon: '🔥', color: C.orange, bg: C.orangeBg, link: '/leads' },
-    { label: 'Сообщений',   value: unread,             icon: '💬', color: C.purple, bg: C.purpleBg, link: '/messenger' },
+    { label: 'Properties',  value: allProps.length,      icon: '🏠', color: C.green,  bg: C.greenBg,  link: '/properties' },
+    { label: 'Agencies',    value: totalAgencies || 10,  icon: '📡', color: C.blue,   bg: C.blueBg,   link: '/distribution' },
+    { label: 'Leads',       value: DEMO_ACTIVITY.length, icon: '🔥', color: C.orange, bg: C.orangeBg, link: '/leads' },
+    { label: 'Messages',    value: unread,               icon: '💬', color: C.purple, bg: C.purpleBg, link: '/messenger' },
   ]
 
   return (
@@ -127,7 +127,7 @@ export default function DashboardPage() {
         }}>
           <div>
             <div style={{ fontSize: 12, color: C.text3, fontWeight: 600, marginBottom: 2 }}>
-              {getGreeting()}, {new Date().toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {getGreeting()}, {new Date().toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long' })}
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0, letterSpacing: '-0.03em' }}>
               {getGreeting()}, {userName} 👋
@@ -140,7 +140,7 @@ export default function DashboardPage() {
               display: 'flex', alignItems: 'center', gap: 6,
               boxShadow: '0 2px 8px rgba(22,163,74,0.3)',
             }}>
-              <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Добавить объект
+              <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Add Property
             </button>
           </Link>
         </div>
@@ -177,13 +177,13 @@ export default function DashboardPage() {
               {/* Properties */}
               <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: 'hidden', marginBottom: 20 }} className="db-card slide-in">
                 <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <h2 style={{ fontSize: 15, fontWeight: 800, margin: 0, color: C.text }}>Мои объекты</h2>
-                  <Link href="/properties" style={{ fontSize: 12, color: C.green, fontWeight: 700, textDecoration: 'none' }}>Все объекты →</Link>
+                  <h2 style={{ fontSize: 15, fontWeight: 800, margin: 0, color: C.text }}>My Properties</h2>
+                  <Link href="/properties" style={{ fontSize: 12, color: C.green, fontWeight: 700, textDecoration: 'none' }}>All properties →</Link>
                 </div>
 
                 {/* Column headers */}
                 <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1fr 1fr 120px', gap: 12, padding: '10px 20px', background: C.bg, borderBottom: `1px solid ${C.border2}` }}>
-                  {['Объект', 'Площадь', 'Цена', 'Агентств', 'Статус'].map(h => (
+                  {['Property', 'Area', 'Price', 'Agencies', 'Status'].map(h => (
                     <div key={h} style={{ fontSize: 11, fontWeight: 700, color: C.text3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</div>
                   ))}
                 </div>
@@ -191,11 +191,11 @@ export default function DashboardPage() {
                 {allProps.length === 0 ? (
                   <div style={{ padding: '40px 20px', textAlign: 'center' }}>
                     <div style={{ fontSize: 36, marginBottom: 10 }}>🏠</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: C.text2, marginBottom: 6 }}>Нет объектов</div>
-                    <div style={{ fontSize: 12, color: C.text3, marginBottom: 16 }}>Добавьте первый объект и запустите APEX-рассылку</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.text2, marginBottom: 6 }}>No properties yet</div>
+                    <div style={{ fontSize: 12, color: C.text3, marginBottom: 16 }}>Add your first property and launch APEX distribution</div>
                     <Link href="/properties/new" style={{ textDecoration: 'none' }}>
                       <button style={{ background: C.green, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                        + Добавить объект
+                        + Add Property
                       </button>
                     </Link>
                   </div>
@@ -206,7 +206,7 @@ export default function DashboardPage() {
                     const isSold   = p.status === 'sold'
                     const statusColor = isActive ? C.green : isDraft ? C.text3 : C.blue
                     const statusBg    = isActive ? C.greenBg : isDraft ? C.bg : C.blueBg
-                    const statusLabel = isActive ? '● В рассылке' : isDraft ? '○ Черновик' : '✓ Продан'
+                    const statusLabel = isActive ? '● In distribution' : isDraft ? '○ Draft' : '✓ Sold'
                     return (
                       <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1fr 1fr 120px', gap: 12, padding: '14px 20px', borderBottom: i < allProps.length - 1 ? `1px solid ${C.border2}` : 'none', alignItems: 'center' }}>
                         {/* Property */}
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                 {/* Add row */}
                 <Link href="/properties/new" style={{ textDecoration: 'none' }}>
                   <div className="db-btn" style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 8, color: C.green, fontSize: 13, fontWeight: 700, borderTop: `1px solid ${C.border2}` }}>
-                    <span style={{ fontSize: 18 }}>+</span> Добавить объект
+                    <span style={{ fontSize: 18 }}>+</span> Add Property
                   </div>
                 </Link>
               </div>
@@ -257,15 +257,15 @@ export default function DashboardPage() {
               <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: '18px 20px' }} className="db-card slide-in">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                   <div>
-                    <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 2px', color: C.text }}>APEX Активность</h2>
-                    <div style={{ fontSize: 12, color: C.text3 }}>Отправлено и получено ответов за 7 дней</div>
+                    <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 2px', color: C.text }}>APEX Activity</h2>
+                    <div style={{ fontSize: 12, color: C.text3 }}>Sent & received over 7 days</div>
                   </div>
                   <div style={{ display: 'flex', gap: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: C.text3 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: C.green }} /> Отправлено
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: C.green }} /> Sent
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: C.text3 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: C.yellow }} /> Ответили
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: C.yellow }} /> Replied
                     </div>
                   </div>
                 </div>
@@ -306,8 +306,8 @@ export default function DashboardPage() {
                 {/* Summary */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${C.border2}` }}>
                   {[
-                    { label: 'Всего отправлено', value: BAR_DATA.reduce((s,d)=>s+d.sent,0), color: C.green },
-                    { label: 'Ответов', value: BAR_DATA.reduce((s,d)=>s+d.replied,0), color: C.yellow },
+                    { label: 'Total sent', value: BAR_DATA.reduce((s,d)=>s+d.sent,0), color: C.green },
+                    { label: 'Replies', value: BAR_DATA.reduce((s,d)=>s+d.replied,0), color: C.yellow },
                     { label: 'Reply Rate', value: `${Math.round(BAR_DATA.reduce((s,d)=>s+d.replied,0)/Math.max(BAR_DATA.reduce((s,d)=>s+d.sent,0),1)*100)}%`, color: C.blue },
                   ].map(s => (
                     <div key={s.label} style={{ textAlign: 'center' }}>
@@ -326,12 +326,12 @@ export default function DashboardPage() {
               <div style={{ background: `linear-gradient(135deg, ${C.green} 0%, #15803D 100%)`, borderRadius: 16, padding: '20px', color: '#fff' }} className="slide-in">
                 <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>PropBlaze APEX</div>
                 <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>
-                  {activeProps.length > 0 ? `${activeProps.length} объект в рассылке` : 'Готов к запуску 🚀'}
+                  {activeProps.length > 0 ? `${activeProps.length} property in distribution` : 'Ready to launch 🚀'}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {[
-                    { label: 'Агентств охвачено', val: totalAgencies || 0 },
-                    { label: 'Новых лидов',       val: unread },
+                    { label: 'Agencies reached', val: totalAgencies || 0 },
+                    { label: 'New leads',         val: unread },
                   ].map(s => (
                     <div key={s.label} style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '10px 12px' }}>
                       <div style={{ fontSize: 22, fontWeight: 900 }}>{s.val}</div>
@@ -345,12 +345,12 @@ export default function DashboardPage() {
               <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: 'hidden' }} className="db-card slide-in">
                 <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <h2 style={{ fontSize: 14, fontWeight: 800, margin: 0 }}>Активность</h2>
+                    <h2 style={{ fontSize: 14, fontWeight: 800, margin: 0 }}>Activity</h2>
                     {unread > 0 && (
                       <span style={{ background: C.red, color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 20, padding: '2px 7px' }}>{unread}</span>
                     )}
                   </div>
-                  <Link href="/leads" style={{ fontSize: 12, color: C.green, fontWeight: 700, textDecoration: 'none' }}>Все →</Link>
+                  <Link href="/leads" style={{ fontSize: 12, color: C.green, fontWeight: 700, textDecoration: 'none' }}>All →</Link>
                 </div>
 
                 {DEMO_ACTIVITY.map((a, i) => (
@@ -388,13 +388,13 @@ export default function DashboardPage() {
 
               {/* Quick Actions */}
               <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: '16px 18px' }} className="db-card slide-in">
-                <h2 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 12px', color: C.text }}>Быстрые действия</h2>
+                <h2 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 12px', color: C.text }}>Quick Actions</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
-                    { label: 'Новый объект',       sub: 'Запустить APEX-рассылку', href: '/properties/new', color: C.green,  bg: C.greenBg,  icon: '🏠' },
-                    { label: 'Мессенджер',          sub: `${unread} непрочитанных`,  href: '/messenger',      color: C.purple, bg: C.purpleBg, icon: '💬' },
-                    { label: 'Дистрибуция',         sub: 'Отчёт по волнам',          href: '/distribution',   color: C.blue,   bg: C.blueBg,   icon: '📡' },
-                    { label: 'Биллинг',             sub: 'Подписка и планы',         href: '/billing',        color: C.orange, bg: C.orangeBg, icon: '💳' },
+                    { label: 'New Property',  sub: 'Launch APEX distribution',     href: '/properties/new', color: C.green,  bg: C.greenBg,  icon: '🏠' },
+                    { label: 'Messages',      sub: `${unread} unread`,              href: '/messenger',      color: C.purple, bg: C.purpleBg, icon: '💬' },
+                    { label: 'Distribution',  sub: 'Wave report',                  href: '/distribution',   color: C.blue,   bg: C.blueBg,   icon: '📡' },
+                    { label: 'Billing',       sub: 'Subscription & plans',         href: '/billing',        color: C.orange, bg: C.orangeBg, icon: '💳' },
                   ].map(q => (
                     <Link key={q.label} href={q.href} style={{ textDecoration: 'none' }}>
                       <div className="db-btn" style={{
