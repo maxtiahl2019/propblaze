@@ -419,6 +419,10 @@ function GlobalStyles() {
         from { opacity:0; }
         to   { opacity:1; }
       }
+      @keyframes heroVideoPan {
+        from { transform:translate(-50%,-50%) scale(1.04); }
+        to   { transform:translate(-50%,-50%) scale(1.0); }
+      }
       @keyframes slideLeft {
         from { opacity:0; transform:translateX(60px); }
         to   { opacity:1; transform:translateX(0); }
@@ -942,40 +946,46 @@ export default function LandingPage() {
         overflow: 'hidden',
       }}>
 
-        {/* ── Hero video background ── */}
-        <video
-          autoPlay muted loop playsInline
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', zIndex: 0,
-            opacity: 0.28,
-            animation: 'fadeIn 2s ease 0.3s both',
-          }}
-        >
-          <source src="/hero-interior.mp4" type="video/mp4" />
-        </video>
+        {/* ── Hero YouTube video background (same cinematic video as splash) ── */}
+        <div style={{
+          position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0,
+          animation: 'fadeIn 1.5s ease 0.2s both',
+        }}>
+          <iframe
+            src="https://www.youtube.com/embed/UBdgfwoZpNE?autoplay=1&mute=1&loop=1&playlist=UBdgfwoZpNE&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&disablekb=1&fs=0&start=4"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            style={{
+              position: 'absolute',
+              top: '50%', left: '50%',
+              width: 'max(100vw, 177.78vh)',
+              height: 'max(100vh, 56.25vw)',
+              transform: 'translate(-50%,-50%)',
+              border: 'none',
+              pointerEvents: 'none',
+              animation: 'heroVideoPan 12s ease-out both',
+            }}
+          />
+        </div>
 
-        {/* Dark gradient over video — keeps text readable */}
+        {/* Dark gradient — keeps hero copy readable over video */}
         <div style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: `linear-gradient(135deg, rgba(8,8,8,0.92) 0%, rgba(8,8,8,0.65) 50%, rgba(8,8,8,0.82) 100%)`,
+          background: `linear-gradient(135deg, rgba(8,8,8,0.88) 0%, rgba(8,8,8,0.55) 50%, rgba(8,8,8,0.80) 100%)`,
         }} />
 
-        {/* Subtle grid texture overlay */}
+        {/* Vignette edges */}
         <div style={{
-          position: 'absolute', inset: 0, zIndex: 2,
-          backgroundImage: `linear-gradient(${C.border} 1px, transparent 1px), linear-gradient(90deg, ${C.border} 1px, transparent 1px)`,
-          backgroundSize: '60px 60px',
-          maskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%, transparent 40%, black 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 30% 50%, transparent 40%, black 100%)',
-          opacity: 0.4,
+          position: 'absolute', inset: 0, zIndex: 1,
+          boxShadow: 'inset 0 0 160px rgba(0,0,0,0.65)',
+          pointerEvents: 'none',
         }} />
 
-        {/* Gold glow */}
+        {/* Gold glow accent */}
         <div style={{
           position: 'absolute', top: '20%', left: '5%',
           width: 500, height: 500,
-          background: 'radial-gradient(circle, rgba(245,194,0,0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(245,194,0,0.07) 0%, transparent 70%)',
           zIndex: 2, pointerEvents: 'none',
         }} />
 
