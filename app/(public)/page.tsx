@@ -130,6 +130,186 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
+// ─── Agency plans for modal ───────────────────────────────────────────────────
+const AGENCY_PLANS_MODAL = [
+  {
+    name: 'FREE',
+    price: '€0',
+    period: '/mo',
+    highlight: false,
+    badge: null,
+    perks: ['Receive matched listings', 'Up to 5 active leads', 'Basic agency profile'],
+    cta: 'Get started free',
+    href: '/register?role=agency&plan=free',
+  },
+  {
+    name: 'BASIC',
+    price: '€19',
+    period: '/mo',
+    highlight: false,
+    badge: null,
+    perks: ['Priority placement in matching', 'Up to 30 leads', 'Email + WhatsApp alerts'],
+    cta: 'Start Basic',
+    href: '/register?role=agency&plan=basic',
+  },
+  {
+    name: 'PRO',
+    price: '€79',
+    period: '/mo',
+    highlight: true,
+    badge: 'POPULAR',
+    perks: ['Unlimited leads', 'Direct owner contact', 'Analytics dashboard', 'API access'],
+    cta: 'Start Pro',
+    href: '/register?role=agency&plan=pro',
+  },
+];
+
+// ─── Property card modal ──────────────────────────────────────────────────────
+interface PropModalProps {
+  prop: { img: string; label: string; price: string } | null;
+  onClose: () => void;
+}
+
+function PropModal({ prop, onClose }: PropModalProps) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (prop) setTimeout(() => setVisible(true), 20);
+    else setVisible(false);
+  }, [prop]);
+
+  if (!prop) return null;
+
+  return (
+    <>
+      <style>{`
+        @keyframes modalSlideUp {
+          from { opacity:0; transform:translateY(32px) scale(0.97); }
+          to   { opacity:1; transform:translateY(0) scale(1); }
+        }
+      `}</style>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.72)',
+          backdropFilter: 'blur(6px)',
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 0.3s',
+        }}
+      />
+      {/* Modal */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1001,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
+        pointerEvents: 'none',
+      }}>
+        <div style={{
+          width: '100%', maxWidth: 820,
+          background: '#111111',
+          border: '1px solid rgba(255,255,255,0.10)',
+          borderRadius: 20,
+          overflow: 'hidden',
+          pointerEvents: 'auto',
+          animation: 'modalSlideUp 0.4s cubic-bezier(0.16,1,0.3,1) both',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+        }}>
+          {/* Left: property photo */}
+          <div style={{ position: 'relative', minHeight: 320 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={prop.img} alt={prop.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(0,0,0,0.1) 0%,rgba(0,0,0,0.65) 100%)' }} />
+            <div style={{ position: 'absolute', bottom: 20, left: 20 }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em' }}>{prop.price}</div>
+              <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{prop.label}</div>
+            </div>
+            {/* Blur badge */}
+            <div style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', borderRadius: 8, padding: '5px 12px', fontSize: '0.68rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Matched listing
+            </div>
+          </div>
+
+          {/* Right: agency plans */}
+          <div style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column', background: '#0F0F0F' }}>
+            {/* Close */}
+            <button onClick={onClose} style={{ alignSelf: 'flex-end', background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>×</button>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>For agencies</div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
+                Contact this owner directly
+              </h3>
+              <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', marginTop: 6, lineHeight: 1.6 }}>
+                Choose a plan to unlock direct owner contact and get matched properties automatically.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+              {AGENCY_PLANS_MODAL.map((plan) => (
+                <div key={plan.name} style={{
+                  padding: '14px 16px',
+                  borderRadius: 12,
+                  border: plan.highlight ? '1px solid rgba(245,194,0,0.4)' : '1px solid rgba(255,255,255,0.09)',
+                  background: plan.highlight ? 'rgba(245,194,0,0.08)' : 'rgba(255,255,255,0.04)',
+                  position: 'relative',
+                }}>
+                  {plan.badge && (
+                    <div style={{ position: 'absolute', top: -9, right: 12, background: '#F5C200', color: '#000', fontSize: '0.58rem', fontWeight: 900, padding: '2px 10px', borderRadius: 99, letterSpacing: '0.08em' }}>
+                      {plan.badge}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: plan.highlight ? '#F5C200' : 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{plan.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginTop: 2 }}>
+                        <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em' }}>{plan.price}</span>
+                        <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>{plan.period}</span>
+                      </div>
+                    </div>
+                    <Link
+                      href={plan.href}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 8,
+                        fontSize: '0.75rem', fontWeight: 800,
+                        textDecoration: 'none',
+                        background: plan.highlight ? '#F5C200' : 'rgba(255,255,255,0.10)',
+                        color: plan.highlight ? '#000' : '#fff',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.2s',
+                        border: plan.highlight ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                      }}
+                    >
+                      {plan.cta}
+                    </Link>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
+                    {plan.perks.map(p => (
+                      <span key={p} style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ color: '#22C55E', fontSize: '0.65rem' }}>✓</span>{p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 16, textAlign: 'center' }}>
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>Already have an account? </span>
+              <Link href="/login" style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600, textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>Sign in →</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── FIND / Cuberto editorial design tokens ────────────────────────────────
 const C = {
   black:   '#080808',
@@ -493,6 +673,7 @@ export default function LandingPage() {
   useFadeIn();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
+  const [selectedProp, setSelectedProp] = useState<{ img: string; label: string; price: string } | null>(null);
 
   // Show splash only once per session
   useEffect(() => {
@@ -623,6 +804,9 @@ export default function LandingPage() {
 
       {/* ── LUXURY SPLASH ────────────────────────────────────────────────── */}
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+
+      {/* ── AGENCY CONTACT MODAL ─────────────────────────────────────────── */}
+      <PropModal prop={selectedProp} onClose={() => setSelectedProp(null)} />
 
       {/* ── NAV ──────────────────────────────────────────────────────────── */}
       <nav style={{
@@ -878,6 +1062,7 @@ export default function LandingPage() {
             <div
               key={i}
               className="prop-card fade-in-el"
+              onClick={() => setSelectedProp(p)}
               style={{
                 gridColumn: i === 0 ? 'span 2' : i === 3 ? 'span 2' : undefined,
                 animationDelay: `${i * 80}ms`,
