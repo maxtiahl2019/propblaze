@@ -55,6 +55,14 @@ export default function PropertiesNewPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [draftSaved, setDraftSaved] = useState(false);
 
+  // FIX Issue 15: always resolve report email from latest profile data
+  const getReportEmail = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pb_report_email') || DEMO_EMAIL;
+    }
+    return DEMO_EMAIL;
+  };
+
   // Step 1: Basic info
   const [property, setProperty] = useState<PropertyData>({
     type: 'Apartment',
@@ -108,9 +116,9 @@ export default function PropertiesNewPage() {
     return () => clearTimeout(timer);
   }, [property, shortDesc, photos]);
 
-  // Run APEX when entering Step 5 (index 4 = Launch)
+  // Run APEX when entering Step 6 (index 5 = Outreach) — updated for new 6-step order
   useEffect(() => {
-    if (currentStep === 4 && !apexResult && !apexLoading) {
+    if (currentStep === 5 && !apexResult && !apexLoading) {
       setApexLoading(true);
       setTimeout(() => {
         try {
@@ -140,24 +148,27 @@ export default function PropertiesNewPage() {
     }
   }, [currentStep]);
 
+  // 6-step wizard:
+  // 0 = Property Info + Description
+  // 1 = Address + Map
+  // 2 = Photos + Documents
+  // 3 = AI Pack
+  // 4 = Review (approve before sending)
+  // 5 = Outreach (APEX + distribution)
   const canProceed = () => {
     switch (currentStep) {
-      case 0:
-        return !!(
-          property.type &&
-          property.city &&
-          property.country &&
-          property.areaSqm > 0 &&
-          property.price > 0
-        );
-      case 1:
+      case 0: // Property info: type, area, price required; description optional (can generate AI without it but better with)
+        return !!(property.type && property.areaSqm > 0 && property.price > 0);
+      case 1: // Address: city + country required
+        return !!(property.city && property.country);
+      case 2: // Photos + Docs: optional
+        return true;
+      case 3: // AI Pack: shortDesc must be ≥10 chars
         return shortDesc.length >= 10;
-      case 2:
-        return true;   // Photos optional
-      case 3:
-        return true;   // Documents optional
-      case 4:
-        return true;   // Launch
+      case 4: // Review: always can proceed (user has reviewed)
+        return true;
+      case 5: // Outreach: always
+        return true;
       default:
         return false;
     }
@@ -227,7 +238,7 @@ export default function PropertiesNewPage() {
             },
             body: JSON.stringify({
               from: 'PropBlaze Platform <onboarding@resend.dev>',
-              to: 'contact@win-winsolution.com',
+              to: getReportEmail(),
               subject: `🏠 New Property Offer: ${property.type} in ${property.city} — PropBlaze AI Match`,
               html: emailBody,
             }),
@@ -421,7 +432,8 @@ export default function PropertiesNewPage() {
     );
   }
 
-  const STEPS = ['Property Details', 'AI Packaging', 'Photos', 'Documents', 'Launch'];
+  // NEW 6-step order per product spec (Issue 10)
+  const STEPS = ['Property Info', 'Address & Map', 'Photos & Docs', 'AI Pack', 'Review', 'Outreach'];
   const isLandOrCommercial = property.type === 'Land' || property.type === 'Commercial';
 
   return (
@@ -462,9 +474,9 @@ export default function PropertiesNewPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontWeight: 700, fontSize: 13,
                   background: i < currentStep ? CSS_VARS.green : i === currentStep ? CSS_VARS.primary : CSS_VARS.surface2,
-                  color: i < currentStep ? '#0A1A0A' : i === currentStep ? '#0A0A00' : CSS_VARS.textTertiary,
+                  color: i < currentStep ? '#FFFFFF' : i === currentStep ? '#FFFFFF' : CSS_VARS.textTertiary,
                   border: i === currentStep ? `2px solid ${CSS_VARS.primary}` : 'none',
-                  boxShadow: i === currentStep ? `0 0 20px rgba(245,194,0,0.35)` : 'none',
+                  boxShadow: i === currentStep ? `0 0 16px rgba(22,163,74,0.25)` : 'none',
                   transition: 'all 0.3s',
                 }}>
                   {i < currentStep ? (
@@ -494,12 +506,13 @@ export default function PropertiesNewPage() {
           boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
         }}
       >
-        {/* Step 1: Property Basics */}
+        {/* ── Step 1: Property Info + Description ── */}
         {currentStep === 0 && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
-              Property Details
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 4 }}>
+              Property Info
             </h2>
+            <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 24 }}>Select type, size, price, and describe the property in your own words.</p>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               <div>
@@ -558,81 +571,50 @@ export default function PropertiesNewPage() {
               </div>
             </div>
 
+            {/* Description — moved here from old Step 2 */}
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                Address / Street
+                Short description (optional)
+                <span style={{ fontWeight: 400, color: CSS_VARS.textTertiary, marginLeft: 8 }}>Used for AI generation on next steps</span>
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Kneza Miloša 123"
-                value={property.address}
-                onChange={(e) => setProperty({ ...property, address: e.target.value })}
+              <textarea
+                placeholder={`e.g. ${isLandOrCommercial ? 'Land plot with road access, suitable for residential construction. Clear title, ready to build.' : 'Bright 3-bedroom apartment in city center, recently renovated. Close to metro and parks.'}`}
+                value={shortDesc}
+                onChange={(e) => setShortDesc(e.target.value)}
                 style={{
-                  width: '100%',
-                  padding: '10px 12px',
+                  width: '100%', padding: '12px',
                   border: `1px solid ${CSS_VARS.border}`,
-                  borderRadius: 8,
-                  fontSize: 13,
-                  color: CSS_VARS.text,
-                  boxSizing: 'border-box',
+                  borderRadius: 8, fontSize: 13, color: CSS_VARS.text,
+                  minHeight: 80, fontFamily: 'inherit', boxSizing: 'border-box' as const,
+                  background: CSS_VARS.inputBg, resize: 'vertical' as const,
                 }}
               />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  City
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Belgrade"
-                  value={property.city}
-                  onChange={(e) => setProperty({ ...property, city: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${CSS_VARS.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: CSS_VARS.text,
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  Country
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Serbia"
-                  value={property.country}
-                  onChange={(e) => setProperty({ ...property, country: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${CSS_VARS.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: CSS_VARS.text,
-                    boxSizing: 'border-box',
-                  }}
-                />
+              {/* Voice input stub — P2 feature */}
+              <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button disabled style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '5px 12px', borderRadius: 6, border: `1px solid ${CSS_VARS.border}`, background: CSS_VARS.surface2, color: CSS_VARS.textTertiary, fontSize: 11, cursor: 'not-allowed' }}>
+                  🎙️ Voice input — coming soon
+                </button>
+                <span style={{ fontSize: 11, color: CSS_VARS.textTertiary }}>Speak your description in any language</span>
               </div>
             </div>
 
+            {/* PLACEHOLDER — address fields moved to Step 2: Address & Map */}
+            <div style={{ padding: '10px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 11, color: '#1D4ED8', marginBottom: 20 }}>
+              📍 Address and location will be entered in the next step.
+            </div>
+
+            {/* Area, Beds/Baths, Price — required on step 0 */}
             <div style={{ display: 'grid', gridTemplateColumns: isLandOrCommercial ? '1fr 1fr' : '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  {isLandOrCommercial ? 'Plot / Floor Area (m²)' : 'Area (m²)'}
+                  {isLandOrCommercial ? 'Plot / Floor Area (m²) *' : 'Area (m²) *'}
                 </label>
                 <input
                   type="number"
                   placeholder="0"
                   value={property.areaSqm || ''}
                   onChange={(e) => setProperty({ ...property, areaSqm: parseFloat(e.target.value) || 0 })}
-                  style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box', background: CSS_VARS.inputBg }}
+                  style={{ width: '100%', padding: '10px 12px', border: `1px solid ${property.areaSqm > 0 ? CSS_VARS.border : CSS_VARS.red}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const, background: CSS_VARS.inputBg }}
                 />
               </div>
               {isLandOrCommercial ? (
@@ -658,12 +640,12 @@ export default function PropertiesNewPage() {
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Bedrooms</label>
                     <input type="number" placeholder="0" value={property.bedrooms || ''} onChange={(e) => setProperty({ ...property, bedrooms: parseInt(e.target.value) || 0 })}
-                      style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box', background: CSS_VARS.inputBg }} />
+                      style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const, background: CSS_VARS.inputBg }} />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Bathrooms</label>
                     <input type="number" placeholder="0" value={property.bathrooms || ''} onChange={(e) => setProperty({ ...property, bathrooms: parseInt(e.target.value) || 0 })}
-                      style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box', background: CSS_VARS.inputBg }} />
+                      style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const, background: CSS_VARS.inputBg }} />
                   </div>
                 </>
               )}
@@ -672,7 +654,7 @@ export default function PropertiesNewPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
-                  Price
+                  Price *
                 </label>
                 <input
                   type="number"
@@ -680,13 +662,9 @@ export default function PropertiesNewPage() {
                   value={property.price || ''}
                   onChange={(e) => setProperty({ ...property, price: parseFloat(e.target.value) || 0 })}
                   style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${CSS_VARS.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: CSS_VARS.text,
-                    boxSizing: 'border-box',
+                    width: '100%', padding: '10px 12px',
+                    border: `1px solid ${property.price > 0 ? CSS_VARS.border : CSS_VARS.red}`,
+                    borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const,
                   }}
                 />
               </div>
@@ -697,19 +675,10 @@ export default function PropertiesNewPage() {
                 <select
                   value={property.currency}
                   onChange={(e) => setProperty({ ...property, currency: e.target.value as any })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${CSS_VARS.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: CSS_VARS.text,
-                  }}
+                  style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text }}
                 >
                   {['EUR', 'USD', 'CHF', 'RSD'].map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </div>
@@ -717,8 +686,64 @@ export default function PropertiesNewPage() {
           </div>
         )}
 
-        {/* Step 2: AI Description */}
+        {/* ── Step 2: Address & Map ── */}
         {currentStep === 1 && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 4 }}>📍 Address & Location</h2>
+            <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 24 }}>Enter the full address. Coordinates help agencies understand exact access.</p>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Street address</label>
+              <input type="text" placeholder="e.g. Kneza Miloša 123" value={property.address}
+                onChange={(e) => setProperty({ ...property, address: e.target.value })}
+                style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const, background: CSS_VARS.inputBg }} />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>City *</label>
+                <input type="text" placeholder="e.g. Kremovice" value={property.city}
+                  onChange={(e) => setProperty({ ...property, city: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', border: `1px solid ${!property.city ? CSS_VARS.red : CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const, background: CSS_VARS.inputBg }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Country *</label>
+                <select value={property.country} onChange={(e) => setProperty({ ...property, country: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', border: `1px solid ${!property.country ? CSS_VARS.red : CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, background: CSS_VARS.inputBg }}>
+                  <option value="">Select country</option>
+                  {['Albania','Austria','Belgium','Bosnia','Bulgaria','Croatia','Cyprus','Czech Republic','Denmark','Estonia','Finland','France','Germany','Greece','Hungary','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta','Montenegro','Netherlands','North Macedonia','Norway','Poland','Portugal','Romania','Serbia','Slovakia','Slovenia','Spain','Sweden','Switzerland','Turkey','Ukraine'].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Map placeholder + coordinates */}
+            <div style={{ border: `2px dashed ${CSS_VARS.border}`, borderRadius: 12, padding: 20, background: CSS_VARS.surface2, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <span style={{ fontSize: 24 }}>🗺️</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: CSS_VARS.text }}>Map pin (optional)</div>
+                  <div style={{ fontSize: 11, color: CSS_VARS.textSecondary }}>Enter coordinates or use Google Maps to find exact location</div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: CSS_VARS.textSecondary, marginBottom: 4 }}>Latitude</label>
+                  <input type="number" step="0.000001" placeholder="e.g. 42.441" style={{ width: '100%', padding: '8px 10px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 7, fontSize: 12, color: CSS_VARS.text, background: CSS_VARS.inputBg, boxSizing: 'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: CSS_VARS.textSecondary, marginBottom: 4 }}>Longitude</label>
+                  <input type="number" step="0.000001" placeholder="e.g. 19.264" style={{ width: '100%', padding: '8px 10px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 7, fontSize: 12, color: CSS_VARS.text, background: CSS_VARS.inputBg, boxSizing: 'border-box' as const }} />
+                </div>
+              </div>
+              <p style={{ fontSize: 11, color: CSS_VARS.textTertiary, marginTop: 10 }}>
+                💡 Google Maps integration coming in v1.1. For now, copy lat/lng from maps.google.com.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 3: AI Description (moved from step 1) ── */}
+        {currentStep === 3 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 24 }}>
               ✨ AI Packaging
@@ -850,15 +875,18 @@ export default function PropertiesNewPage() {
           </div>
         )}
 
-        {/* Step 3: Photos */}
+        {/* ── Step 3: Photos + Documents (merged) ── */}
         {currentStep === 2 && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
-              📸 Property Photos
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 4 }}>
+              📸 Photos & Documents
             </h2>
             <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 24 }}>
-              Добавьте фотографии — агентства получат их вместе с оффером. Этот шаг необязателен.
+              Add photos and ownership documents. Both steps are optional — you can always add them later.
             </p>
+
+            {/* ── Photos ── */}
+            <div style={{ fontSize: 11, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 10 }}>Photos</div>
 
             {/* Hidden file input */}
             <input
@@ -904,25 +932,25 @@ export default function PropertiesNewPage() {
               }}
               style={{
                 border: `2px dashed ${dragActive ? CSS_VARS.primary : CSS_VARS.border}`,
-                borderRadius: 12, padding: '32px 24px', textAlign: 'center',
+                borderRadius: 12, padding: '28px 24px', textAlign: 'center' as const,
                 background: dragActive ? CSS_VARS.primaryLight : CSS_VARS.surface2,
-                marginBottom: 20, cursor: 'pointer', transition: 'all 0.2s',
+                marginBottom: 16, cursor: 'pointer', transition: 'all 0.2s',
               }}
             >
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>📸</div>
               <div style={{ fontSize: 13, fontWeight: 600, color: CSS_VARS.text, marginBottom: 4 }}>
-                Нажмите или перетащите фото сюда
+                Click or drag photos here
               </div>
               <div style={{ fontSize: 12, color: CSS_VARS.textSecondary }}>
-                До 20 фото (JPG, PNG) · {photos.length}/20 загружено
+                Up to 20 photos (JPG, PNG) · {photos.length}/20 uploaded
               </div>
             </div>
 
             {/* Uploaded thumbnails */}
             {photos.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
-                  Загружено ({photos.length})
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 10 }}>
+                  Uploaded ({photos.length})
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                   {photos.map((src, i) => (
@@ -943,21 +971,13 @@ export default function PropertiesNewPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(245,194,0,0.06)', border: '1px solid rgba(245,194,0,0.15)', borderRadius: 8, fontSize: 12, color: CSS_VARS.textSecondary }}>
-              <span>💡</span>
-              <span>Документы (право собственности, паспорт) — на следующем шаге</span>
-            </div>
-          </div>
-        )}
+            {/* Divider */}
+            <div style={{ height: 1, background: CSS_VARS.border, margin: '20px 0' }} />
 
-        {/* Step 4: Documents */}
-        {currentStep === 3 && (
-          <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
-              📄 Документы
-            </h2>
-            <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 24 }}>
-              Загрузите подтверждающие документы. Они <strong style={{ color: CSS_VARS.text }}>не отправляются</strong> агентствам автоматически — только по вашему запросу.
+            {/* ── Documents ── */}
+            <div style={{ fontSize: 11, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 10 }}>Documents</div>
+            <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 16 }}>
+              Documents are <strong style={{ color: CSS_VARS.text }}>never sent</strong> to agencies automatically — only shared on your explicit request.
             </p>
 
             {/* Hidden file inputs */}
@@ -981,67 +1001,67 @@ export default function PropertiesNewPage() {
               }} />
 
             {/* Title Deed */}
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
-                🏠 Право собственности (Title Deed)
-                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.green, fontWeight: 600 }}>рекомендуется</span>
+                🏠 Title Deed
+                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.green, fontWeight: 600 }}>recommended</span>
               </div>
               {titleDeed ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: CSS_VARS.greenDim, border: `1px solid rgba(34,197,94,0.3)`, borderRadius: 10 }}>
                   <span style={{ fontSize: 20 }}>{titleDeed.type === 'application/pdf' ? '📄' : '🖼️'}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titleDeed.name}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{titleDeed.name}</div>
                     <div style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>{(titleDeed.size / 1024).toFixed(0)} KB</div>
                   </div>
                   <button onClick={() => setTitleDeed(null)} style={{ background: 'none', border: 'none', color: CSS_VARS.textTertiary, cursor: 'pointer', fontSize: 16 }}>×</button>
                 </div>
               ) : (
                 <button onClick={() => titleDeedRef.current?.click()} style={{
-                  width: '100%', padding: '14px', border: `2px dashed ${CSS_VARS.border}`, borderRadius: 10,
+                  width: '100%', padding: '12px', border: `2px dashed ${CSS_VARS.border}`, borderRadius: 10,
                   background: CSS_VARS.surface2, color: CSS_VARS.textSecondary, fontSize: 12, fontWeight: 600,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}>
-                  <span>⬆️</span> Загрузить PDF или фото документа
+                  <span>⬆️</span> Upload PDF or photo of document
                 </button>
               )}
             </div>
 
             {/* ID Document */}
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
-                🪪 Удостоверение личности / Паспорт
-                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.textTertiary, fontWeight: 500 }}>необязательно</span>
+                🪪 ID / Passport
+                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.textTertiary, fontWeight: 500 }}>optional</span>
               </div>
               {idDocument ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: CSS_VARS.greenDim, border: `1px solid rgba(34,197,94,0.3)`, borderRadius: 10 }}>
                   <span style={{ fontSize: 20 }}>{idDocument.type === 'application/pdf' ? '📄' : '🖼️'}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{idDocument.name}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{idDocument.name}</div>
                     <div style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>{(idDocument.size / 1024).toFixed(0)} KB</div>
                   </div>
                   <button onClick={() => setIdDocument(null)} style={{ background: 'none', border: 'none', color: CSS_VARS.textTertiary, cursor: 'pointer', fontSize: 16 }}>×</button>
                 </div>
               ) : (
                 <button onClick={() => idDocRef.current?.click()} style={{
-                  width: '100%', padding: '14px', border: `2px dashed ${CSS_VARS.border}`, borderRadius: 10,
+                  width: '100%', padding: '12px', border: `2px dashed ${CSS_VARS.border}`, borderRadius: 10,
                   background: CSS_VARS.surface2, color: CSS_VARS.textSecondary, fontSize: 12, fontWeight: 600,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}>
-                  <span>⬆️</span> Загрузить паспорт / ID
+                  <span>⬆️</span> Upload passport or ID
                 </button>
               )}
             </div>
 
             {/* Other documents */}
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: CSS_VARS.text, marginBottom: 8 }}>
-                📁 Другие документы
-                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.textTertiary, fontWeight: 500 }}>необязательно</span>
+                📁 Other Documents
+                <span style={{ marginLeft: 8, fontSize: 10, color: CSS_VARS.textTertiary, fontWeight: 500 }}>optional</span>
               </div>
               {otherDocs.map((doc, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: CSS_VARS.surface2, border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, marginBottom: 6 }}>
                   <span>📄</span>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.name}</div>
+                  <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: CSS_VARS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{doc.name}</div>
                   <span style={{ fontSize: 10, color: CSS_VARS.textTertiary }}>{(doc.size / 1024).toFixed(0)} KB</span>
                   <button onClick={() => setOtherDocs(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', color: CSS_VARS.textTertiary, cursor: 'pointer', fontSize: 16 }}>×</button>
                 </div>
@@ -1051,20 +1071,88 @@ export default function PropertiesNewPage() {
                 background: 'transparent', color: CSS_VARS.textTertiary, fontSize: 12, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}>
-                + Добавить документ
+                + Add document
               </button>
             </div>
 
             {/* Privacy note */}
-            <div style={{ padding: '12px 14px', background: 'rgba(59,91,219,0.08)', border: '1px solid rgba(59,91,219,0.2)', borderRadius: 10, fontSize: 11, color: CSS_VARS.textSecondary, display: 'flex', gap: 8 }}>
+            <div style={{ padding: '12px 14px', background: 'rgba(59,91,219,0.06)', border: '1px solid rgba(59,91,219,0.15)', borderRadius: 10, fontSize: 11, color: CSS_VARS.textSecondary, display: 'flex', gap: 8 }}>
               <span>🔒</span>
-              <span>Документы хранятся зашифрованными и <strong style={{ color: CSS_VARS.text }}>не передаются агентствам</strong> без вашего явного согласия. GDPR-compliant.</span>
+              <span>Documents are stored encrypted and <strong style={{ color: CSS_VARS.text }}>never shared with agencies</strong> without your explicit consent. GDPR-compliant.</span>
             </div>
           </div>
         )}
 
-        {/* Step 5: APEX Distribution */}
+        {/* ── Step 5: Review & Confirm ── */}
         {currentStep === 4 && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: CSS_VARS.text, marginBottom: 4 }}>
+              ✅ Review & Confirm
+            </h2>
+            <p style={{ fontSize: 12, color: CSS_VARS.textSecondary, marginBottom: 24 }}>
+              Check all details before launching distribution. You can go back to make changes.
+            </p>
+
+            {/* Property summary card */}
+            <div style={{ background: CSS_VARS.surface2, border: `1px solid ${CSS_VARS.border}`, borderRadius: 14, padding: '20px', marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 14 }}>Property Details</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {[
+                  { label: 'Type', value: property.type },
+                  { label: 'Mode', value: `For ${property.mode}` },
+                  { label: 'City', value: property.city || '—' },
+                  { label: 'Country', value: property.country || '—' },
+                  { label: 'Area', value: property.areaSqm > 0 ? `${property.areaSqm} m²` : '—' },
+                  { label: 'Price', value: property.price > 0 ? `${property.price.toLocaleString()} ${property.currency}` : '—' },
+                  ...(!isLandOrCommercial ? [
+                    { label: 'Bedrooms', value: `${property.bedrooms}` },
+                    { label: 'Bathrooms', value: `${property.bathrooms}` },
+                  ] : []),
+                  { label: 'Address', value: property.address || '—' },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div style={{ fontSize: 10, color: CSS_VARS.textTertiary, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 2 }}>{item.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: CSS_VARS.text }}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Media summary */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
+              {[
+                { emoji: '📸', label: 'Photos', value: `${photos.length} uploaded`, ok: photos.length > 0 },
+                { emoji: '📄', label: 'Title Deed', value: titleDeed ? titleDeed.name : 'Not uploaded', ok: !!titleDeed },
+                { emoji: '✨', label: 'AI Pack', value: aiPackData ? 'Generated' : 'Not generated', ok: !!aiPackData },
+              ].map(item => (
+                <div key={item.label} style={{ background: CSS_VARS.surface, border: `1px solid ${item.ok ? 'rgba(22,163,74,0.25)' : CSS_VARS.border}`, borderRadius: 10, padding: '12px', textAlign: 'center' as const }}>
+                  <div style={{ fontSize: 22, marginBottom: 4 }}>{item.emoji}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 4 }}>{item.label}</div>
+                  <div style={{ fontSize: 11, color: item.ok ? CSS_VARS.green : CSS_VARS.textSecondary, fontWeight: item.ok ? 700 : 400 }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Description preview */}
+            {shortDesc && (
+              <div style={{ background: CSS_VARS.surface, border: `1px solid ${CSS_VARS.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: CSS_VARS.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 }}>Your Description</div>
+                <p style={{ fontSize: 13, color: CSS_VARS.textSecondary, lineHeight: 1.6, margin: 0 }}>{shortDesc}</p>
+              </div>
+            )}
+
+            {/* GDPR consent notice */}
+            <div style={{ padding: '14px 16px', background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 10, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>🛡️</span>
+              <div style={{ fontSize: 12, color: CSS_VARS.textSecondary, lineHeight: 1.6 }}>
+                <strong style={{ color: CSS_VARS.text }}>By continuing, you confirm:</strong> Your property details will be shared with matched agencies for sales purposes. All data is processed in accordance with GDPR. You can stop distribution at any time by marking the property as sold.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 6: APEX Distribution (Outreach) ── */}
+        {currentStep === 5 && (
           <div>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
@@ -1378,13 +1466,13 @@ export default function PropertiesNewPage() {
 
         <button
           onClick={() => {
-            if (currentStep === 4) {
+            if (currentStep === 5) {
               handleSendDistribution();
             } else {
               setCurrentStep(currentStep + 1);
             }
           }}
-          disabled={!canProceed() || isSending || (currentStep === 4 && apexLoading)}
+          disabled={!canProceed() || isSending || (currentStep === 5 && apexLoading)}
           style={{
             padding: '13px 32px',
             background: canProceed() && !isSending ? CSS_VARS.primary : CSS_VARS.surface2,
@@ -1392,26 +1480,26 @@ export default function PropertiesNewPage() {
             borderRadius: 12,
             fontSize: 14,
             fontWeight: 700,
-            color: canProceed() && !isSending ? '#080810' : CSS_VARS.textTertiary,
+            color: canProceed() && !isSending ? '#FFFFFF' : CSS_VARS.textTertiary,
             cursor: canProceed() && !isSending ? 'pointer' : 'not-allowed',
-            boxShadow: canProceed() && !isSending ? '0 0 24px rgba(245,194,0,0.3)' : 'none',
+            boxShadow: canProceed() && !isSending ? `0 0 24px rgba(22,163,74,0.3)` : 'none',
             transition: 'all 0.2s',
             display: 'flex', alignItems: 'center', gap: 8,
           }}
         >
           {isSending ? (
             <>
-              <div style={{ width: 14, height: 14, border: '2px solid rgba(0,0,0,0.3)', borderTopColor: '#080810', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+              <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#FFFFFF', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
               Sending to agencies…
             </>
-          ) : currentStep === 4 ? (
+          ) : currentStep === 5 ? (
             <>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {apexResult
                 ? `🚀 Launch — ${distMode === 'manual' ? selectedAgencies.size : apexResult.results.length} Agencies`
                 : 'Launch Distribution'}
             </>
-          ) : 'Continue →'}
+          ) : currentStep === 4 ? 'Confirm & Continue →' : 'Continue →'}
         </button>
       </div>
 
@@ -1421,14 +1509,7 @@ export default function PropertiesNewPage() {
         @keyframes fadeInOut { 0%,100% { opacity: 0; transform: translateY(6px); } 50% { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
         @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-        input, select, textarea {
-          background: #0E0E1C !important;
-          color: #FFFFFF !important;
-          -webkit-text-fill-color: #FFFFFF;
-          color-scheme: dark;
-        }
-        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.32) !important; -webkit-text-fill-color: rgba(255,255,255,0.32) !important; }
-        option { background: #0E0E1C !important; color: #FFFFFF !important; }
+        input, select, textarea { color-scheme: light; }
         input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
       `}</style>
     </div>

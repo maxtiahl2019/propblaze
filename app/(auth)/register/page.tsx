@@ -112,21 +112,27 @@ function OwnerForm({ onDone }: { onDone: () => void }) {
     return e;
   };
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
+    if (submitting) return; // double-submit guard
     const e = validate();
     if (Object.keys(e).length) { setErrs(e); return; }
     setErrs({});
     if (DEMO_MODE) { onDone(); return; }
+    setSubmitting(true);
     try {
-      await register(form.email, form.password, form.name);
+      await register(form.email.trim().toLowerCase(), form.password, form.name);
       onDone(); // auto-confirmed
     } catch (err: any) {
       if (err?.code === 'CHECK_EMAIL') {
-        setRegisteredEmail(form.email);
+        setRegisteredEmail(form.email.trim().toLowerCase());
         setCheckEmail(true);
       }
-      // other errors shown via auth store `error` state
+      // ALREADY_REGISTERED and other errors are shown via auth store `error` state
+    } finally {
+      setSubmitting(false);
     }
   };
 

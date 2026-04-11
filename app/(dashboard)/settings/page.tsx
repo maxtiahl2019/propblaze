@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from '@/lib/i18n/LangContext';
+import { useAuth } from '@/store/auth';
 import type { Lang } from '@/lib/i18n/translations';
 
 const C = {
@@ -58,13 +59,53 @@ function Divider() {
   return <div style={{ height: 1, background: C.border, margin: '0 16px' }} />;
 }
 
+const inpStyle: React.CSSProperties = {
+  width: '100%', padding: '9px 12px',
+  border: '1px solid #E2E8F0', borderRadius: 8, fontSize: '0.8125rem',
+  color: '#0F172A', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box',
+};
+
 export default function SettingsPage() {
-  const { t, lang, setLang } = useTranslation();
+  const { lang, setLang } = useTranslation();
+  const { user } = useAuth();
   const [emailNotif, setEmailNotif] = useState(true);
   const [telegramNotif, setTelegramNotif] = useState(true);
   const [whatsappNotif, setWhatsappNotif] = useState(false);
   const [autoWave2, setAutoWave2] = useState(true);
   const [forwardLeads, setForwardLeads] = useState(true);
+
+  // Contact fields — persisted to localStorage for MVP (backend wiring in Phase 2)
+  const [telegramHandle, setTelegramHandle] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('pb_telegram') ?? '';
+    return '';
+  });
+  const [whatsappNumber, setWhatsappNumber] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('pb_whatsapp') ?? '';
+    return '';
+  });
+  const [commLang, setCommLang] = useState<'en' | 'ru' | 'sr'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('pb_comm_lang') as any) ?? 'en';
+    return 'en';
+  });
+  const [profileEmail, setProfileEmail] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('pb_report_email') ?? (user?.email ?? '');
+    return user?.email ?? '';
+  });
+  const [saved, setSaved] = useState(false);
+
+  const saveProfile = () => {
+    localStorage.setItem('pb_telegram', telegramHandle);
+    localStorage.setItem('pb_whatsapp', whatsappNumber);
+    localStorage.setItem('pb_comm_lang', commLang);
+    localStorage.setItem('pb_report_email', profileEmail);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  // Resolve display name from user object or localStorage
+  const displayName = user?.email?.split('@')[0] ?? 'User';
+  const displayEmail = profileEmail || user?.email || 'contact@win-winsolution.com';
+  const initials = displayName.slice(0, 1).toUpperCase();
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Inter',system-ui,sans-serif", padding: 'clamp(16px,4vw,32px)' }}>
@@ -78,13 +119,89 @@ export default function SettingsPage() {
 
         {/* Profile card */}
         <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: '16px 18px', marginBottom: 24, display: 'flex', gap: 14, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-          <div style={{ width: 52, height: 52, borderRadius: 26, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, color: C.white, flexShrink: 0 }}>M</div>
+          <div style={{ width: 52, height: 52, borderRadius: 26, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, color: C.white, flexShrink: 0 }}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: C.text }}>Max</div>
-            <div style={{ fontSize: '0.78rem', color: C.text3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>contact@win-winsolution.com</div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: C.text }}>{displayName}</div>
+            <div style={{ fontSize: '0.78rem', color: C.text3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{displayEmail}</div>
           </div>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: C.white, background: C.green, padding: '4px 10px', borderRadius: 99, flexShrink: 0 }}>Pro</span>
         </div>
+
+        {/* Contact & Communication */}
+        <Section title="Contact & Communication">
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: C.text3, marginBottom: 12, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
+              Report & notification email
+            </div>
+            <input
+              type="email"
+              value={profileEmail}
+              onChange={e => setProfileEmail(e.target.value)}
+              placeholder="your@email.com"
+              style={inpStyle}
+            />
+            <p style={{ fontSize: '0.7rem', color: C.text3, marginTop: 4 }}>All lead emails and campaign reports go here.</p>
+          </div>
+          <Divider />
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: C.text3, marginBottom: 12, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
+              Telegram username
+            </div>
+            <input
+              type="text"
+              value={telegramHandle}
+              onChange={e => setTelegramHandle(e.target.value)}
+              placeholder="@yourusername"
+              style={inpStyle}
+            />
+            <p style={{ fontSize: '0.7rem', color: C.text3, marginTop: 4 }}>For instant campaign and lead alerts via Telegram bot.</p>
+          </div>
+          <Divider />
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: C.text3, marginBottom: 12, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
+              WhatsApp number
+            </div>
+            <input
+              type="tel"
+              value={whatsappNumber}
+              onChange={e => setWhatsappNumber(e.target.value)}
+              placeholder="+382 67 000 000"
+              style={inpStyle}
+            />
+            <p style={{ fontSize: '0.7rem', color: C.text3, marginTop: 4 }}>International format. Used for WhatsApp Business notifications.</p>
+          </div>
+          <Divider />
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: C.text3, marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
+              Communication language preference
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {([{ code: 'en', label: '🇬🇧 English' }, { code: 'ru', label: '🇷🇺 Russian' }, { code: 'sr', label: '🇷🇸 Serbian' }] as const).map(l => (
+                <button key={l.code} onClick={() => setCommLang(l.code)} style={{
+                  flex: 1, padding: '9px 6px', borderRadius: 8, fontWeight: 600, fontSize: '0.75rem',
+                  cursor: 'pointer', background: commLang === l.code ? C.green : C.bg,
+                  color: commLang === l.code ? C.white : C.text2,
+                  border: commLang === l.code ? 'none' : `1px solid ${C.border}`,
+                }}>
+                  {l.label}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.7rem', color: C.text3, marginTop: 6 }}>
+              Agency emails and campaign reviews will be shown in this language when available.
+            </p>
+          </div>
+          <Divider />
+          <div style={{ padding: '12px 16px' }}>
+            <button onClick={saveProfile} style={{
+              width: '100%', padding: '11px', borderRadius: 9, fontWeight: 700, fontSize: '0.875rem',
+              background: saved ? C.green : C.green, color: C.white, border: 'none', cursor: 'pointer',
+              opacity: saved ? 0.85 : 1,
+            }}>
+              {saved ? '✓ Saved' : 'Save Contact Settings'}
+            </button>
+          </div>
+        </Section>
 
         {/* Notifications */}
         <Section title="Notifications">
@@ -102,20 +219,26 @@ export default function SettingsPage() {
           <SettingsRow emoji="📨" label="Forward Leads to Email" desc="All agency replies → contact@win-winsolution.com" right={<Toggle on={forwardLeads} onChange={setForwardLeads} />} />
         </Section>
 
-        {/* Language */}
-        <Section title="Language">
-          <div style={{ padding: '8px 10px', display: 'flex', gap: 6 }}>
-            {([{ code: 'en' as Lang, label: '🇬🇧 English' }, { code: 'ru' as Lang, label: '🇷🇺 Русский' }, { code: 'sr' as Lang, label: '🇷🇸 Srpski' }]).map(l => (
-              <button key={l.code} onClick={() => setLang(l.code)} style={{
+        {/* App Language (MVP: English UI only, others are stubs) */}
+        <Section title="App Language">
+          <div style={{ padding: '8px 10px' }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+              <button onClick={() => setLang('en')} style={{
                 flex: 1, padding: '10px 8px', borderRadius: 8, fontWeight: 600, fontSize: '0.78rem',
-                cursor: 'pointer', background: lang === l.code ? C.green : C.bg,
-                color: lang === l.code ? C.white : C.text2,
-                border: lang === l.code ? 'none' : `1px solid ${C.border}`,
-                transition: 'all 0.15s',
+                cursor: 'pointer', background: C.green, color: C.white, border: 'none',
               }}>
-                {l.label}
+                🇬🇧 English
               </button>
-            ))}
+              <button style={{ flex: 1, padding: '10px 8px', borderRadius: 8, fontWeight: 600, fontSize: '0.78rem', background: C.bg, color: C.text3, border: `1px solid ${C.border}`, cursor: 'not-allowed' }} disabled>
+                🇷🇺 Русский
+              </button>
+              <button style={{ flex: 1, padding: '10px 8px', borderRadius: 8, fontWeight: 600, fontSize: '0.78rem', background: C.bg, color: C.text3, border: `1px solid ${C.border}`, cursor: 'not-allowed' }} disabled>
+                🇷🇸 Srpski
+              </button>
+            </div>
+            <p style={{ fontSize: '0.7rem', color: C.text3, padding: '0 4px' }}>
+              MVP: English interface only. RU/SR coming in v1.1. Set your <strong>communication language</strong> above to control email and report language.
+            </p>
           </div>
         </Section>
 

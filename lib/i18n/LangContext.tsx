@@ -16,23 +16,22 @@ const LangContext = createContext<LangContextType>({
   t: (k) => k,
 })
 
-function detectBrowserLang(): Lang {
-  if (typeof navigator === 'undefined') return 'en'
-  const l = navigator.language?.toLowerCase() ?? 'en'
-  if (l.startsWith('de')) return 'de'
-  if (l.startsWith('ru')) return 'ru'
-  if (l.startsWith('uk')) return 'ua'
-  if (l.startsWith('es')) return 'es'
-  return 'en'
-}
+// MVP: English-only. Browser language auto-detection removed — was causing
+// mixed-language UI with incomplete translations for DE/UA/ES.
+// Language switcher in Settings shows EN/RU/SR only (user-set comms pref).
+// Full i18n is a Phase 2 deliverable.
+const MVP_SUPPORTED_LANGS: Lang[] = ['en', 'ru', 'sr']
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>('en')
 
   useEffect(() => {
-    // Check localStorage first, then browser language
+    // Only restore if it's one of the MVP-supported languages
     const stored = localStorage.getItem('pb_lang') as Lang | null
-    setLangState(stored ?? detectBrowserLang())
+    if (stored && MVP_SUPPORTED_LANGS.includes(stored)) {
+      setLangState(stored)
+    }
+    // Otherwise stay on English — no auto-detect from browser
   }, [])
 
   function setLang(l: Lang) {

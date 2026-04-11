@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTranslation } from '@/lib/i18n/LangContext';
+// i18n removed: English-only MVP
 
 const C = {
   bg: '#F8FAFC', white: '#FFFFFF', border: '#E2E8F0',
@@ -39,8 +39,10 @@ const STATUS_LABEL: Record<string, string> = {
 
 const FILTER_KEYS = ['All', 'new', 'replied', 'meeting'] as const;
 
+// FIX P0-2: All LEADS data is demo/example content — clearly labeled in UI
+const IS_DEMO_LEADS = true; // flip to false when real backend leads are wired
+
 export default function LeadsPage() {
-  const { t } = useTranslation();
   const [filter, setFilter] = useState('All');
   const [selected, setSelected] = useState<Lead | null>(null);
 
@@ -52,6 +54,12 @@ export default function LeadsPage() {
     return (
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: "'Inter',system-ui,sans-serif" }}>
         <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(16px,4vw,28px)' }}>
+          {IS_DEMO_LEADS && (
+            <div style={{ padding: '8px 14px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, fontSize: '0.75rem', color: '#92400E', fontWeight: 600, marginBottom: 16, display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span>🧪</span>
+              <span>DEMO — This is a sample lead. Real agency responses appear here after your campaign is live.</span>
+            </div>
+          )}
           <button onClick={() => setSelected(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: C.text2, fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', marginBottom: 20, padding: 0 }}>
             ← Back
           </button>
@@ -114,12 +122,24 @@ export default function LeadsPage() {
 
         <div style={{ marginBottom: 20 }}>
           <h1 style={{ fontSize: 'clamp(1.3rem,5vw,1.5rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4, color: C.text }}>
-            🔥 Leads
+            Agency Responses
           </h1>
           <p style={{ fontSize: '0.85rem', color: C.text3 }}>
             {newCount > 0 ? `${newCount} new agency responses` : 'All responses from agencies'}
           </p>
         </div>
+
+        {IS_DEMO_LEADS && (
+          <div style={{ padding: '12px 16px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 12, marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 18, flexShrink: 0 }}>🧪</span>
+            <div>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E', marginBottom: 3 }}>Demo Examples</div>
+              <p style={{ fontSize: '0.75rem', color: '#92400E', lineHeight: 1.5, margin: 0 }}>
+                These are example agency responses shown for illustration. Once your property campaign goes live, real agency messages will appear here — linked to your actual listing.
+              </p>
+            </div>
+          </div>
+        )}
 
         {newCount > 0 && (
           <div style={{ background: C.yellowBg, border: `1px solid rgba(202,138,4,0.25)`, borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>

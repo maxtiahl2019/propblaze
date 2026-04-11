@@ -106,22 +106,52 @@ export const useAuth = create<AuthStore>()(
       },
 
       // ── Register ────────────────────────────────────────────────────────────
+      // FIX P0-1: duplicate account prevention
+      // Supabase signUp silently "succeeds" for existing emails when confirmation
+      // is enabled — it sends another confirmation email without creating a duplicate.
+      // We detect this case via data.user.identities === [] (empty) and show a
+      // clear "already registered" message instead of a misleading success screen.
       register: async (email: string, password: string, full_name: string, role: 'owner' | 'agency' = 'owner') => {
         set({ isLoading: true, error: null });
 
         if (isSupabaseConfigured) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://propblaze.com';
+
+          // Pre-check: normalize email to prevent case-sensitivity duplicates
+          const normalizedEmail = email.trim().toLowerCase();
+
           const { data, error } = await supabase.auth.signUp({
-            email,
+            email: normalizedEmail,
             password,
             options: {
               data: { full_name, role },
               emailRedirectTo: `${appUrl}/auth/confirm`,
             },
           });
+
           if (error) {
-            set({ error: error.message, isLoading: false });
+            // Friendly messages for common errors
+            const msg = error.message.toLowerCase();
+            if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('unique')) {
+              set({ error: 'An account with this email already exists. Please sign in instead.', isLoading: false });
+            } else if (msg.includes('password')) {
+              set({ error: 'Password must be at least 8 characters.', isLoading: false });
+            } else {
+              set({ error: error.message, isLoading: false });
+            }
+            console.error('[auth/register] Supabase error:', error.code, error.message);
             throw error;
+          }
+
+          // Supabase "ghost" duplicate detection: identities array is empty when
+          // the email is already registered (signUp doesn't fail, just returns empty identities)
+          if (data.user?.identities && data.user.identities.length === 0) {
+            set({
+              error: 'An account with this email already exists. Please sign in or use password recovery.',
+              isLoading: false,
+            });
+            console.warn('[auth/register] Duplicate signup attempted for:', normalizedEmail);
+            throw Object.assign(new Error('ALREADY_REGISTERED'), { code: 'ALREADY_REGISTERED' });
           }
 
           // Email confirmation required — session will be null until confirmed
@@ -131,7 +161,7 @@ export const useAuth = create<AuthStore>()(
             // Don't set isAuthenticated — user must confirm email first
             set({ isLoading: false, error: null });
             // Signal to the UI that confirmation is pending
-            throw Object.assign(new Error('CHECK_EMAIL'), { code: 'CHECK_EMAIL', email });
+            throw Object.assign(new Error('CHECK_EMAIL'), { code: 'CHECK_EMAIL', email: normalizedEmail });
           }
 
           // Auto-confirmed (email confirmation disabled in Supabase settings)
