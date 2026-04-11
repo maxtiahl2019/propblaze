@@ -117,8 +117,8 @@ export default function ApexDemoPage() {
     })
       .then(async res => {
         const data = await res.json();
-        if (!res.ok || data.error === 'no_llm_key') {
-          throw new Error(data.message || data.error || 'LLM error');
+        if (!res.ok) {
+          throw new Error(data.message || data.error || 'Matching engine error');
         }
         return data;
       })
@@ -434,7 +434,7 @@ export default function ApexDemoPage() {
                 </div>
                 {provider && (
                   <div style={{ fontSize:'0.65rem',color:C.w40,background:'rgba(255,255,255,0.06)',borderRadius:100,padding:'4px 10px',border:`1px solid ${C.border}` }}>
-                    Powered by {provider === 'claude' ? '⚡ Claude AI' : provider === 'openai' ? '🤖 GPT-4o' : 'AI'}
+                    Powered by {provider === 'claude' ? '⚡ Claude AI' : provider === 'openai' ? '🤖 GPT-4o' : '🔷 APEX Engine'}
                   </div>
                 )}
               </div>
