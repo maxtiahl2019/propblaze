@@ -221,40 +221,72 @@ export default function PropertiesNewPage() {
       : (apexResult?.results ?? []);
     const total = Math.max(agenciesToSend.length, 1);
 
-    // Simulate distribution
-    for (let i = 0; i < total; i++) {
-      await new Promise((r) => setTimeout(r, Math.max(100, 1500 / total)));
-      setSendProgress(Math.round(((i + 1) / total) * 100));
+    // Build agency list for API
+    const apiAgencies = agenciesToSend.map((r, i) => ({
+      id: r.agency.id,
+      name: r.agency.name,
+      email: r.agency.email,
+      city: r.agency.city || '',
+      country: r.agency.country || '',
+      flag: r.agency.flag || '',
+      phone: r.agency.phone,
+      wave: r.wave,
+      apex_score: Math.round(r.apex_score),
+    }));
 
-      // On 9th agency (Win-Win Solution), send real email
-      if (i === 8 && aiPackData) {
-        try {
-          const emailBody = generateEmailHTML();
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer re_K7ZtSKPE_EvUtEnCFCMoRCH1JjY2EgmMd',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              from: 'PropBlaze Platform <onboarding@resend.dev>',
-              to: getReportEmail(),
-              subject: `🏠 New Property Offer: ${property.type} in ${property.city} — PropBlaze AI Match`,
-              html: emailBody,
-            }),
-          });
-        } catch (error) {
-          console.error('Email send failed:', error);
-        }
+    // Show progress while API processes
+    const progressInterval = setInterval(() => {
+      setSendProgress(p => Math.min(p + Math.ceil(100 / (total * 3)), 92));
+    }, 800);
+
+    try {
+      const ownerEmail = getReportEmail();
+      const ownerPhone = typeof window !== 'undefined' ? (localStorage.getItem('pb_whatsapp') || '') : '';
+
+      const resp = await fetch('/api/distribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          property: {
+            type: property.type,
+            city: property.city,
+            country: property.country,
+            areaSqm: property.areaSqm,
+            price: property.price,
+            currency: property.currency || 'EUR',
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            address: property.address,
+            description: aiPackData?.description || shortDesc,
+          },
+          agencies: apiAgencies,
+          ownerName: property.ownerName || 'Owner',
+          ownerEmail,
+          ownerPhone,
+          // Pass AI-generated description as letter body if available
+          customLetter: aiPackData?.emailDraft || undefined,
+          demoMode: false,   // REAL sending — approved by owner
+        }),
+      });
+
+      if (resp.ok) {
+        const result = await resp.json();
+        console.log('[APEX] Distribution result:', result);
       }
+    } catch (err) {
+      console.error('[APEX] Distribution API error:', err);
+    } finally {
+      clearInterval(progressInterval);
+      setSendProgress(100);
     }
 
     setIsSending(false);
 
-    // Save property to localStorage so My Properties page shows it
+    // Save property to localStorage so My Properties shows it
     try {
+      const propId = `wizard-${Date.now()}`;
       const wizardProp = {
-        id: `wizard-${Date.now()}`,
+        id: propId,
         user_id: 'current-user',
         property_type: property.type.toLowerCase(),
         address: property.address || 'Added via wizard',
@@ -267,17 +299,19 @@ export default function PropertiesNewPage() {
         bathrooms: property.bathrooms,
         description: aiPackData?.description || shortDesc,
         headline: aiPackData?.headline || '',
-        photos: photos,
+        photos,
         status: 'in_distribution',
-        agencies_sent: distMode === 'manual' ? selectedAgencies.size : (apexResult?.results.length ?? 10),
+        agencies_sent: agenciesToSend.length,
+        wave_log: agenciesToSend.map(r => ({
+          id: r.agency.id, name: r.agency.name, email: r.agency.email,
+          wave: r.wave, score: Math.round(r.apex_score), sent_at: new Date().toISOString(),
+        })),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
       const existing = JSON.parse(localStorage.getItem('pb_wizard_props') || '[]');
       localStorage.setItem('pb_wizard_props', JSON.stringify([wizardProp, ...existing]));
-    } catch (e) {
-      // localStorage not available
-    }
+    } catch {}
 
     setDistributionComplete(true);
   };
