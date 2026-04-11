@@ -87,10 +87,14 @@ const STATIC_AGENCIES: Record<string, Array<{
     { name: 'Savills Bulgaria', city: 'Sofia', country: 'Bulgaria', website: 'savills.bg', spec: 'Premium commercial & residential investment Bulgaria', langs: ['EN', 'BG', 'DE'], propertyTypes: ['commercial', 'apartment'], priceMin: 150000, priceMax: 5000000, specialties: ['commercial', 'luxury', 'investment'] },
   ],
   Spain: [
-    { name: 'Engel & Völkers Spain', city: 'Madrid', country: 'Spain', website: 'engelvoelkers.com/spain', spec: 'Luxury residential across all Spanish coastal regions', langs: ['EN', 'ES', 'DE', 'FR', 'RU'], propertyTypes: ['villa', 'apartment', 'land'], priceMin: 200000, priceMax: 20000000, specialties: ['luxury', 'coastal', 'sea_view', 'island'] },
-    { name: 'Knight Frank Spain', city: 'Madrid', country: 'Spain', website: 'knightfrank.es', spec: 'Prime & super-prime residential investment, Spain', langs: ['EN', 'ES', 'DE', 'FR', 'RU'], propertyTypes: ['villa', 'apartment', 'commercial'], priceMin: 500000, priceMax: 30000000, specialties: ['ultra_prime', 'luxury', 'investment', 'commercial'] },
-    { name: 'Savills Spain', city: 'Madrid', country: 'Spain', website: 'savills.es', spec: 'Commercial & luxury residential, all Spain markets', langs: ['EN', 'ES', 'DE', 'FR'], propertyTypes: ['apartment', 'villa', 'commercial', 'land'], priceMin: 300000, priceMax: 15000000, specialties: ['luxury', 'commercial', 'investment'] },
-    { name: 'Lucas Fox Spain', city: 'Barcelona', country: 'Spain', website: 'lucasfox.com', spec: 'Barcelona, Costa Brava & Balearic Islands luxury', langs: ['EN', 'ES', 'DE', 'FR', 'RU'], propertyTypes: ['villa', 'apartment', 'house'], priceMin: 300000, priceMax: 15000000, specialties: ['luxury', 'coastal', 'island'] },
+    { name: 'RE/MAX España', city: 'Madrid', country: 'Spain', website: 'remax.es', spec: 'National network — residential, land & commercial across all Spain', langs: ['EN', 'ES', 'DE', 'FR', 'RU'], propertyTypes: ['apartment', 'house', 'villa', 'land', 'commercial'], priceMin: 30000, priceMax: 5000000, specialties: ['investment', 'rental', 'land', 'new_build'] },
+    { name: 'Engel & Völkers Spain', city: 'Madrid', country: 'Spain', website: 'engelvoelkers.com/spain', spec: 'Luxury residential & land plots across all Spanish coastal regions', langs: ['EN', 'ES', 'DE', 'FR', 'RU'], propertyTypes: ['villa', 'apartment', 'land', 'house'], priceMin: 100000, priceMax: 20000000, specialties: ['luxury', 'coastal', 'sea_view', 'island', 'land'] },
+    { name: 'Knight Frank Spain', city: 'Madrid', country: 'Spain', website: 'knightfrank.es', spec: 'Prime & super-prime residential & development land, Spain', langs: ['EN', 'ES', 'DE', 'FR', 'RU'], propertyTypes: ['villa', 'apartment', 'commercial', 'land'], priceMin: 200000, priceMax: 30000000, specialties: ['ultra_prime', 'luxury', 'investment', 'commercial', 'land'] },
+    { name: 'Savills Spain', city: 'Madrid', country: 'Spain', website: 'savills.es', spec: 'Commercial, residential & development land, all Spain', langs: ['EN', 'ES', 'DE', 'FR'], propertyTypes: ['apartment', 'villa', 'commercial', 'land', 'house'], priceMin: 100000, priceMax: 15000000, specialties: ['luxury', 'commercial', 'investment', 'land'] },
+    { name: 'Lucas Fox Spain', city: 'Barcelona', country: 'Spain', website: 'lucasfox.com', spec: 'Barcelona, Costa Brava, Ibiza & Balearic Islands — plots & luxury', langs: ['EN', 'ES', 'DE', 'FR', 'RU'], propertyTypes: ['villa', 'apartment', 'house', 'land'], priceMin: 100000, priceMax: 15000000, specialties: ['luxury', 'coastal', 'island', 'land'] },
+    { name: 'Solvia Real Estate', city: 'Barcelona', country: 'Spain', website: 'solvia.es', spec: 'Land plots, residential & distressed assets across Spain', langs: ['EN', 'ES'], propertyTypes: ['land', 'apartment', 'house', 'commercial'], priceMin: 20000, priceMax: 3000000, specialties: ['land', 'investment', 'new_build'] },
+    { name: 'Tecnocasa Spain', city: 'Madrid', country: 'Spain', website: 'tecnocasa.es', spec: 'Residential & urban land plots — nationwide network Spain', langs: ['EN', 'ES', 'IT'], propertyTypes: ['apartment', 'house', 'land'], priceMin: 30000, priceMax: 1500000, specialties: ['rental', 'investment', 'land'] },
+    { name: 'BM Inmobiliaria', city: 'Marbella', country: 'Spain', website: 'bmimmobiliaria.es', spec: 'Costa del Sol luxury villas, plots & sea-view land', langs: ['EN', 'ES', 'DE', 'RU', 'FR'], propertyTypes: ['villa', 'land', 'apartment'], priceMin: 80000, priceMax: 8000000, specialties: ['coastal', 'luxury', 'land', 'sea_view'] },
   ],
   Portugal: [
     { name: 'Engel & Völkers Portugal', city: 'Lisbon', country: 'Portugal', website: 'engelvoelkers.com/portugal', spec: 'Luxury Lisbon, Algarve & Porto residential market', langs: ['EN', 'PT', 'DE', 'FR', 'RU'], propertyTypes: ['villa', 'apartment', 'house'], priceMin: 150000, priceMax: 10000000, specialties: ['luxury', 'coastal', 'golden_visa', 'investment'] },
@@ -216,72 +220,93 @@ function staticMatch(
     for (const a of agencies) {
       let score = 40 // base
 
-      // ── Geographic scoring (most important) ─────────────────────────────
+      // ── Geographic scoring — highest weight ──────────────────────────────
+      const agencyCluster = Object.entries(CLUSTERS).find(([, c]) => c.includes(agencyCountry))?.[0]
       if (agencyCountry === country) {
-        score += 40 // same country — top priority
+        score += 42   // same country: strong priority
+      } else if (agencyCluster && agencyCluster === propCluster) {
+        score += 18   // same regional cluster (e.g. Portugal for Spain)
+      } else if (CLUSTERS.GlobalInvestors.includes(agencyCountry)) {
+        // Global brands only add value for non-trivial prices
+        score += isLuxury ? 10 : (priceEur >= 150_000 ? 4 : -5)
       } else {
-        const agencyCluster = Object.entries(CLUSTERS).find(([, c]) => c.includes(agencyCountry))?.[0]
-        if (agencyCluster && agencyCluster === propCluster) {
-          score += 20 // same regional cluster
-        } else if (CLUSTERS.GlobalInvestors.includes(agencyCountry) && isLuxury) {
-          score += 12 // global investor market, only for luxury
-        } else {
-          score -= 10 // off-region penalty
-        }
+        // Completely off-region (e.g. Balkans agency for Spain property)
+        score -= 25
       }
 
       // ── Property type match ──────────────────────────────────────────────
-      if (a.propertyTypes.includes(normType)) score += 15
-      else score -= 5
+      if (a.propertyTypes.includes(normType)) score += 16
+      else score -= 8
 
       // ── Price range fit ──────────────────────────────────────────────────
       if (priceEur >= a.priceMin && priceEur <= a.priceMax) {
-        score += 12
+        score += 13
       } else if (priceEur < a.priceMin) {
-        score -= Math.min(20, Math.round((a.priceMin - priceEur) / a.priceMin * 20))
+        // Bigger penalty the further below their minimum we are
+        const gap = (a.priceMin - priceEur) / a.priceMin
+        score -= Math.min(22, Math.round(gap * 25))
       }
 
-      // ── Luxury/ultra-prime bonus ─────────────────────────────────────────
-      if (isUltra && a.specialties.includes('ultra_prime')) score += 15
+      // ── Luxury/ultra-prime bonus/penalty ────────────────────────────────
+      if (isUltra && a.specialties.includes('ultra_prime')) score += 14
       if (isLuxury && a.specialties.includes('luxury')) score += 8
-      if (!isLuxury && a.specialties.includes('ultra_prime')) score -= 20
+      if (!isLuxury && a.specialties.includes('ultra_prime')) score -= 18
 
-      // Clamp
-      score = Math.max(45, Math.min(98, score))
+      // ── Land specialisation bonus ────────────────────────────────────────
+      if (normType === 'land' && a.specialties.includes('land')) score += 8
+
+      // Clamp — keep realistic range without artificial inflation
+      score = Math.max(20, Math.min(98, score))
       scored.push({ agency: a, score })
     }
   }
 
-  // Sort by score desc, take top 28
+  // Sort by score desc, filter out truly irrelevant agencies (score < 45 unless needed)
   scored.sort((a, b) => b.score - a.score)
-  const top28 = scored.slice(0, 28)
+  // Take top 28 but prefer agencies with score >= 45 — pad with best available if needed
+  const qualified = scored.filter(s => s.score >= 45)
+  const top28 = qualified.length >= 20
+    ? qualified.slice(0, 28)
+    : scored.slice(0, 28)
 
-  // Assign waves & build reasons
+  // Assign waves & build accurate reasons
   return top28.map(({ agency: a, score }, i) => {
     const wave: 1 | 2 | 3 = i < 10 ? 1 : i < 20 ? 2 : 3
     const priceFmt = priceEur >= 1_000_000 ? `€${(priceEur / 1_000_000).toFixed(1)}M` : `€${Math.round(priceEur / 1000)}K`
+    const agCluster = Object.entries(CLUSTERS).find(([, c]) => c.includes(a.country))?.[0]
 
-    // Generate contextual reasons
+    // ── Accurate contextual reasons ───────────────────────────────────────
     const reasons: string[] = []
+
+    // Reason 1: geographic relationship
     if (a.country === country) {
-      reasons.push(`Local specialist in ${country} with direct buyer network for this market`)
+      reasons.push(`Local ${country} agency with direct buyer network for this specific market`)
+    } else if (agCluster === propCluster) {
+      reasons.push(`Regional specialist in ${agCluster} cluster — active buyer flow into ${country}`)
+    } else if (CLUSTERS.GlobalInvestors.includes(a.country)) {
+      reasons.push(`Global network with international buyer database covering ${country} investments`)
     } else {
-      const agCluster = Object.entries(CLUSTERS).find(([, c]) => c.includes(a.country))?.[0]
-      if (agCluster === propCluster) {
-        reasons.push(`Active regional agency with verified buyer flow from ${a.country} into ${country}`)
-      } else {
-        reasons.push(`International buyer network with documented interest in ${country} properties`)
-      }
+      reasons.push(`Cross-market agency with some exposure to ${country} investor demand`)
     }
-    if (a.propertyTypes.includes(normType)) {
-      reasons.push(`Specialises in ${normType} sales matching this ${priceFmt} price point`)
+
+    // Reason 2: property type / specialisation
+    if (normType === 'land' && a.specialties.includes('land')) {
+      reasons.push(`Land & plot specialist — active database of buyers seeking buildable ${country} land`)
+    } else if (a.propertyTypes.includes(normType)) {
+      reasons.push(`Proven track record in ${normType} transactions at ${priceFmt} price level`)
+    } else {
+      reasons.push(`Diversified portfolio covering multiple property types including ${normType}`)
     }
+
+    // Reason 3: commercial value
     if (isLuxury && a.specialties.includes('luxury')) {
-      reasons.push(`Premium/luxury portfolio alignment — proven track record in this price segment`)
+      reasons.push(`Luxury & premium segment focus — aligned with this property's price positioning`)
     } else if (a.specialties.includes('investment')) {
-      reasons.push(`Strong investor client base actively seeking ${country} property opportunities`)
+      reasons.push(`Investment-oriented client base actively seeking ${country} acquisition opportunities`)
+    } else if (a.specialties.includes('new_build')) {
+      reasons.push(`Developer & new-build network — relevant for land with building potential`)
     } else {
-      reasons.push(`Multilingual team (${a.langs.slice(0, 3).join(', ')}) serving international buyers`)
+      reasons.push(`Multilingual team (${a.langs.slice(0, 3).join(', ')}) — reaches international buyers`)
     }
 
     return {
@@ -293,7 +318,8 @@ function staticMatch(
       spec: a.spec,
       reasons: reasons.slice(0, 3),
       langs: a.langs,
-      score: Math.min(99, Math.max(62, score)),
+      // Real score — no artificial inflation. Min 40 so UI doesn't look broken.
+      score: Math.min(99, Math.max(40, score)),
       wave,
     }
   })
