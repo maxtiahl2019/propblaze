@@ -41,7 +41,7 @@ function GlobalStyles() {
         position:relative;
         border-top:1px solid ${C.border};
         overflow:hidden;
-        cursor:pointer;
+        cursor:default;
         transition:background 0.4s ease;
         display:flex; align-items:center;
         min-height:180px;
@@ -307,10 +307,16 @@ export default function LandingPage() {
             >{n}</a>
           ))}
         </div>
-        <Link href="/properties/new" style={{ background: C.white, color: C.black, fontSize: '0.78rem', fontWeight: 800, padding: '8px 20px', borderRadius: 100, textDecoration: 'none', transition: 'background 0.2s', letterSpacing: '0.01em' }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.background = C.gold; }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.background = C.white; }}
-        >Sell property →</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/login" style={{ fontSize: '0.78rem', fontWeight: 600, color: C.w60, textDecoration: 'none', transition: 'color 0.2s', letterSpacing: '0.01em' }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.color = C.white; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.color = C.w60; }}
+          >Sign in</Link>
+          <Link href="/properties/new" style={{ background: C.white, color: C.black, fontSize: '0.78rem', fontWeight: 800, padding: '8px 20px', borderRadius: 100, textDecoration: 'none', transition: 'background 0.2s', letterSpacing: '0.01em' }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.background = C.gold; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.background = C.white; }}
+          >Sell property →</Link>
+        </div>
       </nav>
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
@@ -389,15 +395,14 @@ export default function LandingPage() {
 
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           {bands.map((b, i) => (
-            <Link key={i} href={b.href} className="service-band" style={{ textDecoration: 'none' }}>
+            <div key={i} className="service-band">
               <div className="band-bg" style={{ backgroundImage: `url(${b.img})` }} />
               <div className="band-num">{b.num}</div>
               <div className="band-desc" style={{ padding: '28px 0' }}>
                 <p style={{ fontSize: '0.82rem', color: C.w60, lineHeight: 1.6, margin: 0 }}>{b.desc}</p>
               </div>
               <div className="band-word">{b.word}</div>
-              <div className="band-arrow">→</div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
