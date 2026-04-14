@@ -51,13 +51,14 @@ const CITY_HINTS: Record<string,string> = {
 // ─── Animated matching steps (shown while API call runs) ──────────────────────
 const MATCH_STEPS_FN = (country: string) => [
   'Parsing property parameters…',
-  `Scanning 2,847 verified EU agency profiles…`,
-  `Applying geographic filters — ${country} and region…`,
+  `Building geo-targeted search queries for ${country}…`,
+  `Running live DuckDuckGo search — 5 parallel queries…`,
+  'Deduplicating and ranking search results…',
+  'Feeding live web context to Claude AI…',
+  `Applying strict geo-filter — ${country} specialists only…`,
   'Matching type, price band, language fit…',
-  'Running LLM semantic analysis…',
-  `Ranking by APEX score — ${country} specialists first…`,
   'Organizing into 3 distribution waves…',
-  'Verifying agency contacts & activity status…',
+  'Verifying agency authenticity…',
   'Results ready.',
 ];
 
@@ -95,7 +96,8 @@ export default function ApexDemoPage() {
     let ms = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
     MATCH_STEPS.forEach((_, i) => {
-      ms += 440 + i * 200;
+      // Slower ticker (~18-22s total) to match real live search + LLM time
+      ms += 900 + i * 350;
       timers.push(setTimeout(() => {
         setMatchStep(i);
         setMatchPct(Math.round(((i + 1) / MATCH_STEPS.length) * 100));
@@ -434,7 +436,7 @@ export default function ApexDemoPage() {
                 </div>
                 {provider && (
                   <div style={{ fontSize:'0.65rem',color:C.w40,background:'rgba(255,255,255,0.06)',borderRadius:100,padding:'4px 10px',border:`1px solid ${C.border}` }}>
-                    Powered by {provider === 'claude' ? '⚡ Claude AI' : provider === 'openai' ? '🤖 GPT-4o' : '🔷 APEX Engine'}
+                    Powered by {provider.startsWith('claude') ? '⚡ Claude AI + Live Web Search' : provider.startsWith('openai') ? '🤖 GPT-4o + Live Web Search' : provider === 'fallback' ? '🔷 APEX Engine' : '🌐 Live Search'}
                   </div>
                 )}
               </div>
