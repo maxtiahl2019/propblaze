@@ -40,6 +40,7 @@ interface PropertyData {
   mode: 'sale' | 'rent';
   price: number;
   currency: 'EUR' | 'USD' | 'CHF' | 'RSD';
+  ownerName?: string;
 }
 
 interface AIPackData {
@@ -48,6 +49,7 @@ interface AIPackData {
   keyFeatures: string[];
   investmentHighlights: string[];
   targetBuyerProfile: string;
+  emailDraft?: string;
 }
 
 export default function PropertiesNewPage() {

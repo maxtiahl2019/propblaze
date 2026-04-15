@@ -11,6 +11,76 @@ import clsx from 'clsx';
 
 type Tab = 'overview' | 'distribution' | 'leads' | 'billing';
 
+// ─── Inline stub components (TODO: extract to /components when finalized) ──
+function CampaignStats({ campaign }: { campaign: any }) {
+  if (!campaign) return <p className="text-xs text-gray-400">No campaign data yet</p>
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {[
+        ['Wave', `${campaign.wave_current || 1}/${campaign.wave_total || 3}`],
+        ['Agencies', campaign.agencies_total ?? 0],
+        ['Replied', campaign.agencies_replied ?? 0],
+        ['Status', campaign.status || '—'],
+      ].map(([k, v]) => (
+        <div key={String(k)} className="bg-gray-50 rounded-xl p-3">
+          <p className="text-[0.65rem] text-gray-400 uppercase tracking-wider">{k}</p>
+          <p className="text-sm font-semibold text-gray-800 capitalize">{String(v)}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DistributionReport({ deliveries }: { deliveries: any[] }) {
+  if (!deliveries || deliveries.length === 0) return <p className="text-xs text-gray-400">No deliveries yet</p>
+  return (
+    <ul className="space-y-2">
+      {deliveries.slice(0, 10).map((d, i) => (
+        <li key={d.id || i} className="flex justify-between items-center text-xs bg-gray-50 rounded-lg p-2">
+          <span className="text-gray-700">{d.agency_name || d.channel || 'Agency'}</span>
+          <span className="text-gray-400">{d.status || 'sent'}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function LeadsPanel({ leads, onUpdate }: { leads: any[]; onUpdate?: () => void }) {
+  if (!leads || leads.length === 0) return <p className="text-xs text-gray-400">No replies yet</p>
+  return (
+    <ul className="space-y-2">
+      {leads.map(l => (
+        <li key={l.id} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 text-xs">
+          <span className="font-medium text-gray-800 flex-1">{l.agency_name}</span>
+          <span className="text-gray-500">{l.status?.replace('_', ' ')}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function MarkAsSoldModal({ propertyId, propertyTitle, onClose, onSuccess }: {
+  propertyId: string; propertyTitle: string; onClose: () => void; onSuccess: () => void
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
+        <h3 className="font-bold text-lg mb-2">Mark as sold</h3>
+        <p className="text-sm text-gray-600 mb-4">Confirm that <strong>{propertyTitle}</strong> is sold. This will stop all distributions and billing.</p>
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+          <button
+            onClick={async () => {
+              try { await api.post(`/properties/${propertyId}/mark-sold`, {}) } catch {}
+              onSuccess()
+            }}
+            className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">Confirm sold</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // âââ Demo data for property detail âââââââââââââââââââââââââââââââââââââââââââ
 const DEMO_PROPERTY_MAP: Record<string, Partial<Property> & { [k: string]: any }> = {
   'demo-1': {

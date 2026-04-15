@@ -8,29 +8,10 @@
  * GET  /api/agency-docs?offerId=...    → list docs for an offer
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { offersStore, msgsStore, logFeedback, type Msg } from '@/lib/api-globals'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-interface Offer {
-  id: string
-  docs: { id: string; name: string; requestedAt: string; receivedAt?: string; url?: string }[]
-  status: string
-  statusHistory: { at: string; status: string; note?: string }[]
-  seller: { name: string }
-  property: { address: string; city: string }
-}
-
-interface Msg { id: string; offerId: string; from: 'agency' | 'owner' | 'seller'; text: string; at: string }
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __PB_OFFERS__: Offer[] | undefined
-  // eslint-disable-next-line no-var
-  var __PB_MSGS__: Record<string, Msg[]> | undefined
-  // eslint-disable-next-line no-var
-  var __PB_FEEDBACK__: { at: string; offerId: string; ref: string; event: string; note?: string }[] | undefined
-}
 
 const DOC_CATALOG: Record<string, { name: string; delay: number }> = {
   title_deed:    { name: 'Title deed (свидетельство о собственности)', delay: 2000 },
@@ -45,7 +26,7 @@ const DOC_CATALOG: Record<string, { name: string; delay: number }> = {
 
 export async function GET(req: NextRequest) {
   const offerId = req.nextUrl.searchParams.get('offerId') || ''
-  const offers = global.__PB_OFFERS__ || []
+  const offers = offersStore()
   const offer = offers.find(o => o.id === offerId)
   if (!offer) return NextResponse.json({ error: 'offer not found' }, { status: 404 })
   return NextResponse.json({ success: true, docs: offer.docs, catalog: DOC_CATALOG })
@@ -57,13 +38,12 @@ export async function POST(req: NextRequest) {
   if (!offerId || !Array.isArray(docs) || docs.length === 0) {
     return NextResponse.json({ error: 'offerId & docs[] required' }, { status: 400 })
   }
-  const offers = global.__PB_OFFERS__ || []
+  const offers = offersStore()
   const offer = offers.find(o => o.id === offerId)
   if (!offer) return NextResponse.json({ error: 'offer not found' }, { status: 404 })
 
   const nowIso = new Date().toISOString()
 
-  // Create doc records in "requested" state
   const requested = docs.map(key => {
     const info = DOC_CATALOG[key] || { name: key, delay: 1500 }
     const doc = {
@@ -77,22 +57,18 @@ export async function POST(req: NextRequest) {
     return doc
   })
 
-  // Set status to pending_docs
   offer.status = 'pending_docs'
   offer.statusHistory.push({ at: nowIso, status: 'pending_docs', note: `Requested ${requested.length} doc(s)` })
 
-  // Feedback log
-  if (!global.__PB_FEEDBACK__) global.__PB_FEEDBACK__ = []
-  global.__PB_FEEDBACK__.unshift({
-    at: nowIso, offerId, ref: (offer as { ref?: string }).ref || '',
+  logFeedback({
+    at: nowIso, offerId, ref: offer.ref || '',
     event: 'docs_requested',
     note: requested.map(d => d.name).join('; '),
   })
 
-  // Append agency message into chat
-  if (!global.__PB_MSGS__) global.__PB_MSGS__ = {}
-  if (!global.__PB_MSGS__[offerId]) global.__PB_MSGS__[offerId] = []
-  const thread = global.__PB_MSGS__[offerId]
+  const msgs = msgsStore()
+  if (!msgs[offerId]) msgs[offerId] = []
+  const thread = msgs[offerId]
 
   const agencyMsg: Msg = {
     id: 'm-' + Date.now(),
@@ -102,7 +78,6 @@ export async function POST(req: NextRequest) {
   }
   thread.push(agencyMsg)
 
-  // Simulate seller ack + delivery a bit later (same request, instant for demo)
   const ackMsg: Msg = {
     id: 'm-' + (Date.now() + 1),
     offerId, from: 'seller',
@@ -111,7 +86,6 @@ export async function POST(req: NextRequest) {
   }
   thread.push(ackMsg)
 
-  // Mark docs as received (demo: instant simulated delivery with fake URLs)
   for (const d of requested) {
     d.receivedAt = new Date(Date.now() + 2500).toISOString()
     d.url = `/docs/${offerId}/${encodeURIComponent(d.name)}.pdf`
@@ -124,12 +98,11 @@ export async function POST(req: NextRequest) {
   }
   thread.push(deliveryMsg)
 
-  // Status back to in_progress
   const receivedIso = new Date(Date.now() + 3000).toISOString()
   offer.status = 'in_progress'
   offer.statusHistory.push({ at: receivedIso, status: 'in_progress', note: 'Docs received' })
-  global.__PB_FEEDBACK__.unshift({
-    at: receivedIso, offerId, ref: (offer as { ref?: string }).ref || '',
+  logFeedback({
+    at: receivedIso, offerId, ref: offer.ref || '',
     event: 'docs_received', note: `${requested.length} docs`,
   })
 

@@ -1,26 +1,11 @@
 /**
  * POST /api/auth/register
- *   body: { email, password, full_name, role? }
- *   → { access_token, user }
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { usersStore, tokensStore, type StoredUser } from '@/lib/api-globals'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-interface StoredUser {
-  id: string; email: string; passwordHash: string; full_name: string
-  role: 'owner' | 'agency' | 'staff'; status: 'active'
-  email_verified: boolean; phone_verified: boolean
-  created_at: string; updated_at: string
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __PB_USERS__: StoredUser[] | undefined
-  // eslint-disable-next-line no-var
-  var __PB_TOKENS__: Record<string, string> | undefined
-}
 
 function hash(pw: string): string {
   let h = 0
@@ -38,10 +23,10 @@ export async function POST(req: NextRequest) {
   if (!email || !password) return NextResponse.json({ detail: 'Email and password required' }, { status: 400 })
   if (password.length < 8) return NextResponse.json({ detail: 'Password must be at least 8 characters' }, { status: 400 })
 
-  if (!global.__PB_USERS__) global.__PB_USERS__ = []
-  if (!global.__PB_TOKENS__) global.__PB_TOKENS__ = {}
+  const users = usersStore()
+  const tokens = tokensStore()
 
-  const existing = global.__PB_USERS__.find(u => u.email === email)
+  const existing = users.find(u => u.email === email)
   if (existing) return NextResponse.json({ detail: 'An account with this email already exists. Please sign in.' }, { status: 409 })
 
   const user: StoredUser = {
@@ -50,10 +35,10 @@ export async function POST(req: NextRequest) {
     status: 'active', email_verified: true, phone_verified: false,
     created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
   }
-  global.__PB_USERS__.push(user)
+  users.push(user)
 
   const token = 't_' + user.id + '_' + Date.now().toString(36)
-  global.__PB_TOKENS__[token] = user.id
+  tokens[token] = user.id
 
   const { passwordHash, ...publicUser } = user
   return NextResponse.json({ access_token: token, token_type: 'bearer', user: publicUser })

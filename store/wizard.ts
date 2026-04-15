@@ -34,6 +34,7 @@ export interface Step2Data {
   exclusive_agreement: string; // 'yes' | 'no' | 'maybe'
   remote_viewing: boolean;
   target_buyer_types: string[];
+  commission_pct?: number | null;
 }
 
 export interface Step3Data {

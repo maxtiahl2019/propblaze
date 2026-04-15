@@ -15,73 +15,22 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
+import {
+  offersStore, feedbackStore, logFeedback,
+  type Offer, type OfferStatus, type FeedbackEvent,
+} from '@/lib/api-globals'
+
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export type OfferStatus =
-  | 'new'           // just routed by engine, awaiting agency decision
-  | 'accepted'      // agency took the lead
-  | 'in_progress'  // actively working (chat ongoing)
-  | 'pending_docs'  // waiting on seller to send docs
-  | 'closed'        // deal done / archived
-  | 'declined'      // agency declined
-
-interface DocItem {
-  id: string
-  name: string
-  requestedAt: string
-  receivedAt?: string
-  url?: string        // demo: placeholder URL
-}
-
-interface Offer {
-  id: string
-  ref: string
-  receivedAt: string
-  property: {
-    type: string; address: string; city: string; country: string; flag: string
-    sqm: number; beds: number; price: number; currency: string
-    description: string; photos: number
-  }
-  seller: { name: string; lang: string; respondsIn: string; email?: string }
-  match: { score: number; wave: 1 | 2 | 3; reasons: string[] }
-  status: OfferStatus
-  statusHistory: { at: string; status: OfferStatus; note?: string }[]
-  docs: DocItem[]
-}
-
-interface FeedbackEvent {
-  at: string
-  offerId: string
-  ref: string
-  event: 'routed' | 'accepted' | 'declined' | 'in_progress' | 'pending_docs' | 'closed' | 'docs_requested' | 'docs_received'
-  score?: number
-  city?: string
-  country?: string
-  note?: string
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __PB_OFFERS__: Offer[] | undefined
-  // eslint-disable-next-line no-var
-  var __PB_FEEDBACK__: FeedbackEvent[] | undefined
-}
-
 function store(): Offer[] {
-  if (!global.__PB_OFFERS__) global.__PB_OFFERS__ = seed()
-  return global.__PB_OFFERS__
+  const s = offersStore()
+  if (s.length === 0) s.push(...seed())
+  return s
 }
 
 function feedback(): FeedbackEvent[] {
-  if (!global.__PB_FEEDBACK__) global.__PB_FEEDBACK__ = []
-  return global.__PB_FEEDBACK__
-}
-
-function logFeedback(ev: FeedbackEvent) {
-  const fb = feedback()
-  fb.unshift(ev)
-  if (fb.length > 500) fb.length = 500
+  return feedbackStore()
 }
 
 function seed(): Offer[] {

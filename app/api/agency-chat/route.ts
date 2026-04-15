@@ -6,30 +6,13 @@
  * otherwise canned scripted replies.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { msgsStore, type Msg } from '@/lib/api-globals'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-interface Msg {
-  id: string
-  offerId: string
-  from: 'agency' | 'owner' | 'seller'
-  text: string
-  at: string
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __PB_MSGS__: Record<string, Msg[]> | undefined
-}
-
-function store(): Record<string, Msg[]> {
-  if (!global.__PB_MSGS__) global.__PB_MSGS__ = {}
-  return global.__PB_MSGS__
-}
-
 function thread(offerId: string): Msg[] {
-  const s = store()
+  const s = msgsStore()
   if (!s[offerId]) {
     s[offerId] = [{
       id: 'm-' + Date.now(),
