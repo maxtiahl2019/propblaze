@@ -1,13 +1,38 @@
 /**
- * GET  /api/agency-feed?since=<iso>  → returns offers created since timestamp
- * POST /api/agency-feed               → creates a new offer (used by APEX engine)
+ * Agency cabinet API (in-memory, demo-grade).
  *
- * In-memory store for demo. Replace with DB in production.
+ * GET    /api/agency-feed?since=<iso>        → list offers (optionally incremental)
+ * POST   /api/agency-feed                     → create a new offer (engine simulation)
+ * PATCH  /api/agency-feed                     → update offer status (accept/decline/etc)
+ *                                               body: { id, status, note? }
+ *
+ * Status flow:
+ *   new → accepted → in_progress → pending_docs → closed
+ *        ↘ declined
+ *
+ * Each status change is logged to __PB_FEEDBACK__ so the engine can learn
+ * (acceptance rate, decline reasons, time-to-accept, etc).
  */
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+export type OfferStatus =
+  | 'new'           // just routed by engine, awaiting agency decision
+  | 'accepted'      // agency took the lead
+  | 'in_progress'  // actively working (chat ongoing)
+  | 'pending_docs'  // waiting on seller to send docs
+  | 'closed'        // deal done / archived
+  | 'declined'      // agency declined
+
+interface DocItem {
+  id: string
+  name: string
+  requestedAt: string
+  receivedAt?: string
+  url?: string        // demo: placeholder URL
+}
 
 interface Offer {
   id: string
@@ -18,62 +43,88 @@ interface Offer {
     sqm: number; beds: number; price: number; currency: string
     description: string; photos: number
   }
-  owner: { name: string; lang: string; respondsIn: string }
+  seller: { name: string; lang: string; respondsIn: string; email?: string }
   match: { score: number; wave: 1 | 2 | 3; reasons: string[] }
-  status: 'new' | 'viewed' | 'replied' | 'declined'
+  status: OfferStatus
+  statusHistory: { at: string; status: OfferStatus; note?: string }[]
+  docs: DocItem[]
 }
 
-// Module-level store survives across requests within same lambda warm window.
+interface FeedbackEvent {
+  at: string
+  offerId: string
+  ref: string
+  event: 'routed' | 'accepted' | 'declined' | 'in_progress' | 'pending_docs' | 'closed' | 'docs_requested' | 'docs_received'
+  score?: number
+  city?: string
+  country?: string
+  note?: string
+}
+
 declare global {
   // eslint-disable-next-line no-var
   var __PB_OFFERS__: Offer[] | undefined
+  // eslint-disable-next-line no-var
+  var __PB_FEEDBACK__: FeedbackEvent[] | undefined
 }
 
-function getStore(): Offer[] {
-  if (!global.__PB_OFFERS__) {
-    global.__PB_OFFERS__ = seed()
-  }
+function store(): Offer[] {
+  if (!global.__PB_OFFERS__) global.__PB_OFFERS__ = seed()
   return global.__PB_OFFERS__
+}
+
+function feedback(): FeedbackEvent[] {
+  if (!global.__PB_FEEDBACK__) global.__PB_FEEDBACK__ = []
+  return global.__PB_FEEDBACK__
+}
+
+function logFeedback(ev: FeedbackEvent) {
+  const fb = feedback()
+  fb.unshift(ev)
+  if (fb.length > 500) fb.length = 500
 }
 
 function seed(): Offer[] {
   const now = Date.now()
-  return [
-    {
-      id: 'PB-' + (now - 3_600_000),
-      ref: 'PB-2026-0041',
-      receivedAt: new Date(now - 3_600_000).toISOString(),
-      property: {
-        type: 'Villa', address: 'Jadranska bb 14', city: 'Budva', country: 'Montenegro', flag: '🇲🇪',
-        sqm: 210, beds: 4, price: 485000, currency: 'EUR',
-        description: 'Sea-view villa with pool, 400 m from the beach. Fully furnished.', photos: 12,
-      },
-      owner: { name: 'A. Petrov', lang: 'RU', respondsIn: '2h' },
-      match: { score: 94, wave: 1, reasons: ['Geo: Budva ✓', 'Luxury segment ✓', 'Russian buyer profile ✓'] },
-      status: 'new',
+  const o: Offer = {
+    id: 'PB-' + (now - 3_600_000),
+    ref: 'PB-2026-0041',
+    receivedAt: new Date(now - 3_600_000).toISOString(),
+    property: {
+      type: 'Villa', address: 'Jadranska bb 14', city: 'Budva', country: 'Montenegro', flag: '🇲🇪',
+      sqm: 210, beds: 4, price: 485000, currency: 'EUR',
+      description: 'Sea-view villa with pool, 400 m from the beach. Fully furnished.', photos: 12,
     },
-  ]
+    seller: { name: 'A. Petrov', lang: 'RU', respondsIn: '2h', email: 'a.petrov@seller.propblaze' },
+    match: { score: 94, wave: 1, reasons: ['Geo: Budva ✓', 'Luxury segment ✓', 'Russian buyer profile ✓'] },
+    status: 'new',
+    statusHistory: [{ at: new Date(now - 3_600_000).toISOString(), status: 'new' }],
+    docs: [],
+  }
+  return [o]
 }
 
 export async function GET(req: NextRequest) {
   const since = req.nextUrl.searchParams.get('since')
-  const store = getStore()
-  const filtered = since ? store.filter(o => o.receivedAt > since) : store
+  const s = store()
+  const filtered = since ? s.filter(o => o.receivedAt > since || (o.statusHistory[o.statusHistory.length - 1]?.at > since)) : s
   return NextResponse.json({
     success: true,
-    offers: filtered.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt)),
+    offers: [...filtered].sort((a, b) => b.receivedAt.localeCompare(a.receivedAt)),
+    feedback: feedback().slice(0, 20),
     serverTime: new Date().toISOString(),
   })
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const store = getStore()
+  const s = store()
   const id = 'PB-' + Date.now()
+  const nowIso = new Date().toISOString()
   const offer: Offer = {
     id,
-    ref: body.ref || 'PB-2026-' + String(40 + store.length).padStart(4, '0'),
-    receivedAt: new Date().toISOString(),
+    ref: body.ref || 'PB-2026-' + String(40 + s.length).padStart(4, '0'),
+    receivedAt: nowIso,
     property: {
       type: body.type || 'Apartment',
       address: body.address || 'Demo address',
@@ -87,10 +138,11 @@ export async function POST(req: NextRequest) {
       description: body.description || 'New listing routed via APEX matching.',
       photos: Number(body.photos) || 6,
     },
-    owner: {
-      name: body.ownerName || 'Owner',
-      lang: body.ownerLang || 'EN',
+    seller: {
+      name: body.sellerName || body.ownerName || 'Seller',
+      lang: body.sellerLang || body.ownerLang || 'EN',
       respondsIn: body.respondsIn || '4h',
+      email: body.sellerEmail || undefined,
     },
     match: {
       score: Number(body.score) || 80,
@@ -98,9 +150,50 @@ export async function POST(req: NextRequest) {
       reasons: Array.isArray(body.reasons) ? body.reasons.slice(0, 4).map(String) : ['AI-matched'],
     },
     status: 'new',
+    statusHistory: [{ at: nowIso, status: 'new' }],
+    docs: [],
   }
-  store.unshift(offer)
-  // Keep only last 50 to prevent unbounded growth
-  if (store.length > 50) store.length = 50
+  s.unshift(offer)
+  if (s.length > 50) s.length = 50
+
+  logFeedback({
+    at: nowIso,
+    offerId: offer.id,
+    ref: offer.ref,
+    event: 'routed',
+    score: offer.match.score,
+    city: offer.property.city,
+    country: offer.property.country,
+  })
+
+  return NextResponse.json({ success: true, offer })
+}
+
+export async function PATCH(req: NextRequest) {
+  const body = await req.json().catch(() => ({}))
+  const { id, status, note } = body as { id?: string; status?: OfferStatus; note?: string }
+  if (!id || !status) return NextResponse.json({ error: 'id & status required' }, { status: 400 })
+  const s = store()
+  const offer = s.find(o => o.id === id)
+  if (!offer) return NextResponse.json({ error: 'offer not found' }, { status: 404 })
+
+  const allowed: OfferStatus[] = ['new', 'accepted', 'in_progress', 'pending_docs', 'closed', 'declined']
+  if (!allowed.includes(status)) return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+
+  const nowIso = new Date().toISOString()
+  offer.status = status
+  offer.statusHistory.push({ at: nowIso, status, note })
+
+  logFeedback({
+    at: nowIso,
+    offerId: offer.id,
+    ref: offer.ref,
+    event: status as FeedbackEvent['event'],
+    score: offer.match.score,
+    city: offer.property.city,
+    country: offer.property.country,
+    note,
+  })
+
   return NextResponse.json({ success: true, offer })
 }
