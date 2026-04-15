@@ -20,7 +20,7 @@ const NAV = [
   },
   {
     href: '/leads',
-    label: 'Leads',
+    label: 'Sellers',
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="5" r="3" stroke="currentColor" strokeWidth="1.25"/><path d="M1 13.5C1 11.015 3.015 9 5.5 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/><path d="M11 9V14M8.5 11.5H13.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
     badge: '3',
   },

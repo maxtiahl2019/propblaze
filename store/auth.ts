@@ -93,10 +93,9 @@ export const useAuth = create<AuthStore>()(
           return;
         }
 
-        // ── Fallback: FastAPI backend ──────────────────────────────────────────
+        // ── Fallback: Next.js in-memory auth API (same origin) ────────────────
         try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-          const res = await fetch(`${apiUrl}/auth/login`, {
+          const res = await fetch(`/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -109,12 +108,7 @@ export const useAuth = create<AuthStore>()(
           const loginData = await res.json();
           const token = loginData.access_token;
           if (typeof window !== 'undefined') localStorage.setItem('access_token', token);
-
-          const userRes = await fetch(`${apiUrl}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const userData = await userRes.json();
-          set({ user: userData, token, isAuthenticated: true, isLoading: false });
+          set({ user: loginData.user, token, isAuthenticated: true, isLoading: false });
         } catch (err: any) {
           if (!err.message) set({ error: 'Login failed — check your email and password', isLoading: false });
           throw err;
@@ -202,13 +196,12 @@ export const useAuth = create<AuthStore>()(
           return;
         }
 
-        // ── Fallback: FastAPI backend ──────────────────────────────────────────
+        // ── Fallback: Next.js in-memory auth API (same origin) ────────────────
         try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-          const res = await fetch(`${apiUrl}/auth/register`, {
+          const res = await fetch(`/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, full_name }),
+            body: JSON.stringify({ email, password, full_name, role }),
           });
           if (!res.ok) {
             const detail = await res.json().catch(() => ({ detail: 'Registration failed' }));
@@ -218,12 +211,7 @@ export const useAuth = create<AuthStore>()(
           const regData = await res.json();
           const token = regData.access_token;
           if (typeof window !== 'undefined') localStorage.setItem('access_token', token);
-
-          const userRes = await fetch(`${apiUrl}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const userData = await userRes.json();
-          set({ user: userData, token, isAuthenticated: true, isLoading: false });
+          set({ user: regData.user, token, isAuthenticated: true, isLoading: false });
         } catch (err: any) {
           if (!err.message) set({ error: 'Registration failed', isLoading: false });
           throw err;

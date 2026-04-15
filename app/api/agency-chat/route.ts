@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 interface Msg {
   id: string
   offerId: string
-  from: 'agency' | 'owner'
+  from: 'agency' | 'owner' | 'seller'
   text: string
   at: string
 }
