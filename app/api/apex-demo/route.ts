@@ -221,6 +221,24 @@ async function callClaude(prompt: string): Promise<ApexAgency[]> {
   return parseAgencies(data.content?.[0]?.text || '')
 }
 
+async function callGemini(prompt: string): Promise<ApexAgency[]> {
+  const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+  if (!key) throw new Error('No Gemini key')
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt + '\n\nReturn ONLY the JSON array, no markdown.' }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 8000 },
+    }),
+    signal: AbortSignal.timeout(45000),
+  })
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`)
+  const data = await res.json()
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  return parseAgencies(text)
+}
+
 async function callOpenAI(prompt: string): Promise<ApexAgency[]> {
   const key = process.env.OPENAI_API_KEY
   if (!key || key === 'YOUR_OPENAI_KEY_HERE') throw new Error('No OpenAI key')
@@ -464,30 +482,36 @@ export async function POST(req: NextRequest) {
     const searchResults = await liveSearch(propType, country, city, priceEur)
     console.log(`[apex] DDG: ${searchResults.length} results in ${Date.now() - t0}ms`)
 
-    // ── STEP 2: Try Claude → OpenAI → Static fallback ──────────────────────
+    // ── STEP 2: Multi-model AI race — Claude + OpenAI in parallel ──────────
+    // CRITICAL: Always call AI, even when DDG returns 0 results.
+    // LLMs use their verified knowledge base for any geo worldwide.
     let agencies: ApexAgency[] = []
     let provider = 'unknown'
 
-    if (searchResults.length > 0) {
-      const prompt = buildPrompt(propType, country, city, priceEur, sqm || '', beds || '', searchResults)
-      try {
-        agencies = await callClaude(prompt)
-        provider = 'claude+live'
-      } catch (e) {
-        console.warn('[apex] Claude:', (e as Error).message)
-        try {
-          agencies = await callOpenAI(prompt)
-          provider = 'openai+live'
-        } catch (e2) {
-          console.warn('[apex] OpenAI:', (e2 as Error).message)
-        }
-      }
+    const prompt = buildPrompt(propType, country, city, priceEur, sqm || '', beds || '', searchResults)
+
+    // Race Claude + OpenAI in parallel — first non-empty result wins
+    const tasks: Promise<{ p: string; a: ApexAgency[] }>[] = [
+      callClaude(prompt).then(a => ({ p: searchResults.length ? 'claude+live' : 'claude+knowledge', a }))
+        .catch(e => { console.warn('[apex] Claude:', (e as Error).message); return { p: 'claude-failed', a: [] } }),
+      callOpenAI(prompt).then(a => ({ p: searchResults.length ? 'openai+live' : 'openai+knowledge', a }))
+        .catch(e => { console.warn('[apex] OpenAI:', (e as Error).message); return { p: 'openai-failed', a: [] } }),
+      callGemini(prompt).then(a => ({ p: searchResults.length ? 'gemini+live' : 'gemini+knowledge', a }))
+        .catch(e => { console.warn('[apex] Gemini:', (e as Error).message); return { p: 'gemini-failed', a: [] } }),
+    ]
+
+    const results = await Promise.all(tasks)
+    // Prefer Claude if it returned something; otherwise OpenAI; otherwise static
+    const winner = results.find(r => r.a.length >= 10) || results.find(r => r.a.length > 0)
+    if (winner) {
+      agencies = winner.a
+      provider = winner.p
     }
 
-    // Fallback to static DB if LLMs unavailable OR returned empty
+    // Static DB only as ultimate emergency (both AI providers failed)
     if (agencies.length === 0) {
       agencies = staticMatch(propType, country, city, priceEur)
-      provider = 'static-db'
+      provider = 'static-emergency'
     }
 
     // Re-assign waves after sort
