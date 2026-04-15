@@ -1,401 +1,302 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
-// ─── Mock incoming offers from property owners ─────────────────────────────
-const INCOMING_OFFERS = [
-  {
-    id: 'offer-001',
-    ref: 'PB-2026-0041',
-    received: '2026-04-07T09:14:00Z',
-    property: {
-      type: 'Villa',
-      icon: '🏡',
-      address: 'Jadranska bb 14, Budva',
-      country: 'Montenegro',
-      area_sqm: 210,
-      bedrooms: 4,
-      bathrooms: 3,
-      year_built: 2019,
-      price: 485000,
-      currency: 'EUR',
-      condition: 'Excellent',
-      description: 'Sea-view villa with pool and landscaped garden. 210 m². Fully furnished. Private road access. Quiet upscale neighbourhood 400m from the beach.',
-      photos: 12,
-      has_docs: true,
-      target_buyers: ['Investor', 'Foreign buyer', 'Luxury'],
-    },
-    owner: {
-      name: 'A. Petrov',
-      country: 'Russia',
-      language: 'RU',
-      response_within: '2h',
-    },
-    match: {
-      score: 94,
-      reasons: ['Geo match: Budva ✓', 'Luxury segment ✓', 'Price band €400K+ ✓', 'Russian buyer target ✓'],
-      wave: 1,
-    },
-    status: 'new',
-  },
-  {
-    id: 'offer-002',
-    ref: 'PB-2026-0038',
-    received: '2026-04-06T16:30:00Z',
-    property: {
-      type: 'Apartment',
-      icon: '🏢',
-      address: 'Knez Mihailova 28, Belgrade',
-      country: 'Serbia',
-      area_sqm: 68,
-      bedrooms: 2,
-      bathrooms: 1,
-      year_built: 2015,
-      price: 127000,
-      currency: 'EUR',
-      condition: 'Good',
-      description: 'City centre apartment. 68 m². Renovated 2023. High floor with partial river view. Walking distance to main square and business district.',
-      photos: 8,
-      has_docs: true,
-      target_buyers: ['Local buyer', 'Investor', 'Expat'],
-    },
-    owner: {
-      name: 'M. Jovanović',
-      country: 'Serbia',
-      language: 'SR',
-      response_within: '4h',
-    },
-    match: {
-      score: 87,
-      reasons: ['Geo match: Belgrade ✓', 'Residential segment ✓', 'Price band €100–150K ✓', 'Serbian market ✓'],
-      wave: 1,
-    },
-    status: 'viewed',
-  },
-  {
-    id: 'offer-003',
-    ref: 'PB-2026-0035',
-    received: '2026-04-05T11:00:00Z',
-    property: {
-      type: 'Penthouse',
-      icon: '🌆',
-      address: 'Bulevar Svetog Petra 7, Podgorica',
-      country: 'Montenegro',
-      area_sqm: 145,
-      bedrooms: 3,
-      bathrooms: 2,
-      year_built: 2022,
-      price: 295000,
-      currency: 'EUR',
-      condition: 'New',
-      description: 'Top-floor penthouse in newly built complex. 145 m² + 35 m² roof terrace. City view. Two underground parking spaces. Smart home system.',
-      photos: 15,
-      has_docs: true,
-      target_buyers: ['Investor', 'Relocation', 'Premium'],
-    },
-    owner: {
-      name: 'D. Nikolić',
-      country: 'Montenegro',
-      language: 'SR',
-      response_within: '1h',
-    },
-    match: {
-      score: 81,
-      reasons: ['Geo match: Montenegro ✓', 'New build ✓', 'Price band €250–350K ✓'],
-      wave: 2,
-    },
-    status: 'responded',
-  },
-];
-
-type OfferStatus = 'new' | 'viewed' | 'responded' | 'declined';
-
-const STATUS_CFG: Record<OfferStatus, { label: string; color: string; bg: string }> = {
-  new:       { label: 'New offer',   color: 'var(--primary)', bg: 'var(--primary-light)' },
-  viewed:    { label: 'Viewed',      color: 'var(--blue)', bg: 'var(--blue-light)' },
-  responded: { label: 'Responded',   color: 'var(--green)', bg: 'var(--green-light)' },
-  declined:  { label: 'Declined',    color: 'var(--text-tertiary)', bg: 'var(--surface-2)' },
-};
-
-function ScoreDot({ score }: { score: number }) {
-  const color = score >= 90 ? '#4ade80' : score >= 80 ? '#e67e22' : '#fbbf24';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <svg width="36" height="36" viewBox="0 0 36 36">
-        <circle cx="18" cy="18" r="16" fill="none" stroke="var(--border)" strokeWidth="3"/>
-        <circle cx="18" cy="18" r="16" fill="none" stroke={color} strokeWidth="3"
-          strokeDasharray={`${(score / 100) * 100.53} 100.53`}
-          strokeLinecap="round" transform="rotate(-90 18 18)"/>
-        <text x="18" y="22" textAnchor="middle" fontSize="9" fontWeight="700" fill={color}>{score}</text>
-      </svg>
-    </div>
-  );
+interface Offer {
+  id: string; ref: string; receivedAt: string;
+  property: { type: string; address: string; city: string; country: string; flag: string; sqm: number; beds: number; price: number; currency: string; description: string; photos: number };
+  owner: { name: string; lang: string; respondsIn: string };
+  match: { score: number; wave: 1 | 2 | 3; reasons: string[] };
+  status: 'new' | 'viewed' | 'replied' | 'declined';
 }
 
-function OfferCard({ offer, onExpand }: { offer: typeof INCOMING_OFFERS[0]; onExpand: () => void }) {
-  const st = STATUS_CFG[offer.status as OfferStatus];
-  return (
-    <div style={{
-      background: 'var(--surface)', border: `1px solid ${offer.status === 'new' ? 'rgba(230,126,34,0.3)' : 'rgba(255,255,255,0.07)'}`,
-      borderRadius: 14, overflow: 'hidden', transition: 'border 0.2s',
-      boxShadow: offer.status === 'new' ? '0 0 0 1px rgba(230,126,34,0.1)' : 'none',
-    }}>
-      {/* Header */}
-      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ fontSize: '1.5rem' }}>{offer.property.icon}</div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text)', letterSpacing: '-0.01em' }}>
-              {offer.property.type} · {offer.property.area_sqm} m²
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-              {offer.property.address}
-            </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ padding: '3px 9px', borderRadius: 6, fontSize: '0.6875rem', fontWeight: 600, color: st.color, background: st.bg }}>
-            {st.label}
-          </span>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-            {offer.ref}
-          </span>
-        </div>
-      </div>
+interface Msg { id: string; offerId: string; from: 'agency' | 'owner'; text: string; at: string }
 
-      {/* Body */}
-      <div style={{ padding: '16px 18px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 16, alignItems: 'start' }}>
-        {/* Left: property info */}
-        <div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            {[
-              { icon: '💶', label: `€${offer.property.price.toLocaleString()}` },
-              { icon: '🛏', label: `${offer.property.bedrooms} bed` },
-              { icon: '📐', label: `${offer.property.area_sqm} m²` },
-              { icon: '🏗', label: offer.property.condition },
-              { icon: '📸', label: `${offer.property.photos} photos` },
-              { icon: '📄', label: offer.property.has_docs ? 'Docs ✓' : 'No docs' },
-            ].map(i => (
-              <span key={i.icon} style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid rgba(255,255,255,0.07)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                {i.icon} {i.label}
-              </span>
-            ))}
-          </div>
+export default function AgencyDemo() {
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [active, setActive] = useState<string | null>(null);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const [simulating, setSimulating] = useState(false);
+  const [lastFeedTs, setLastFeedTs] = useState<string>('');
+  const [lastChatTs, setLastChatTs] = useState<string>('');
+  const chatBottomRef = useRef<HTMLDivElement>(null);
 
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>
-            {offer.property.description}
-          </p>
+  // Initial load + poll for new offers every 5s
+  useEffect(() => {
+    let stop = false;
+    const tick = async () => {
+      const url = lastFeedTs ? `/api/agency-feed?since=${encodeURIComponent(lastFeedTs)}` : '/api/agency-feed';
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        const j = await r.json();
+        if (stop) return;
+        if (j.offers?.length) {
+          setOffers(prev => {
+            const seen = new Set(prev.map((o: Offer) => o.id));
+            const fresh = j.offers.filter((o: Offer) => !seen.has(o.id));
+            return [...fresh, ...prev];
+          });
+        }
+        setLastFeedTs(j.serverTime);
+      } catch {}
+    };
+    tick();
+    const id = setInterval(tick, 5000);
+    return () => { stop = true; clearInterval(id); };
+  }, [lastFeedTs]);
 
-          {/* AI match reasons */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
-            {offer.match.reasons.map(r => (
-              <span key={r} style={{ fontSize: '0.6875rem', padding: '2px 8px', borderRadius: 4, background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', color: '#4ade80' }}>
-                {r}
-              </span>
-            ))}
-          </div>
+  // Load chat for active offer + poll new messages every 2s
+  useEffect(() => {
+    if (!active) return;
+    setMsgs([]);
+    setLastChatTs('');
+    let stop = false;
+    const load = async () => {
+      const url = lastChatTs
+        ? `/api/agency-chat?offerId=${active}&since=${encodeURIComponent(lastChatTs)}`
+        : `/api/agency-chat?offerId=${active}`;
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        const j = await r.json();
+        if (stop) return;
+        if (j.messages?.length) {
+          setMsgs(prev => {
+            const seen = new Set(prev.map(m => m.id));
+            return [...prev, ...j.messages.filter((m: Msg) => !seen.has(m.id))];
+          });
+        }
+        setLastChatTs(j.serverTime);
+      } catch {}
+    };
+    load();
+    const id = setInterval(load, 2000);
+    return () => { stop = true; clearInterval(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
-          {/* Owner info (anonymized) */}
-          <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary),0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>👤</div>
-            <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                Owner: <strong style={{ color: 'var(--text-secondary)' }}>●●●</strong> (revealed after contact)
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                From {offer.owner.country} · Speaks {offer.owner.language} · Responds in {offer.owner.response_within}
-              </div>
-            </div>
-          </div>
-        </div>
+  // Auto-scroll chat
+  useEffect(() => { chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs.length]);
 
-        {/* Right: match score + actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, minWidth: 100 }}>
-          <div style={{ textAlign: 'center' }}>
-            <ScoreDot score={offer.match.score} />
-            <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Match score
-            </div>
-            <div style={{ fontSize: '0.65rem', color: '#e67e22', marginTop: 2 }}>
-              Wave {offer.match.wave}
-            </div>
-          </div>
-
-          {offer.status !== 'responded' && offer.status !== 'declined' && (
-            <button onClick={onExpand} style={{
-              padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg,#c0392b,#e67e22)',
-              color: 'var(--text)', fontWeight: 700, fontSize: '0.75rem',
-              boxShadow: '0 3px 12px linear-gradient(135deg, var(--primary),0.3)', whiteSpace: 'nowrap',
-            }}>
-              Respond →
-            </button>
-          )}
-          {offer.status === 'responded' && (
-            <div style={{ padding: '6px 10px', borderRadius: 8, background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.7rem', color: '#4ade80', fontWeight: 600 }}>✓ Responded</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div style={{ padding: '8px 18px', borderTop: '1px solid var(--surface-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--border)' }}>
-          <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
-          <path d="M6 3.5V6.5L7.5 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-        </svg>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-          Received {new Date(offer.received).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-        </span>
-        <div style={{ flex: 1 }} />
-        <span style={{ fontSize: '0.7rem', color: 'var(--border)' }}>
-          ⏰ Offer expires in 5 days
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Respond modal ─────────────────────────────────────────────────────────────
-function RespondModal({ offer, onClose }: { offer: typeof INCOMING_OFFERS[0]; onClose: () => void }) {
-  const [msg, setMsg] = useState(`Hello,\n\nWe are interested in ${offer.property.type.toLowerCase()} at ${offer.property.address}.\n\nWe specialize in this area and have active buyer base that matches your requirements.\n\nPlease contact us to discuss further.\n\nBest regards,`);
-  const [sent, setSent] = useState(false);
-
-  const handleSend = () => {
-    setSent(true);
-    setTimeout(onClose, 2000);
+  const send = async () => {
+    if (!draft.trim() || !active || sending) return;
+    setSending(true);
+    const text = draft.trim();
+    setDraft('');
+    try {
+      const r = await fetch('/api/agency-chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offerId: active, text }),
+      });
+      const j = await r.json();
+      if (j.messages) {
+        setMsgs(prev => {
+          const seen = new Set(prev.map(m => m.id));
+          return [...prev, ...j.messages.filter((m: Msg) => !seen.has(m.id))];
+        });
+      }
+    } finally { setSending(false); }
   };
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}>
-        {sent ? (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Response sent!</div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>The property owner will be notified. Contact details will be shared after mutual confirmation.</p>
-          </div>
-        ) : (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Respond to offer {offer.ref}</div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4 }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              </button>
-            </div>
+  // Simulate APEX engine routing a new object to this agency
+  const simulateNewOffer = async () => {
+    setSimulating(true);
+    try {
+      // 1) call the real engine to get a realistic property
+      const seedProperty = SAMPLE_PROPS[Math.floor(Math.random() * SAMPLE_PROPS.length)];
+      const r = await fetch('/api/agency-feed', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(seedProperty),
+      });
+      const j = await r.json();
+      if (j.offer) setOffers(prev => [j.offer, ...prev]);
+    } finally { setSimulating(false); }
+  };
 
-            <div style={{ padding: '10px 14px', background: 'rgba(230,126,34,0.07)', border: '1px solid rgba(230,126,34,0.2)', borderRadius: 9, marginBottom: 16, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              <strong style={{ color: '#e67e22' }}>📋 {offer.property.type}</strong> · {offer.property.address} · €{offer.property.price.toLocaleString()}
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Your message to the property owner
-              </label>
-              <textarea
-                value={msg}
-                onChange={e => setMsg(e.target.value)}
-                rows={7}
-                style={{
-                  width: '100%', padding: '10px 13px', boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 9, color: 'var(--text)', fontSize: '0.8125rem', outline: 'none',
-                  resize: 'vertical', lineHeight: 1.6,
-                }}
-              />
-            </div>
-
-            <div style={{ padding: '8px 12px', background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.15)', borderRadius: 8, fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
-              🔒 Owner's contact details are shared only after they accept your response. Your agency ID (PB-AG) is used until then.
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer' }}>
-                Cancel
-              </button>
-              <button onClick={handleSend} style={{ flex: 2, padding: '10px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: 'var(--text)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 3px 12px linear-gradient(135deg, var(--primary),0.3)' }}>
-                Send Response →
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Main page ─────────────────────────────────────────────────────────────────
-export default function AgencyDemoPage() {
-  const [activeOffer, setActiveOffer] = useState<string | null>(null);
-
-  const selectedOffer = INCOMING_OFFERS.find(o => o.id === activeOffer);
-
-  const newCount = INCOMING_OFFERS.filter(o => o.status === 'new').length;
+  const activeOffer = offers.find(o => o.id === active);
 
   return (
-    <div style={{ padding: '28px 32px', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
-      {/* Demo banner */}
-      <div style={{ marginBottom: 20, padding: '8px 16px', background: 'rgba(230,126,34,0.08)', border: '1px solid rgba(230,126,34,0.2)', borderRadius: 9, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8125rem' }}>
-        <span style={{ fontSize: '1rem' }}>🏢</span>
-        <span style={{ color: '#e67e22', fontWeight: 600 }}>Agency Demo Mode</span>
-        <span style={{ color: 'var(--text-tertiary)' }}>— this is how your agency portal looks when matched to property owners</span>
-        <div style={{ flex: 1 }} />
-        <Link href="/register?role=agency" style={{ padding: '5px 12px', borderRadius: 7, background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: 'var(--text)', fontWeight: 600, fontSize: '0.75rem', textDecoration: 'none' }}>
-          Register Agency →
-        </Link>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
-            Incoming Property Offers
-          </h1>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-            {INCOMING_OFFERS.length} offers matched to your agency · {newCount} new
-          </p>
+      <header className="border-b border-white/10 bg-black/30 backdrop-blur-xl sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
+              PropBlaze
+            </Link>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 border border-orange-400/40 text-orange-200 uppercase tracking-wider">Agency Cabinet · Live Demo</span>
+          </div>
+          <button
+            onClick={simulateNewOffer}
+            disabled={simulating}
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-400 hover:to-pink-400 disabled:opacity-50 text-sm font-semibold transition"
+          >
+            {simulating ? 'Маршрутизация…' : '⚡ Симулировать новый объект из APEX'}
+          </button>
         </div>
+      </header>
 
-        {/* Agency stats */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          {[
-            { label: 'Match score', value: '89/100', icon: '🎯', color: '#4ade80' },
-            { label: 'Response rate', value: '94%',    icon: '⚡', color: '#e67e22' },
-            { label: 'Conversions',  value: '12',      icon: '🏆', color: '#60a5fa' },
-          ].map(s => (
-            <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '8px 14px', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.9rem', marginBottom: 2 }}>{s.icon}</div>
-              <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+      <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-12 gap-6">
+        {/* Inbox */}
+        <aside className="col-span-12 lg:col-span-4 space-y-3">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold">Входящие объекты</h2>
+            <span className="text-xs text-white/50">{offers.length} active</span>
+          </div>
+          {offers.length === 0 && (
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-white/50 text-sm">
+              Ожидание объектов от APEX-движка…
             </div>
+          )}
+          {offers.map(o => (
+            <button
+              key={o.id}
+              onClick={() => setActive(o.id)}
+              className={`w-full text-left rounded-xl border p-4 transition ${
+                active === o.id
+                  ? 'border-orange-400 bg-orange-500/10'
+                  : 'border-white/10 bg-white/5 hover:bg-white/10'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{o.property.flag}</span>
+                  <span className="font-semibold text-sm">{o.property.type} · {o.property.city}</span>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  o.match.wave === 1 ? 'bg-green-500/20 text-green-300 border border-green-400/40'
+                  : o.match.wave === 2 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/40'
+                  : 'bg-blue-500/20 text-blue-300 border border-blue-400/40'
+                }`}>W{o.match.wave} · {o.match.score}</span>
+              </div>
+              <div className="text-xs text-white/60 mb-2">{o.property.address}</div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-white/80">€{o.property.price.toLocaleString()}</span>
+                <span className="text-white/40">{timeAgo(o.receivedAt)}</span>
+              </div>
+            </button>
           ))}
-        </div>
+        </aside>
+
+        {/* Property + Chat */}
+        <main className="col-span-12 lg:col-span-8 space-y-4">
+          {!activeOffer && (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center text-white/50">
+              ← Выберите объект слева, чтобы открыть детали и переписку с владельцем
+            </div>
+          )}
+
+          {activeOffer && (
+            <>
+              {/* Property card */}
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="text-xs text-white/50 mb-1">Ref · {activeOffer.ref}</div>
+                    <h3 className="text-2xl font-bold mb-1">{activeOffer.property.flag} {activeOffer.property.type} · {activeOffer.property.city}</h3>
+                    <div className="text-white/70 text-sm">{activeOffer.property.address}, {activeOffer.property.country}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-orange-400">€{activeOffer.property.price.toLocaleString()}</div>
+                    <div className="text-xs text-white/50 mt-1">€{Math.round(activeOffer.property.price / activeOffer.property.sqm).toLocaleString()}/m²</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-3 mb-4 text-center">
+                  <Stat label="Площадь" value={`${activeOffer.property.sqm} m²`} />
+                  <Stat label="Спальни" value={String(activeOffer.property.beds)} />
+                  <Stat label="Фото" value={String(activeOffer.property.photos)} />
+                  <Stat label="Owner reply" value={`~${activeOffer.owner.respondsIn}`} />
+                </div>
+                <p className="text-sm text-white/80 mb-4 leading-relaxed">{activeOffer.property.description}</p>
+                <div className="border-t border-white/10 pt-4">
+                  <div className="text-xs uppercase tracking-wider text-white/50 mb-2">Почему вам</div>
+                  <div className="flex flex-wrap gap-2">
+                    {activeOffer.match.reasons.map((r, i) => (
+                      <span key={i} className="text-xs px-2 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200">{r}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 flex flex-col h-[480px]">
+                <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-sm">Переписка с владельцем</div>
+                    <div className="text-xs text-white/50">{activeOffer.owner.name} · отвечает в течение {activeOffer.owner.respondsIn} · {activeOffer.owner.lang}</div>
+                  </div>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 border border-green-400/30">● live</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                  {msgs.length === 0 && (
+                    <div className="text-center text-white/40 text-sm py-8">Загрузка диалога…</div>
+                  )}
+                  {msgs.map(m => (
+                    <div key={m.id} className={`flex ${m.from === 'agency' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
+                        m.from === 'agency'
+                          ? 'bg-gradient-to-br from-orange-500 to-pink-600 text-white rounded-br-sm'
+                          : 'bg-white/10 text-white/95 rounded-bl-sm'
+                      }`}>
+                        <div className="text-xs opacity-70 mb-0.5">{m.from === 'agency' ? 'Вы (агентство)' : activeOffer.owner.name}</div>
+                        <div>{m.text}</div>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={chatBottomRef} />
+                </div>
+                <div className="border-t border-white/10 p-3 flex gap-2">
+                  <input
+                    value={draft}
+                    onChange={e => setDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+                    placeholder="Напишите владельцу…"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-orange-400/50"
+                  />
+                  <button
+                    onClick={send}
+                    disabled={!draft.trim() || sending}
+                    className="px-5 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-400 hover:to-pink-400 disabled:opacity-40 text-sm font-semibold"
+                  >
+                    {sending ? '…' : 'Отправить'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </main>
       </div>
 
-      {/* Agency ID badge */}
-      <div style={{ padding: '10px 16px', background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Your PropBlaze Agency ID:</span>
-        <code style={{ fontSize: '0.875rem', fontWeight: 700, color: '#e67e22', letterSpacing: '0.05em', background: 'rgba(230,126,34,0.08)', padding: '2px 8px', borderRadius: 5 }}>PB-AG-DEMO-0001</code>
-        <span style={{ fontSize: '0.7rem', color: 'var(--border)' }}>· Used in all offers until contact is confirmed</span>
-      </div>
-
-      {/* Offer cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {INCOMING_OFFERS.map(offer => (
-          <OfferCard
-            key={offer.id}
-            offer={offer}
-            onExpand={() => setActiveOffer(offer.id)}
-          />
-        ))}
-      </div>
-
-      {/* Respond modal */}
-      {selectedOffer && (
-        <RespondModal offer={selectedOffer} onClose={() => setActiveOffer(null)} />
-      )}
+      <footer className="text-center py-6 text-xs text-white/40 border-t border-white/10 mt-8">
+        Real-time agency cabinet · powered by APEX matching engine · Claude+OpenAI+Gemini
+      </footer>
     </div>
   );
 }
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-white/5 border border-white/10 py-2">
+      <div className="text-xs text-white/50">{label}</div>
+      <div className="font-semibold text-sm">{value}</div>
+    </div>
+  );
+}
+
+function timeAgo(iso: string): string {
+  const sec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (sec < 60) return `${sec}s назад`;
+  if (sec < 3600) return `${Math.floor(sec / 60)}m назад`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h назад`;
+  return `${Math.floor(sec / 86400)}d назад`;
+}
+
+const SAMPLE_PROPS = [
+  { type: 'Apartment', address: 'Calle Serrano 84', city: 'Madrid', country: 'Spain', flag: '🇪🇸', sqm: 95, beds: 3, price: 720000, ownerName: 'C. García', ownerLang: 'ES', score: 91, wave: 1, reasons: ['Geo: Madrid centro ✓', 'Premium price band ✓', 'EN+ES owner ✓'], description: 'Renovated piso in Salamanca district. Concierge, garage, balcony.', photos: 14 },
+  { type: 'Villa', address: 'Praia da Marinha 7', city: 'Lagoa', country: 'Portugal', flag: '🇵🇹', sqm: 280, beds: 5, price: 1850000, ownerName: 'M. Costa', ownerLang: 'PT', score: 96, wave: 1, reasons: ['Algarve coast ✓', 'Luxury segment ✓', 'Foreign-buyer ready ✓'], description: 'Cliff-top villa, infinity pool, 180° ocean view, 12 min to Carvoeiro.', photos: 22 },
+  { type: 'Apartment', address: 'Bd Saint-Germain 142', city: 'Paris', country: 'France', flag: '🇫🇷', sqm: 78, beds: 2, price: 1290000, ownerName: 'L. Dubois', ownerLang: 'FR', score: 92, wave: 1, reasons: ['6e arrondissement ✓', 'Prime €/m² band ✓', 'Move-in ready ✓'], description: 'Haussmannien 4ème étage, parquet, cheminée, ascenseur.', photos: 11 },
+  { type: 'Loft', address: 'Bergmannstr 11', city: 'Berlin', country: 'Germany', flag: '🇩🇪', sqm: 132, beds: 3, price: 695000, ownerName: 'S. Schneider', ownerLang: 'DE', score: 88, wave: 1, reasons: ['Kreuzberg loft ✓', 'Investor-ready ✓', 'Strong rental yield ✓'], description: 'Industrial loft in Bergmannkiez, exposed brick, 4m ceilings.', photos: 18 },
+  { type: 'Villa', address: 'Camí de Cala Comte 3', city: 'Ibiza', country: 'Spain', flag: '🇪🇸', sqm: 340, beds: 6, price: 4200000, ownerName: 'A. Marí', ownerLang: 'ES', score: 95, wave: 1, reasons: ['Sant Josep coastline ✓', 'Ultra-luxury ✓', 'Sunset-view plot ✓'], description: 'Modernist villa, infinity pool, direct cala access, fully licensed.', photos: 28 },
+];
