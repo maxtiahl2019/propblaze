@@ -362,6 +362,13 @@ export default function LoginPage() {
                     {isLoading ? <><div style={{ width:16, height:16, border:`2px solid ${C.border}`, borderTopColor:C.white, borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />Signing in…</> : 'Sign In →'}
                   </button>
                 </form>
+
+                <p style={{ textAlign:'center', fontSize:'0.78rem', color:C.w40, marginTop:20 }}>
+                  Don&apos;t have an account?{' '}
+                  <Link href={`/register${roleId ? `?role=${roleId}` : ''}`} style={{ color:C.white, fontWeight:600, textDecoration:'none', borderBottom:`1px solid ${C.bdr2}`, paddingBottom:1 }}>
+                    Sign Up
+                  </Link>
+                </p>
               </div>
             )}
           </div>
