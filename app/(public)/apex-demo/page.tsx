@@ -302,24 +302,31 @@ export default function ApexDemoPage() {
                 {price && <div style={{ fontSize:'0.75rem',color:C.gold,marginTop:6,fontWeight:600 }}>= {priceDisplay}</div>}
               </div>
 
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+              {propType === 'land' || propType === 'commercial' ? (
                 <div>
-                  <label className="fl">Size (m²)</label>
-                  <input type="number" placeholder="e.g. 120" value={sqm} onChange={e => setSqm(e.target.value)} min={0} />
+                  <label className="fl">Size (m²) <span className="req">*</span></label>
+                  <input type="number" placeholder={propType === 'land' ? 'e.g. 1200' : 'e.g. 350'} value={sqm} onChange={e => setSqm(e.target.value)} min={0} />
                 </div>
-                <div>
-                  <label className="fl">Bedrooms</label>
-                  <select value={beds} onChange={e => setBeds(e.target.value)}>
-                    <option value="">Select…</option>
-                    <option value="studio">Studio</option>
-                    <option value="1">1 bedroom</option>
-                    <option value="2">2 bedrooms</option>
-                    <option value="3">3 bedrooms</option>
-                    <option value="4">4 bedrooms</option>
-                    <option value="5+">5+ bedrooms</option>
-                  </select>
+              ) : (
+                <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+                  <div>
+                    <label className="fl">Size (m²)</label>
+                    <input type="number" placeholder="e.g. 120" value={sqm} onChange={e => setSqm(e.target.value)} min={0} />
+                  </div>
+                  <div>
+                    <label className="fl">Bedrooms</label>
+                    <select value={beds} onChange={e => setBeds(e.target.value)}>
+                      <option value="">Select…</option>
+                      <option value="studio">Studio</option>
+                      <option value="1">1 bedroom</option>
+                      <option value="2">2 bedrooms</option>
+                      <option value="3">3 bedrooms</option>
+                      <option value="4">4 bedrooms</option>
+                      <option value="5+">5+ bedrooms</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div style={{ borderTop:`1px solid ${C.border}`,paddingTop:16 }}>
                 <div style={{ fontSize:'0.7rem',fontWeight:700,color:C.w40,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:12 }}>Optional — receive full report by email</div>
@@ -339,7 +346,7 @@ export default function ApexDemoPage() {
                   · <strong style={{ color:C.white }}>{country}</strong>
                   · <strong style={{ color:C.gold }}>{priceDisplay}</strong>
                   {sqm && <> · <strong style={{ color:C.white }}>{sqm}m²</strong></>}
-                  {beds && <> · <strong style={{ color:C.white }}>{beds} bed{beds!=='1'&&beds!=='studio'?'s':''}</strong></>}
+                  {beds && propType !== 'land' && propType !== 'commercial' && <> · <strong style={{ color:C.white }}>{beds} bed{beds!=='1'&&beds!=='studio'?'s':''}</strong></>}
                 </span>
               </div>
             )}
@@ -467,7 +474,7 @@ export default function ApexDemoPage() {
             </div>
 
             {/* Wave filter */}
-            <div style={{ display:'flex',gap:8,marginBottom:20,alignItems:'center',flexWrap:'wrap' }}>
+            <div style={{ display:'flex',gap:8,marginBottom:12,alignItems:'center',flexWrap:'wrap' }}>
               <span style={{ fontSize:'0.7rem',color:C.w40,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase' }}>Show:</span>
               {([
                 { val:0 as const, label:`All ${matches.length}`, color:C.w60 },
@@ -485,6 +492,85 @@ export default function ApexDemoPage() {
               ))}
               <div style={{ marginLeft:'auto',fontSize:'0.7rem',color:C.w40 }}>🔒 Preview — not sent to anyone</div>
             </div>
+
+            {/* Wave description banner */}
+            {waveFilter > 0 && (
+              <div style={{
+                marginBottom:16,borderRadius:12,padding:'14px 18px',
+                background: waveFilter===1?'rgba(34,197,94,0.08)':waveFilter===2?'rgba(59,130,246,0.08)':'rgba(168,85,247,0.08)',
+                border: `1px solid ${waveFilter===1?'rgba(34,197,94,0.25)':waveFilter===2?'rgba(59,130,246,0.25)':'rgba(168,85,247,0.25)'}`,
+                animation:'fadeIn 0.3s ease both',
+              }}>
+                <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:6 }}>
+                  <span style={{ fontSize:'0.85rem' }}>{waveFilter===1?'🎯':waveFilter===2?'📬':'📡'}</span>
+                  <span style={{ fontSize:'0.78rem',fontWeight:800,color:waveFilter===1?C.green:waveFilter===2?C.blue:C.purple }}>
+                    {waveFilter===1?'Wave 1 — Priority delivery':waveFilter===2?'Wave 2 — Follow-up':'Wave 3 — Extended reach'}
+                  </span>
+                </div>
+                <div style={{ fontSize:'0.75rem',color:C.w60,lineHeight:1.6 }}>
+                  {waveFilter===1 && <>Top {wave1.length} agencies with highest APEX score. Sent <strong style={{color:C.white}}>Tuesday 10:00</strong> local time. Best conversion window — first-mover advantage.</>}
+                  {waveFilter===2 && <>Next {wave2.length} agencies. Sent <strong style={{color:C.white}}>Thursday 14:00</strong> — catches agencies who missed Wave 1. Different subject line to avoid pattern fatigue.</>}
+                  {waveFilter===3 && <>Remaining {wave3.length} agencies for maximum coverage. Sent <strong style={{color:C.white}}>Monday 09:00 next week</strong>. Broader regional reach.</>}
+                </div>
+              </div>
+            )}
+
+            {/* Demo distribution letter preview */}
+            {waveFilter > 0 && (
+              <details style={{ marginBottom:20 }}>
+                <summary style={{
+                  cursor:'pointer',fontSize:'0.75rem',fontWeight:700,
+                  color:waveFilter===1?C.green:waveFilter===2?C.blue:C.purple,
+                  marginBottom:8,userSelect:'none',
+                }}>
+                  📧 Preview outreach email for Wave {waveFilter} →
+                </summary>
+                <div style={{
+                  background:'rgba(255,255,255,0.03)',border:`1px solid ${C.border}`,
+                  borderRadius:12,padding:'18px 20px',fontSize:'0.78rem',color:C.w80,lineHeight:1.7,
+                  animation:'fadeIn 0.3s ease both',
+                }}>
+                  <div style={{ marginBottom:12,paddingBottom:12,borderBottom:`1px solid ${C.border}` }}>
+                    <div style={{ fontSize:'0.65rem',color:C.w40,marginBottom:4,textTransform:'uppercase',letterSpacing:'0.08em' }}>Subject</div>
+                    <div style={{ fontWeight:700,color:C.white }}>
+                      {waveFilter===1
+                        ? `Exclusive: ${PROP_TYPES.find(t=>t.id===propType)?.label} for sale in ${city||country} — ${priceDisplay} · APEX-matched to your agency`
+                        : waveFilter===2
+                        ? `Reminder: ${PROP_TYPES.find(t=>t.id===propType)?.label} opportunity in ${city||country} — ${priceDisplay} · AI-verified match`
+                        : `Last chance: ${PROP_TYPES.find(t=>t.id===propType)?.label} listing in ${city||country} — ${priceDisplay}`}
+                    </div>
+                  </div>
+                  <div style={{ whiteSpace:'pre-wrap' }}>
+{`Dear [Agency Name],
+
+We have a verified ${(PROP_TYPES.find(t=>t.id===propType)?.label||'property').toLowerCase()} listing that matches your agency profile — ${city?city+', ':''}${country}.
+
+`}<strong style={{color:C.gold}}>Property highlights:</strong>{`
+• Type: ${PROP_TYPES.find(t=>t.id===propType)?.label}${sqm?`\n• Size: ${sqm} m²`:''}${beds&&propType!=='land'&&propType!=='commercial'?`\n• Bedrooms: ${beds}`:''}
+• Asking price: ${priceDisplay}
+• Location: ${city?city+', ':''}${country}
+• Listing status: Active, direct from owner
+• Documentation: Complete, verified
+
+`}<strong style={{color:C.gold}}>Why your agency:</strong>{`
+APEX AI selected your agency based on geographic specialization, property type match, price band alignment, and buyer pipeline fit.
+
+Full sales pack with photos, floor plan, and investment summary is attached.
+
+To express interest or request a viewing, reply to this email or click the link below.
+
+Best regards,
+PropBlaze Distribution Team
+on behalf of the property owner`}
+                  </div>
+                  <div style={{ marginTop:14,paddingTop:12,borderTop:`1px solid ${C.border}`,display:'flex',gap:8,flexWrap:'wrap' }}>
+                    <span style={{ fontSize:'0.62rem',background:'rgba(34,197,94,0.12)',color:C.green,padding:'3px 10px',borderRadius:100,fontWeight:700 }}>📎 Sales_Pack.pdf</span>
+                    <span style={{ fontSize:'0.62rem',background:'rgba(59,130,246,0.12)',color:C.blue,padding:'3px 10px',borderRadius:100,fontWeight:700 }}>📎 Floor_Plan.pdf</span>
+                    <span style={{ fontSize:'0.62rem',background:'rgba(168,85,247,0.12)',color:C.purple,padding:'3px 10px',borderRadius:100,fontWeight:700 }}>📎 Investment_Summary.pdf</span>
+                  </div>
+                </div>
+              </details>
+            )}
 
             {/* Agency grid */}
             <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:10,marginBottom:40 }}>
