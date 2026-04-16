@@ -7,7 +7,8 @@ import { useAuth } from '@/store/auth'
 import { useTranslation } from '@/lib/i18n/LangContext'
 import type { Lang } from '@/lib/i18n/translations'
 
-const NAV = [
+/* ─── Owner navigation ─────────────────────────────────────────────── */
+const OWNER_NAV = [
   {
     href: '/dashboard',
     label: 'Dashboard',
@@ -58,6 +59,36 @@ const NAV = [
   },
 ]
 
+/* ─── Agency navigation ────────────────────────────────────────────── */
+const AGENCY_NAV = [
+  {
+    href: '/agency-demo',
+    label: 'Dashboard',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.9"/><rect x="8.5" y="1" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.4"/><rect x="1" y="8.5" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.4"/><rect x="8.5" y="8.5" width="6.5" height="6.5" rx="1.5" fill="currentColor" opacity="0.9"/></svg>,
+  },
+  {
+    href: '/agency-demo?tab=new',
+    label: 'Incoming',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5V10.5M4.5 7L8 10.5L11.5 7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12.5H14" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+    badge: '!',
+  },
+  {
+    href: '/agency-demo?tab=in_progress',
+    label: 'In Work',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.25"/><path d="M8 4.5V8L10.5 10.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+  },
+  {
+    href: '/agency-demo?tab=closed',
+    label: 'Closed',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.25"/><path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M12.6 3.4L11.5 4.5M4.5 11.5L3.4 12.6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+  },
+]
+
 // ─── Light language switcher ──────────────────────────────────────────
 function LangBar() {
   const { lang, setLang } = useTranslation()
@@ -88,6 +119,9 @@ export const Sidebar: React.FC = () => {
   const router = useRouter()
   const { user, logout } = useAuth()
   const [showProfile, setShowProfile] = useState(false)
+
+  const isAgency = user?.role === 'agency'
+  const nav = isAgency ? AGENCY_NAV : OWNER_NAV
 
   const handleLogout = () => {
     logout()
@@ -121,8 +155,8 @@ export const Sidebar: React.FC = () => {
             <svg viewBox="0 0 32 32" fill="none" width="30" height="30">
               <defs>
                 <linearGradient id="sbg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#F97316"/>
-                  <stop offset="100%" stopColor="#EA580C"/>
+                  <stop offset="0%" stopColor={isAgency ? '#3B82F6' : '#F97316'}/>
+                  <stop offset="100%" stopColor={isAgency ? '#1D4ED8' : '#EA580C'}/>
                 </linearGradient>
               </defs>
               <path d="M16 2C16 2 8 10 8 18C8 22.4 11.6 26 16 26C20.4 26 24 22.4 24 18C24 10 16 2 16 2Z" fill="url(#sbg)"/>
@@ -131,7 +165,9 @@ export const Sidebar: React.FC = () => {
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>PropBlaze</div>
-            <div style={{ fontSize: '0.55rem', color: 'var(--text-tertiary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>AI Platform</div>
+            <div style={{ fontSize: '0.55rem', color: 'var(--text-tertiary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {isAgency ? 'Agency Portal' : 'AI Platform'}
+            </div>
           </div>
         </div>
       </Link>
@@ -139,34 +175,38 @@ export const Sidebar: React.FC = () => {
       {/* Language Switcher */}
       <LangBar />
 
-      {/* Add Property CTA */}
-      <div style={{ padding: '12px 12px 8px' }}>
-        <Link href="/properties/new"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: '9px 12px',
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: '0.75rem',
-            textDecoration: 'none',
-            boxShadow: 'var(--shadow-sm)',
-          }}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1.5V10.5M1.5 6H10.5" stroke="white" strokeWidth="1.75" strokeLinecap="round"/>
-          </svg>
-          Add Property
-        </Link>
-      </div>
+      {/* Add Property CTA — owners only */}
+      {!isAgency && (
+        <div style={{ padding: '12px 12px 8px' }}>
+          <Link href="/properties/new"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '9px 12px',
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
+              color: 'white',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              textDecoration: 'none',
+              boxShadow: 'var(--shadow-sm)',
+            }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1.5V10.5M1.5 6H10.5" stroke="white" strokeWidth="1.75" strokeLinecap="round"/>
+            </svg>
+            Add Property
+          </Link>
+        </div>
+      )}
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-        {NAV.map(item => {
-          const active = pathname === item.href || pathname.startsWith(item.href + '/')
+        {nav.map(item => {
+          // For agency tabs with query params, match on base path
+          const base = item.href.split('?')[0]
+          const active = pathname === base || pathname.startsWith(base + '/')
           return (
             <Link key={item.href} href={item.href}
               style={{
@@ -228,7 +268,9 @@ export const Sidebar: React.FC = () => {
             fontWeight: 700,
             color: 'white',
             flexShrink: 0,
-            background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
+            background: isAgency
+              ? 'linear-gradient(135deg, #3B82F6, #1D4ED8)'
+              : 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
           }}>
             {user?.email?.charAt(0).toUpperCase() ?? 'U'}
           </div>
@@ -238,7 +280,7 @@ export const Sidebar: React.FC = () => {
             </div>
             <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 3 }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
-              Owner · Active
+              {isAgency ? 'Agency' : 'Owner'} · Active
             </div>
           </div>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--text-tertiary)', flexShrink: 0, transform: showProfile ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
