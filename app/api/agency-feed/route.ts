@@ -33,8 +33,39 @@ function feedback(): FeedbackEvent[] {
   return feedbackStore()
 }
 
+/* Demo photo pools by property type */
+const DEMO_PHOTOS: Record<string, string[]> = {
+  Villa: [
+    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+  ],
+  Apartment: [
+    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
+    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
+  ],
+  Loft: [
+    'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=800&q=80',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
+  ],
+  Land: [
+    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80',
+    'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?w=800&q=80',
+  ],
+  _default: [
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
+  ],
+}
+
+function photosForType(type: string): string[] {
+  return DEMO_PHOTOS[type] || DEMO_PHOTOS._default
+}
+
 function seed(): Offer[] {
   const now = Date.now()
+  const photos = photosForType('Villa')
   const o: Offer = {
     id: 'PB-' + (now - 3_600_000),
     ref: 'PB-2026-0041',
@@ -42,7 +73,8 @@ function seed(): Offer[] {
     property: {
       type: 'Villa', address: 'Jadranska bb 14', city: 'Budva', country: 'Montenegro', flag: '🇲🇪',
       sqm: 210, beds: 4, price: 485000, currency: 'EUR',
-      description: 'Sea-view villa with pool, 400 m from the beach. Fully furnished.', photos: 12,
+      description: 'Sea-view villa with pool, 400 m from the beach. Fully furnished. Three levels, panoramic terrace, private parking for 3 cars. 5 min walk to Old Town.',
+      photos: 12, photoUrls: photos,
     },
     seller: { name: 'A. Petrov', lang: 'RU', respondsIn: '2h', email: 'a.petrov@seller.propblaze' },
     match: { score: 94, wave: 1, reasons: ['Geo: Budva ✓', 'Luxury segment ✓', 'Russian buyer profile ✓'] },
@@ -86,6 +118,7 @@ export async function POST(req: NextRequest) {
       currency: 'EUR',
       description: body.description || 'New listing routed via APEX matching.',
       photos: Number(body.photos) || 6,
+      photoUrls: Array.isArray(body.photoUrls) ? body.photoUrls : photosForType(body.type || 'Apartment'),
     },
     seller: {
       name: body.sellerName || body.ownerName || 'Seller',

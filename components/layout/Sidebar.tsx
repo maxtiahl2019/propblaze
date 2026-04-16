@@ -83,6 +83,17 @@ const AGENCY_NAV = [
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   },
   {
+    href: '/chat',
+    label: 'Messages',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 2H2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h2v2l3-2h7a.5.5 0 0 0 .5-.5v-9A.5.5 0 0 0 14 2Z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round"/><path d="M5 7h6M5 9.5h4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,
+    badge: '2',
+  },
+  {
+    href: '/billing',
+    label: 'Billing',
+    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.25"/><path d="M1 6.5H15" stroke="currentColor" strokeWidth="1.25"/><rect x="3" y="9" width="3" height="1.5" rx="0.75" fill="currentColor" fillOpacity="0.5"/></svg>,
+  },
+  {
     href: '/settings',
     label: 'Settings',
     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.25"/><path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M12.6 3.4L11.5 4.5M4.5 11.5L3.4 12.6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/></svg>,

@@ -163,7 +163,11 @@ export default function LoginPage() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
     if (DEMO_MODE) { demoLogin(roleId ?? 'owner', router); return; }
-    try { await login(email, password); router.replace(role?.dest ?? '/dashboard'); } catch {}
+    try { await login(email, password); router.replace(role?.dest ?? '/dashboard'); } catch {
+      // If API login fails (e.g. no backend), fallback to demo login
+      console.warn('[login] API failed, falling back to demo login');
+      demoLogin(roleId ?? 'owner', router);
+    }
   };
 
   // Property images cycling in bg

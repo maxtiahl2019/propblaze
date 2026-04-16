@@ -21,7 +21,7 @@ export interface Offer {
   property: {
     type: string; address: string; city: string; country: string; flag: string
     sqm: number; beds: number; price: number; currency: string
-    description: string; photos: number
+    description: string; photos: number; photoUrls?: string[]
   }
   seller: { name: string; lang: string; respondsIn: string; email?: string }
   match: { score: number; wave: 1 | 2 | 3; reasons: string[] }
