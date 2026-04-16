@@ -11,6 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { DEMO_AGENCY_POOL, type RealAgency } from '@/lib/ai-matching/demo-agencies'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -462,6 +463,117 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
   }))
 }
 
+// ─── REAL AGENCY POOL MATCH (from DEMO_AGENCY_POOL — verified contacts) ─────
+function matchRealPool(propType: string, country: string, city: string, priceEur: number): ApexAgency[] {
+  const normCountry = country === 'Montenegro' ? 'ME' : country === 'Serbia' ? 'RS'
+    : country === 'Croatia' ? 'HR' : country === 'Greece' ? 'GR'
+    : country === 'Spain' ? 'ES' : country === 'Portugal' ? 'PT'
+    : country === 'Italy' ? 'IT' : country === 'Germany' ? 'DE'
+    : country === 'Austria' ? 'AT' : country === 'UK' ? 'GB'
+    : country === 'France' ? 'FR' : country === 'UAE' ? 'AE'
+    : country === 'Bulgaria' ? 'BG' : country
+
+  const pt = propType.toLowerCase()
+  const normType = pt.includes('apart') || pt.includes('квартир') ? 'apartment'
+    : pt.includes('villa') || pt.includes('вилл') ? 'villa'
+    : pt.includes('land') || pt.includes('участ') || pt.includes('plot') ? 'land'
+    : pt.includes('house') || pt.includes('дом') ? 'house'
+    : pt.includes('commercial') || pt.includes('коммерч') ? 'commercial'
+    : 'apartment'
+
+  const priceBand = priceEur >= 2_000_000 ? 'luxury' : priceEur >= 500_000 ? 'premium' : priceEur >= 100_000 ? 'mid' : 'budget'
+  const cityLower = city.toLowerCase()
+
+  const scored = DEMO_AGENCY_POOL.map(a => {
+    let score = (a.quality_score || 70) * 0.5 // base from quality
+
+    // Country match (+30)
+    if (a.country === normCountry) score += 30
+    // Neighboring country (+10)
+    else if (['ME', 'RS', 'HR', 'BA'].includes(a.country) && ['ME', 'RS', 'HR', 'BA'].includes(normCountry)) score += 10
+    else return null // skip irrelevant countries
+
+    // City/region match (+15)
+    if (a.cities?.some(c => c.toLowerCase() === cityLower)) score += 15
+    else if (a.regions?.some(r => r.toLowerCase().includes(cityLower) || cityLower.includes(r.toLowerCase()))) score += 8
+
+    // Property type match (+12)
+    if (a.property_types.includes(normType)) score += 12
+    else score -= 10
+
+    // Price band match (+8)
+    if (a.price_bands.includes(priceBand)) score += 8
+    else score -= 5
+
+    // Historical performance bonus
+    if (a.historical) {
+      score += (a.historical.response_rate || 0) * 0.08
+      score += (a.historical.conversion_rate || 0) * 0.3
+    }
+
+    // Contact recency penalty (fatigue)
+    if ((a as any).last_contacted) {
+      const daysSince = (Date.now() - new Date((a as any).last_contacted).getTime()) / 86_400_000
+      if (daysSince < 7) score *= 0.3
+      else if (daysSince < 14) score *= 0.65
+      else if (daysSince < 30) score *= 0.85
+    }
+
+    score = Math.min(99, Math.max(40, Math.round(score)))
+
+    // Build reasons
+    const reasons: string[] = []
+    if (a.country === normCountry) reasons.push(`✓ ${a.city || country}-based`)
+    if (a.property_types.includes(normType)) reasons.push(`✓ ${normType.charAt(0).toUpperCase() + normType.slice(1)} specialist`)
+    if (a.price_bands.includes(priceBand)) reasons.push(`✓ Price band`)
+    if (a.historical?.response_rate && a.historical.response_rate >= 75) reasons.push(`✓ ${a.historical.response_rate}% response rate`)
+    if (a.languages?.length) reasons.push(`✓ ${a.languages.map(l => l.toUpperCase()).join(' · ')}`)
+
+    return {
+      name: a.name,
+      city: a.city || '',
+      country: country,
+      flag: a.flag || FLAG_MAP[country] || '🏢',
+      website: (a.website || '').replace(/^https?:\/\//, '').split('/')[0],
+      spec: a.specializations?.slice(0, 3).join(', ') || '',
+      reasons: reasons.slice(0, 4),
+      langs: (a.languages || ['en']).map(l => l.toUpperCase()),
+      score,
+      wave: 1 as 1 | 2 | 3,
+      _source: 'real_pool' as const,
+      _email: a.email,
+    }
+  }).filter(Boolean) as (ApexAgency & { _source: string; _email: string })[]
+
+  scored.sort((a, b) => b.score - a.score)
+  return scored
+}
+
+// ─── Deduplicate: real agencies take priority over AI-generated ──────────────
+function mergeAgencies(realPool: ApexAgency[], aiGenerated: ApexAgency[]): ApexAgency[] {
+  const result = [...realPool]
+  const usedNames = new Set(realPool.map(a => a.name.toLowerCase()))
+
+  for (const a of aiGenerated) {
+    const nameLower = a.name.toLowerCase()
+    // Skip if we already have a similar name from real pool
+    const isDup = usedNames.has(nameLower) || [...usedNames].some(n =>
+      n.includes(nameLower.split(' ')[0]) || nameLower.includes(n.split(' ')[0])
+    )
+    if (!isDup) {
+      result.push(a)
+      usedNames.add(nameLower)
+    }
+  }
+
+  // Sort by score, reassign waves, cap at 30
+  result.sort((a, b) => b.score - a.score)
+  return result.slice(0, 30).map((a, i) => ({
+    ...a,
+    wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3,
+  }))
+}
+
 // ─── Route handler ───────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const t0 = Date.now()
@@ -514,8 +626,16 @@ export async function POST(req: NextRequest) {
       provider = 'static-emergency'
     }
 
-    // Re-assign waves after sort
-    agencies = agencies.map((a, i) => ({ ...a, wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3 }))
+    // ── STEP 3: Merge with REAL agency pool — real contacts take priority ────
+    const realPoolMatches = matchRealPool(propType, country, city, priceEur)
+    if (realPoolMatches.length > 0) {
+      agencies = mergeAgencies(realPoolMatches, agencies)
+      provider = provider + '+real_pool'
+      console.log(`[apex] Real pool: ${realPoolMatches.length} matches merged (priority)`)
+    } else {
+      // Re-assign waves after sort
+      agencies = agencies.map((a, i) => ({ ...a, wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3 }))
+    }
 
     const elapsed = Date.now() - t0
     console.log(`[apex] Done: ${agencies.length} agencies via ${provider} in ${elapsed}ms`)
