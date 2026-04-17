@@ -599,7 +599,7 @@ on behalf of the property owner`}
                       </div>
                     </div>
 
-                    <div style={{ fontSize:'0.72rem',color:C.w60,marginBottom:10,lineHeight:1.4 }}>{m.spec}</div>
+                    <div style={{ fontSize:'0.72rem',color:C.w60,marginBottom:8,lineHeight:1.4,fontStyle:'italic' }}>💼 {m.spec}</div>
 
                     <div style={{ display:'flex',flexWrap:'wrap',gap:5,marginBottom:8 }}>
                       {m.reasons.map((r,ri) => (
@@ -611,9 +611,13 @@ on behalf of the property owner`}
                         🗣 {m.langs.join(' · ')}
                       </span>
                     </div>
-                    {m.website && (
-                      <div style={{ fontSize:'0.6rem',color:C.w40 }}>🔗 {m.website}</div>
-                    )}
+
+                    {/* Contact info */}
+                    <div style={{ display:'flex',flexWrap:'wrap',gap:8,fontSize:'0.62rem',color:C.w40,borderTop:'1px solid rgba(255,255,255,0.06)',paddingTop:8,marginTop:4 }}>
+                      {(m as any).email && <span>📧 {(m as any).email}</span>}
+                      {(m as any).phone && <span>📞 {(m as any).phone}</span>}
+                      {m.website && <span>🔗 {m.website}</span>}
+                    </div>
                   </div>
                 );
               })}

@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import {
-  offersStore, feedbackStore, logFeedback,
+  offersStore, feedbackStore, logFeedback, seedOffers, photosForType,
   type Offer, type OfferStatus, type FeedbackEvent,
 } from '@/lib/api-globals'
 
@@ -24,104 +24,11 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 function store(): Offer[] {
-  const s = offersStore()
-  if (s.length === 0) s.push(...seed())
-  return s
+  return seedOffers() // uses shared seed with FIXED IDs
 }
 
 function feedback(): FeedbackEvent[] {
   return feedbackStore()
-}
-
-/* Demo photo pools by property type */
-const DEMO_PHOTOS: Record<string, string[]> = {
-  Villa: [
-    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-  ],
-  Apartment: [
-    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
-    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
-  ],
-  Loft: [
-    'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=800&q=80',
-    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
-  ],
-  Land: [
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80',
-    'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?w=800&q=80',
-  ],
-  _default: [
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
-  ],
-}
-
-function photosForType(type: string): string[] {
-  return DEMO_PHOTOS[type] || DEMO_PHOTOS._default
-}
-
-function seed(): Offer[] {
-  const now = Date.now()
-  return [
-    {
-      id: 'PB-' + (now - 3_600_000),
-      ref: 'PB-2026-0041',
-      receivedAt: new Date(now - 3_600_000).toISOString(),
-      property: {
-        type: 'Villa', address: 'Kneza Miloša 42', city: 'Belgrade', country: 'Serbia', flag: '🇷🇸',
-        sqm: 210, beds: 4, price: 485000, currency: 'EUR',
-        description: 'Luxury villa with panoramic city views, private garden, 3 levels. Fully renovated 2025, premium fixtures throughout. Quiet residential area, 10 min to center.',
-        photos: 12, photoUrls: photosForType('Villa'),
-      },
-      seller: { name: 'M. Kovačević', lang: 'EN', respondsIn: '2h', email: 'm.kovacevic@seller.propblaze' },
-      match: { score: 94, wave: 1, reasons: ['Geo: Belgrade ✓', 'Luxury segment ✓', 'International buyer profile ✓'] },
-      status: 'new',
-      statusHistory: [{ at: new Date(now - 3_600_000).toISOString(), status: 'new' }],
-      docs: [],
-    },
-    {
-      id: 'PB-' + (now - 86_400_000),
-      ref: 'PB-2026-0038',
-      receivedAt: new Date(now - 86_400_000).toISOString(),
-      property: {
-        type: 'Apartment', address: 'Bulevar Oslobođenja 15', city: 'Novi Sad', country: 'Serbia', flag: '🇷🇸',
-        sqm: 85, beds: 2, price: 175000, currency: 'EUR',
-        description: 'Modern 2-bedroom apartment in city center. New building, underground parking, balcony with river view. Energy class A.',
-        photos: 8, photoUrls: photosForType('Apartment'),
-      },
-      seller: { name: 'D. Jovanović', lang: 'EN', respondsIn: '4h', email: 'd.jovanovic@seller.propblaze' },
-      match: { score: 87, wave: 1, reasons: ['Geo: Novi Sad ✓', 'Mid-range segment ✓', 'High demand area ✓'] },
-      status: 'accepted',
-      statusHistory: [
-        { at: new Date(now - 86_400_000).toISOString(), status: 'new' },
-        { at: new Date(now - 72_000_000).toISOString(), status: 'accepted' },
-      ],
-      docs: [],
-    },
-    {
-      id: 'PB-' + (now - 172_800_000),
-      ref: 'PB-2026-0035',
-      receivedAt: new Date(now - 172_800_000).toISOString(),
-      property: {
-        type: 'Land', address: 'Niška Banja area', city: 'Niš', country: 'Serbia', flag: '🇷🇸',
-        sqm: 1200, beds: 0, price: 95000, currency: 'EUR',
-        description: 'Development plot with all permits, flat terrain, utility connections ready. Zoned for residential, up to 3 floors.',
-        photos: 4, photoUrls: photosForType('Land'),
-      },
-      seller: { name: 'S. Nikolić', lang: 'SR', respondsIn: '6h', email: 's.nikolic@seller.propblaze' },
-      match: { score: 79, wave: 2, reasons: ['Geo: Niš region ✓', 'Land specialist ✓', 'Development potential ✓'] },
-      status: 'in_progress',
-      statusHistory: [
-        { at: new Date(now - 172_800_000).toISOString(), status: 'new' },
-        { at: new Date(now - 160_000_000).toISOString(), status: 'accepted' },
-        { at: new Date(now - 120_000_000).toISOString(), status: 'in_progress' },
-      ],
-      docs: [],
-    },
-  ]
 }
 
 export async function GET(req: NextRequest) {

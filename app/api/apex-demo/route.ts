@@ -29,6 +29,8 @@ export interface ApexAgency {
   langs: string[]
   score: number
   wave: 1 | 2 | 3
+  email?: string
+  phone?: string
 }
 
 interface SearchResult { title: string; snippet: string; url: string }
@@ -447,18 +449,25 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
   scored.sort((a, b) => b.score - a.score)
   const top = scored.slice(0, 30)
 
-  return top.map((s, i) => ({
-    name: s.agency.name,
-    city: s.agency.city,
-    country: s.agency.country,
-    flag: s.agency.flag,
-    website: s.agency.website,
-    spec: s.agency.spec,
-    reasons: s.reasons,
-    langs: s.agency.langs,
-    score: s.score,
-    wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3,
-  }))
+  return top.map((s, i) => {
+    // Generate demo contact from website
+    const domain = s.agency.website.replace(/^https?:\/\//, '').split('/')[0]
+    const emailPrefix = domain.includes('engelvoelkers') ? 'office' : domain.includes('sotheby') ? 'inquiries' : 'info'
+    return {
+      name: s.agency.name,
+      city: s.agency.city,
+      country: s.agency.country,
+      flag: s.agency.flag,
+      website: s.agency.website,
+      spec: s.agency.spec,
+      reasons: s.reasons,
+      langs: s.agency.langs,
+      score: s.score,
+      wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3,
+      email: `${emailPrefix}@${domain}`,
+      phone: `+${s.agency.country === 'Serbia' ? '381' : s.agency.country === 'Spain' ? '34' : s.agency.country === 'Germany' ? '49' : s.agency.country === 'UK' ? '44' : s.agency.country === 'France' ? '33' : s.agency.country === 'Italy' ? '39' : s.agency.country === 'Portugal' ? '351' : s.agency.country === 'Austria' ? '43' : s.agency.country === 'Greece' ? '30' : s.agency.country === 'Croatia' ? '385' : s.agency.country === 'Montenegro' ? '382' : s.agency.country === 'Bulgaria' ? '359' : s.agency.country === 'UAE' ? '971' : '1'} ${String(Math.floor(1000000 + Math.random() * 9000000)).replace(/(\d{3})(\d{4})/, '$1-$2')}`,
+    }
+  })
 }
 
 // ─── REAL AGENCY POOL MATCH (from DEMO_AGENCY_POOL — verified contacts) ─────
