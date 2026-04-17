@@ -65,24 +65,63 @@ function photosForType(type: string): string[] {
 
 function seed(): Offer[] {
   const now = Date.now()
-  const photos = photosForType('Villa')
-  const o: Offer = {
-    id: 'PB-' + (now - 3_600_000),
-    ref: 'PB-2026-0041',
-    receivedAt: new Date(now - 3_600_000).toISOString(),
-    property: {
-      type: 'Villa', address: 'Jadranska bb 14', city: 'Budva', country: 'Montenegro', flag: '🇲🇪',
-      sqm: 210, beds: 4, price: 485000, currency: 'EUR',
-      description: 'Sea-view villa with pool, 400 m from the beach. Fully furnished. Three levels, panoramic terrace, private parking for 3 cars. 5 min walk to Old Town.',
-      photos: 12, photoUrls: photos,
+  return [
+    {
+      id: 'PB-' + (now - 3_600_000),
+      ref: 'PB-2026-0041',
+      receivedAt: new Date(now - 3_600_000).toISOString(),
+      property: {
+        type: 'Villa', address: 'Kneza Miloša 42', city: 'Belgrade', country: 'Serbia', flag: '🇷🇸',
+        sqm: 210, beds: 4, price: 485000, currency: 'EUR',
+        description: 'Luxury villa with panoramic city views, private garden, 3 levels. Fully renovated 2025, premium fixtures throughout. Quiet residential area, 10 min to center.',
+        photos: 12, photoUrls: photosForType('Villa'),
+      },
+      seller: { name: 'M. Kovačević', lang: 'EN', respondsIn: '2h', email: 'm.kovacevic@seller.propblaze' },
+      match: { score: 94, wave: 1, reasons: ['Geo: Belgrade ✓', 'Luxury segment ✓', 'International buyer profile ✓'] },
+      status: 'new',
+      statusHistory: [{ at: new Date(now - 3_600_000).toISOString(), status: 'new' }],
+      docs: [],
     },
-    seller: { name: 'A. Petrov', lang: 'RU', respondsIn: '2h', email: 'a.petrov@seller.propblaze' },
-    match: { score: 94, wave: 1, reasons: ['Geo: Budva ✓', 'Luxury segment ✓', 'Russian buyer profile ✓'] },
-    status: 'new',
-    statusHistory: [{ at: new Date(now - 3_600_000).toISOString(), status: 'new' }],
-    docs: [],
-  }
-  return [o]
+    {
+      id: 'PB-' + (now - 86_400_000),
+      ref: 'PB-2026-0038',
+      receivedAt: new Date(now - 86_400_000).toISOString(),
+      property: {
+        type: 'Apartment', address: 'Bulevar Oslobođenja 15', city: 'Novi Sad', country: 'Serbia', flag: '🇷🇸',
+        sqm: 85, beds: 2, price: 175000, currency: 'EUR',
+        description: 'Modern 2-bedroom apartment in city center. New building, underground parking, balcony with river view. Energy class A.',
+        photos: 8, photoUrls: photosForType('Apartment'),
+      },
+      seller: { name: 'D. Jovanović', lang: 'EN', respondsIn: '4h', email: 'd.jovanovic@seller.propblaze' },
+      match: { score: 87, wave: 1, reasons: ['Geo: Novi Sad ✓', 'Mid-range segment ✓', 'High demand area ✓'] },
+      status: 'accepted',
+      statusHistory: [
+        { at: new Date(now - 86_400_000).toISOString(), status: 'new' },
+        { at: new Date(now - 72_000_000).toISOString(), status: 'accepted' },
+      ],
+      docs: [],
+    },
+    {
+      id: 'PB-' + (now - 172_800_000),
+      ref: 'PB-2026-0035',
+      receivedAt: new Date(now - 172_800_000).toISOString(),
+      property: {
+        type: 'Land', address: 'Niška Banja area', city: 'Niš', country: 'Serbia', flag: '🇷🇸',
+        sqm: 1200, beds: 0, price: 95000, currency: 'EUR',
+        description: 'Development plot with all permits, flat terrain, utility connections ready. Zoned for residential, up to 3 floors.',
+        photos: 4, photoUrls: photosForType('Land'),
+      },
+      seller: { name: 'S. Nikolić', lang: 'SR', respondsIn: '6h', email: 's.nikolic@seller.propblaze' },
+      match: { score: 79, wave: 2, reasons: ['Geo: Niš region ✓', 'Land specialist ✓', 'Development potential ✓'] },
+      status: 'in_progress',
+      statusHistory: [
+        { at: new Date(now - 172_800_000).toISOString(), status: 'new' },
+        { at: new Date(now - 160_000_000).toISOString(), status: 'accepted' },
+        { at: new Date(now - 120_000_000).toISOString(), status: 'in_progress' },
+      ],
+      docs: [],
+    },
+  ]
 }
 
 export async function GET(req: NextRequest) {
@@ -110,8 +149,8 @@ export async function POST(req: NextRequest) {
       type: body.type || 'Apartment',
       address: body.address || 'Demo address',
       city: body.city || '',
-      country: body.country || 'Montenegro',
-      flag: body.flag || '🏢',
+      country: body.country || 'Serbia',
+      flag: body.flag || '🇷🇸',
       sqm: Number(body.sqm) || 80,
       beds: Number(body.beds) || 2,
       price: Number(body.price) || 200_000,

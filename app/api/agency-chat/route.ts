@@ -25,7 +25,7 @@ function thread(offerId: string): Msg[] {
       id: 'm-seed-' + offerId,
       offerId,
       from: 'owner',
-      text: `Здравствуйте! Это ${sellerName}. Готов обсудить вашу заинтересованность объектом. Какие у вас вопросы?`,
+      text: `Hello! This is ${sellerName}. I'm ready to discuss your interest in the property. What questions do you have?`,
       at: new Date(Date.now() - 60_000).toISOString(),
     }]
   }
@@ -76,12 +76,12 @@ Your reply as the owner:`
 
 function canned(msg: string): string {
   const m = msg.toLowerCase()
-  if (/price|цен|стоим/.test(m)) return 'Цена обсуждаемая, готов рассмотреть предложения от €465K. Документы все в порядке.'
-  if (/view|посмотр|показ/.test(m)) return 'Можем организовать просмотр в любой день на этой неделе. Когда удобно?'
-  if (/photo|фото|видео/.test(m)) return 'Все фото и видео-обход уже в pack. Хотите дополнительные ракурсы?'
-  if (/buyer|клиент|покупател/.test(m)) return 'Открыт ко всем серьёзным покупателям. Какой профиль у вашего клиента?'
-  if (/doc|документ|справк/.test(m)) return 'Все документы в порядке. Могу предоставить что нужно для проверки.'
-  return 'Спасибо за интерес. Что именно вы хотели бы уточнить?'
+  if (/price|цен|стоим|cost/.test(m)) return 'The price is negotiable — open to offers from €465K. All documents are in order.'
+  if (/view|посмотр|показ|visit|tour/.test(m)) return 'We can arrange a viewing any day this week. When works best for you?'
+  if (/photo|фото|видео|video|image/.test(m)) return 'All photos and video walkthrough are in the pack. Would you like additional angles?'
+  if (/buyer|клиент|покупател|client|interest/.test(m)) return 'Open to all serious buyers. What is your client\'s profile?'
+  if (/doc|документ|справк|paper|certificate/.test(m)) return 'All documents are in order. I can provide whatever you need for due diligence.'
+  return 'Thank you for your interest. What would you like to know more about?'
 }
 
 /* ═══ GET — poll messages ══════════════════════════════════════════ */

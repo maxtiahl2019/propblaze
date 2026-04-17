@@ -391,11 +391,10 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
   const scored = STATIC_DB.map(a => {
     let score = a.weight * 0.6 // base 0-60
 
-    // Geographic fit (+42 same country, +18 same cluster, -25 off-cluster)
+    // Geographic fit (+42 same country, +0 same cluster but different country, -25 off-cluster)
+    // STRICT: only same-country agencies get geographic bonus (no cross-country leakage)
     if (a.country === country) {
       score += 42
-    } else if (COUNTRY_CLUSTER[a.country] === propCluster) {
-      score += 18
     } else if (a.cluster === 'Global') {
       score += priceEur >= 1_000_000 ? 12 : 0
     } else {
@@ -429,7 +428,6 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
     // Build contextual reasons
     const reasons: string[] = []
     if (a.country === country) reasons.push(`Local ${country} specialist — direct market access`)
-    else if (COUNTRY_CLUSTER[a.country] === propCluster) reasons.push(`Regional ${propCluster} player with ${country} buyer pipeline`)
     else reasons.push(`International brand — global buyer reach`)
 
     if (a.types.includes(normType)) reasons.push(`${normType.charAt(0).toUpperCase() + normType.slice(1)} specialisation matches listing type`)
@@ -487,11 +485,9 @@ function matchRealPool(propType: string, country: string, city: string, priceEur
   const scored = DEMO_AGENCY_POOL.map(a => {
     let score = (a.quality_score || 70) * 0.5 // base from quality
 
-    // Country match (+30)
+    // Country match (+30) — STRICT: same country only, no neighbors
     if (a.country === normCountry) score += 30
-    // Neighboring country (+10)
-    else if (['ME', 'RS', 'HR', 'BA'].includes(a.country) && ['ME', 'RS', 'HR', 'BA'].includes(normCountry)) score += 10
-    else return null // skip irrelevant countries
+    else return null // skip — no cross-country leakage
 
     // City/region match (+15)
     if (a.cities?.some(c => c.toLowerCase() === cityLower)) score += 15
