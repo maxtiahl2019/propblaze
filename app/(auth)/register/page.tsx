@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth, DEMO_MODE } from '@/store/auth';
+import { useAuth, DEMO_MODE, DEMO_USER } from '@/store/auth';
 
 type Role = 'owner' | 'agency';
 type Step = 'role' | 'form' | 'verify' | 'done';
@@ -120,10 +120,14 @@ function OwnerForm({ onDone }: { onDone: () => void }) {
     const e = validate();
     if (Object.keys(e).length) { setErrs(e); return; }
     setErrs({});
-    if (DEMO_MODE) { onDone(); return; }
+    if (DEMO_MODE) {
+      // Set owner role in auth store so dashboard reflects correct role
+      useAuth.setState({ user: { ...DEMO_USER, role: 'owner' }, isAuthenticated: true, token: 'demo-token' });
+      onDone(); return;
+    }
     setSubmitting(true);
     try {
-      await register(form.email.trim().toLowerCase(), form.password, form.name);
+      await register(form.email.trim().toLowerCase(), form.password, form.name, 'owner');
       onDone(); // auto-confirmed
     } catch (err: any) {
       if (err?.code === 'CHECK_EMAIL') {
@@ -245,6 +249,7 @@ function OwnerForm({ onDone }: { onDone: () => void }) {
 
 // ─── Agency registration form ─────────────────────────────────────────────────
 function AgencyForm({ onDone }: { onDone: () => void }) {
+  const { register, isLoading, error, clearError } = useAuth();
   const [form, setForm] = useState({
     agency_name: '', contact_name: '', email: '', phone: '', website: '',
     country: 'Serbia', city: '', specialization: 'residential',
@@ -253,6 +258,11 @@ function AgencyForm({ onDone }: { onDone: () => void }) {
   });
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [step, setStep] = useState<1|2>(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+
+  useEffect(() => { clearError(); }, []);
 
   const validateStep1 = () => {
     const e: Record<string, string> = {};
@@ -277,12 +287,47 @@ function AgencyForm({ onDone }: { onDone: () => void }) {
     setErrs({}); setStep(2);
   };
 
-  const handleSubmit = (ev: React.FormEvent) => {
+  const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
+    if (submitting) return;
     const e = validateStep2();
     if (Object.keys(e).length) { setErrs(e); return; }
-    onDone();
+    setErrs({});
+    if (DEMO_MODE) {
+      // Set agency role in auth store so dashboard reflects correct role
+      useAuth.setState({ user: { ...DEMO_USER, role: 'agency' }, isAuthenticated: true, token: 'demo-token' });
+      onDone(); return;
+    }
+    setSubmitting(true);
+    try {
+      await register(form.email.trim().toLowerCase(), form.password, form.contact_name, 'agency');
+      onDone();
+    } catch (err: any) {
+      if (err?.code === 'CHECK_EMAIL') {
+        setRegisteredEmail(form.email.trim().toLowerCase());
+        setCheckEmail(true);
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (checkEmail) {
+    return (
+      <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>📬</div>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', marginBottom: 10 }}>Check your email</h2>
+        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, marginBottom: 24, maxWidth: 320, margin: '0 auto 24px' }}>
+          We sent a confirmation link to <strong style={{ color: '#F5C200' }}>{registeredEmail}</strong>.
+          Your agency application will be reviewed after confirmation.
+        </p>
+        <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+          Didn't receive it? Check spam or{' '}
+          <button onClick={() => setCheckEmail(false)} style={{ background: 'none', border: 'none', color: '#F5C200', cursor: 'pointer', fontSize: '0.75rem', padding: 0, textDecoration: 'underline' }}>try again</button>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={step === 1 ? (ev => { ev.preventDefault(); handleNext(); }) : handleSubmit}>
@@ -382,6 +427,12 @@ function AgencyForm({ onDone }: { onDone: () => void }) {
 
       {step === 2 && (
         <>
+          {error && (
+            <div style={{ padding: '10px 14px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 8, color: '#f87171', fontSize: '0.8125rem', marginBottom: 16 }}>
+              {error}
+            </div>
+          )}
+
           <button type="button" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: '0.8125rem', padding: 0, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             Back to agency details
@@ -413,13 +464,14 @@ function AgencyForm({ onDone }: { onDone: () => void }) {
             <Link href="/privacy" style={{ color: '#e67e22', textDecoration: 'none' }}>Privacy</Link>
           </div>
 
-          <button type="submit" style={{
+          <button type="submit" disabled={isLoading} style={{
             width: '100%', padding: '12px', borderRadius: 10,
-            background: 'linear-gradient(135deg,#c0392b,#e67e22)',
-            color: 'white', fontWeight: 700, fontSize: '0.9375rem', border: 'none', cursor: 'pointer',
+            background: isLoading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg,#c0392b,#e67e22)',
+            color: 'white', fontWeight: 700, fontSize: '0.9375rem', border: 'none',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
             boxShadow: '0 4px 16px rgba(192,57,43,0.3)',
           }}>
-            Submit Agency Application →
+            {isLoading ? 'Submitting…' : 'Submit Agency Application →'}
           </button>
         </>
       )}

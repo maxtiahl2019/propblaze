@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const email = String(body.email || '').trim().toLowerCase()
   const password = String(body.password || '')
+  const requestedRole = body.role === 'agency' ? 'agency' : 'owner'
 
   if (!email || !password) return NextResponse.json({ detail: 'Email and password required' }, { status: 400 })
   if (password.length < 4) return NextResponse.json({ detail: 'Password too short' }, { status: 400 })
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       email,
       passwordHash: hash(password),
       full_name: email.split('@')[0],
-      role: 'owner',
+      role: requestedRole,
       status: 'active',
       email_verified: true,
       phone_verified: false,
