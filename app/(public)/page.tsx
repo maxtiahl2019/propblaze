@@ -574,6 +574,25 @@ function GlobalStyles() {
         background:${C.black};
         color:${C.white};
       }
+
+      /* ── Mobile responsive ─────────────────────────────── */
+      @media (max-width: 900px) {
+        .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+        .hero-right { display: none !important; }
+        .prop-masonry { grid-template-columns: 1fr 1fr !important; grid-template-rows: auto !important; }
+        .prop-masonry > * { grid-column: auto !important; }
+        .features-grid { grid-template-columns: 1fr 1fr !important; }
+        .steps-grid { grid-template-columns: 1fr !important; }
+        .plans-grid { grid-template-columns: 1fr !important; }
+        .stats-row { grid-template-columns: repeat(2,1fr) !important; gap: 24px !important; }
+        .nav-links, .desktop-nav { display: none !important; }
+      }
+      @media (max-width: 480px) {
+        .prop-masonry { grid-template-columns: 1fr !important; }
+        .features-grid { grid-template-columns: 1fr !important; }
+        .btn-primary { padding: 14px 24px !important; font-size: 0.8rem !important; }
+        .btn-secondary { padding: 14px 20px !important; font-size: 0.8rem !important; }
+      }
     `}</style>
   );
 }
@@ -989,7 +1008,7 @@ export default function LandingPage() {
           zIndex: 2, pointerEvents: 'none',
         }} />
 
-        <div style={{
+        <div className="hero-grid" style={{
           position: 'relative', zIndex: 3,
           maxWidth: 1280, margin: '0 auto', width: '100%',
           display: 'grid',
@@ -1081,7 +1100,7 @@ export default function LandingPage() {
           </div>
 
           {/* Right — APEX card */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 320 }}>
+          <div className="hero-right" style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 320 }}>
             <ApexCard />
           </div>
         </div>
@@ -1132,7 +1151,7 @@ export default function LandingPage() {
         </div>
 
         {/* Masonry grid */}
-        <div style={{
+        <div className="prop-masonry" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gridTemplateRows: 'repeat(2, 260px)',
@@ -1215,7 +1234,7 @@ export default function LandingPage() {
           </h2>
         </div>
 
-        <div style={{
+        <div className="features-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: 14,

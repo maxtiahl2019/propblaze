@@ -130,10 +130,23 @@ export default function AgencyDashboard() {
         .ag-photo{transition:opacity 0.4s ease}
         .ag-pill:hover{opacity:0.85}
         @keyframes agSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+        .ag-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+        .ag-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+        .ag-tabs{display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .ag-main{display:grid;gap:20px;min-height:550px}
+        @media(max-width:900px){
+          .ag-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+          .ag-main{grid-template-columns:1fr!important}
+          .ag-tabs{padding-bottom:4px}
+        }
+        @media(max-width:480px){
+          .ag-stats{grid-template-columns:1fr 1fr!important;gap:8px!important}
+          .ag-topbar h1{font-size:1.2rem!important}
+        }
       `}</style>
 
       {/* ══ TOP BAR ════════════════════════════════════════════════════ */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div className="ag-topbar">
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.03em' }}>Agency Dashboard</h1>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', margin: '4px 0 0' }}>Manage incoming properties, deals, and seller communications</p>
@@ -150,7 +163,7 @@ export default function AgencyDashboard() {
       </div>
 
       {/* ══ STATS ══════════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div className="ag-stats">
         {([
           { label: 'Incoming', icon: '📥', statuses: ['new'] as Status[], accent: '#F97316', bg: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)' },
           { label: 'In Work', icon: '⚡', statuses: ['accepted', 'in_progress', 'pending_docs'] as Status[], accent: '#3B82F6', bg: 'linear-gradient(135deg, #EFF6FF, #DBEAFE)' },
@@ -176,7 +189,7 @@ export default function AgencyDashboard() {
       </div>
 
       {/* ══ PIPELINE TABS ══════════════════════════════════════════════ */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--surface-2)', borderRadius: 12, padding: 4, border: '1px solid var(--border)' }}>
+      <div className="ag-tabs" style={{ background: 'var(--surface-2)', borderRadius: 12, padding: 4, border: '1px solid var(--border)' }}>
         {(['all', 'new', 'accepted', 'in_progress', 'pending_docs', 'closed', 'declined'] as const).map(t => {
           const labels: Record<string, string> = { all: 'All', new: 'Incoming', accepted: 'Accepted', in_progress: 'In Work', pending_docs: 'Pending Docs', closed: 'Closed', declined: 'Declined' };
           const isActive = tab === t;
@@ -197,7 +210,7 @@ export default function AgencyDashboard() {
       </div>
 
       {/* ══ MAIN LAYOUT ════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: ao ? '340px 1fr' : '1fr', gap: 20, minHeight: 550 }}>
+      <div className="ag-main" style={{ gridTemplateColumns: ao ? '340px 1fr' : '1fr' }}>
 
         {/* ── LEFT: Offer List ──────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 'calc(100vh - 340px)', overflowY: 'auto', paddingRight: 4 }}>

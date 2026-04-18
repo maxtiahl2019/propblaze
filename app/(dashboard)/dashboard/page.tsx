@@ -283,12 +283,30 @@ export default function DashboardPage() {
         body { background: ${T.bg}; }
         @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
         .fade-up { animation: fadeUp 0.4s ease both; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+        .main-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+        .prop-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid ${T.border}; }
+        .top-bar { padding: 16px 28px; }
+        .content-wrap { padding: 24px 28px; max-width: 1280px; margin: 0 auto; }
+        @media (max-width: 900px) {
+          .kpi-grid { grid-template-columns: repeat(2,1fr) !important; gap: 10px !important; }
+          .main-grid { grid-template-columns: 1fr !important; }
+          .prop-grid { grid-template-columns: 1fr 1fr !important; }
+          .top-bar { padding: 14px 16px !important; }
+          .content-wrap { padding: 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          .prop-grid { grid-template-columns: 1fr !important; }
+          .stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+        }
       `}</style>
 
       <div style={{ minHeight: '100vh', background: T.bg, fontFamily: 'Inter,system-ui,sans-serif', color: T.text }}>
 
         {/* ── TOP BAR ──────────────────────────────────────────────────── */}
-        <div style={{ background: T.white, borderBottom: `1px solid ${T.border}`, padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="top-bar" style={{ background: T.white, borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 11, color: T.text3, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 2 }}>
               {new Date().toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -312,10 +330,10 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div style={{ padding: '24px 28px', maxWidth: 1280, margin: '0 auto' }}>
+        <div className="content-wrap">
 
           {/* ── KPI ROW ────────────────────────────────────────────────── */}
-          <div className="fade-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 28 }}>
+          <div className="fade-up kpi-grid">
             <KpiCard icon="🏠" label="Properties" value={props.length} sub={`${props.filter(p => p.status === 'in_distribution').length} active`} color={T.green} bg={T.greenBg} href="/properties" />
             <KpiCard icon="📡" label="Agencies Reached" value={totalAgencies} sub={`${waves} waves sent`} color={T.blue} bg={T.blueBg} href="/distribution" />
             <KpiCard icon="✉️" label="Responses" value={totalResponses} sub="from agencies" color={T.orange} bg={T.orangeBg} href="/leads" />
@@ -323,7 +341,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ── MAIN GRID ─────────────────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20 }}>
+          <div className="main-grid">
 
             {/* LEFT COLUMN */}
             <div>
@@ -338,7 +356,7 @@ export default function DashboardPage() {
                   <Link href="/properties" style={{ fontSize: 12, color: T.green, fontWeight: 700, textDecoration: 'none' }}>View all →</Link>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 16 }}>
+                <div className="prop-grid">
                   {props.map(p => <PropertyCard key={p.id} p={p} />)}
                   <Link href="/properties/new" style={{ textDecoration: 'none' }}>
                     <div style={{
@@ -384,7 +402,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+                <div className="stats-grid">
                   {[
                     { label: 'Agencies sent', value: waveLog.length, color: T.green },
                     { label: 'Waves', value: waves, color: T.blue },

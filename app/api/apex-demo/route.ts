@@ -198,12 +198,17 @@ STRICT GEO-FILTER:
 ✗ NEVER invent names
 ✗ NEVER include unrelated-region agencies
 
-DISTRIBUTION:
-Wave 1 (top 10, 85–99): Local specialists + int'l with strong presence
-Wave 2 (11–20, 70–84): Regional + additional locals
-Wave 3 (21–30, 55–69): Broader network + investor-focused
+MANDATORY SORT ORDER (this is critical — follow exactly):
+Tier 1 — LOCAL: Small/medium agencies based in ${city || country} that work directly with this property type. These MUST come first with highest scores (90-99).
+Tier 2 — REGIONAL: Larger agencies covering the region/country but not city-specific. Scores 80-89.
+Tier 3 — NETWORK: National franchise/network brands with ${country} offices (RE/MAX, Engel & Völkers, etc). Scores 70-79.
+Tier 4 — INTERNATIONAL: Global brands (Sotheby's, Knight Frank, Savills, Christie's). Only if luxury/high-value. Scores 55-69.
 
-SCORING (0–99): geo fit 40% · type spec 25% · price band 20% · 2024-25 activity 15%
+Wave 1 (top 10): Mostly Tier 1 + some Tier 2
+Wave 2 (11–20): Mix of Tier 2 + Tier 3
+Wave 3 (21–30): Tier 3 + Tier 4
+
+SCORING (0–99): locality tier 45% · type spec 25% · price band 20% · 2024-25 activity 10%
 
 Return ONLY JSON array, no prose, no markdown:
 [{"name":"X","city":"Y","country":"${country}","website":"domain.com","spec":"max 80 chars","reasons":["r1","r2","r3"],"langs":["EN"],"score":92,"wave":1}]`
@@ -389,39 +394,66 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
     : 'apartment'
 
   const priceTier = priceEur >= 2_000_000 ? 'ultra' : priceEur >= 800_000 ? 'luxury' : priceEur >= 300_000 ? 'premium' : 'standard'
+  const cityLower = city.toLowerCase()
+
+  // ── Classify agency into locality tier ────────────────────────────────────
+  // Tier 1 (local): same country + same city → highest priority
+  // Tier 2 (regional): same country, different city → high priority
+  // Tier 3 (network): international brand name with country office → medium
+  // Tier 4 (international): global brand, no local presence → lowest
+  const NETWORK_BRANDS = ['engel', 'sotheby', 'christie', 'knight frank', 'savills', 'remax', 're/max', 'century 21', 'coldwell', 'keller williams']
+  const isNetworkBrand = (name: string) => NETWORK_BRANDS.some(b => name.toLowerCase().includes(b))
 
   const scored = STATIC_DB.map(a => {
-    let score = a.weight * 0.6 // base 0-60
-
-    // Geographic fit (+42 same country, +0 same cluster but different country, -25 off-cluster)
-    // STRICT: only same-country agencies get geographic bonus (no cross-country leakage)
-    if (a.country === country) {
-      score += 42
-    } else if (a.cluster === 'Global') {
-      score += priceEur >= 1_000_000 ? 12 : 0
+    // ── Determine locality tier ─────────────────────────────────────────────
+    let tier: 1 | 2 | 3 | 4
+    if (a.country === country && !isNetworkBrand(a.name)) {
+      // Local independent agency in same country
+      tier = (cityLower && a.city.toLowerCase().includes(cityLower)) ? 1 : 2
+    } else if (a.country === country && isNetworkBrand(a.name)) {
+      // Network brand with country office
+      tier = 3
+    } else if (a.cluster === 'Global' || isNetworkBrand(a.name)) {
+      // International / global brand
+      tier = 4
     } else {
-      score -= 25
+      // Different country, not global → skip unless luxury
+      if (priceTier !== 'ultra' && priceTier !== 'luxury') return null
+      tier = 4
     }
 
-    // Property type specialisation (+10)
-    if (a.types.includes(normType)) score += 10
+    // ── Base score by tier (this ensures local agencies always rank higher) ──
+    const tierBase = tier === 1 ? 85 : tier === 2 ? 70 : tier === 3 ? 55 : 42
+    let score = tierBase + (a.weight - 70) * 0.3 // small quality bonus (0-9 pts)
+
+    // ── Geographic fit ──────────────────────────────────────────────────────
+    if (a.country === country) {
+      score += tier === 1 ? 8 : 4  // city match gets extra
+    } else if (a.cluster === 'Global' && priceEur >= 1_000_000) {
+      score += 3 // globals only for expensive properties
+    } else if (a.country !== country) {
+      score -= 15
+    }
+
+    // Property type specialisation (+6)
+    if (a.types.includes(normType)) score += 6
     else score -= 8
 
     // Land bonus
-    if (normType === 'land' && a.tags.includes('land')) score += 8
+    if (normType === 'land' && a.tags.includes('land')) score += 5
 
-    // Price-band fit (+8 in-range, -5 out)
-    if (priceEur >= a.minPrice && priceEur <= a.maxPrice) score += 8
+    // Price-band fit (+5 in-range, -5 out)
+    if (priceEur >= a.minPrice && priceEur <= a.maxPrice) score += 5
     else score -= 5
 
-    // Luxury alignment
-    if (priceTier === 'ultra' || priceTier === 'luxury') {
-      if (a.tags.includes('luxury')) score += 8
+    // Luxury alignment (only for tier 3-4, already factored for local)
+    if ((priceTier === 'ultra' || priceTier === 'luxury') && a.tags.includes('luxury')) {
+      score += tier >= 3 ? 6 : 3
     }
 
     // Investor for high-value land/commercial
     if ((normType === 'land' || normType === 'commercial') && priceEur >= 500_000 && a.tags.includes('investor')) {
-      score += 6
+      score += 4
     }
 
     // Cap 40-99
@@ -429,7 +461,9 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
 
     // Build contextual reasons
     const reasons: string[] = []
-    if (a.country === country) reasons.push(`Local ${country} specialist — direct market access`)
+    if (tier === 1) reasons.push(`Local ${a.city} specialist — direct market knowledge`)
+    else if (tier === 2) reasons.push(`${country} specialist — regional expertise`)
+    else if (tier === 3) reasons.push(`${a.name.split(' ')[0]} network — ${country} office`)
     else reasons.push(`International brand — global buyer reach`)
 
     if (a.types.includes(normType)) reasons.push(`${normType.charAt(0).toUpperCase() + normType.slice(1)} specialisation matches listing type`)
@@ -442,8 +476,8 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
       reasons.push(`Active 2024-2025, verified ${a.country} presence`)
     }
 
-    return { agency: a, score, reasons: reasons.slice(0, 3) }
-  })
+    return { agency: a, score, tier, reasons: reasons.slice(0, 3) }
+  }).filter(Boolean) as { agency: StaticAgency; score: number; tier: number; reasons: string[] }[]
 
   // Sort by score, take top 30
   scored.sort((a, b) => b.score - a.score)
@@ -498,9 +532,9 @@ function matchRealPool(propType: string, country: string, city: string, priceEur
     if (a.country === normCountry) score += 30
     else return null // skip — no cross-country leakage
 
-    // City/region match (+15)
-    if (a.cities?.some(c => c.toLowerCase() === cityLower)) score += 15
-    else if (a.regions?.some(r => r.toLowerCase().includes(cityLower) || cityLower.includes(r.toLowerCase()))) score += 8
+    // City/region match (+20 city, +10 region) — locals first!
+    if (a.cities?.some(c => c.toLowerCase() === cityLower)) score += 20
+    else if (a.regions?.some(r => r.toLowerCase().includes(cityLower) || cityLower.includes(r.toLowerCase()))) score += 10
 
     // Property type match (+12)
     if (a.property_types.includes(normType)) score += 12
@@ -555,13 +589,26 @@ function matchRealPool(propType: string, country: string, city: string, priceEur
 }
 
 // ─── Deduplicate: real agencies take priority over AI-generated ──────────────
-function mergeAgencies(realPool: ApexAgency[], aiGenerated: ApexAgency[]): ApexAgency[] {
+// Also classifies AI agencies into tiers for proper sorting
+function mergeAgencies(realPool: ApexAgency[], aiGenerated: ApexAgency[], country: string, city: string): ApexAgency[] {
+  const NETWORK_BRANDS = ['engel', 'sotheby', 'christie', 'knight frank', 'savills', 'remax', 're/max', 'century 21', 'coldwell', 'keller williams']
+  const isNetwork = (name: string) => NETWORK_BRANDS.some(b => name.toLowerCase().includes(b))
+  const cityLower = city.toLowerCase()
+
+  // Classify each agency into tier for sorting
+  function getTier(a: ApexAgency): number {
+    const sameCountry = a.country === country
+    if (sameCountry && !isNetwork(a.name) && cityLower && a.city.toLowerCase().includes(cityLower)) return 1
+    if (sameCountry && !isNetwork(a.name)) return 2
+    if (sameCountry && isNetwork(a.name)) return 3
+    return 4
+  }
+
   const result = [...realPool]
   const usedNames = new Set(realPool.map(a => a.name.toLowerCase()))
 
   for (const a of aiGenerated) {
     const nameLower = a.name.toLowerCase()
-    // Skip if we already have a similar name from real pool
     const isDup = usedNames.has(nameLower) || [...usedNames].some(n =>
       n.includes(nameLower.split(' ')[0]) || nameLower.includes(n.split(' ')[0])
     )
@@ -571,8 +618,13 @@ function mergeAgencies(realPool: ApexAgency[], aiGenerated: ApexAgency[]): ApexA
     }
   }
 
-  // Sort by score, reassign waves, cap at 30
-  result.sort((a, b) => b.score - a.score)
+  // Sort by tier first, then by score within tier
+  result.sort((a, b) => {
+    const ta = getTier(a), tb = getTier(b)
+    if (ta !== tb) return ta - tb // lower tier = higher priority
+    return b.score - a.score
+  })
+
   return result.slice(0, 30).map((a, i) => ({
     ...a,
     wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3,
@@ -634,7 +686,7 @@ export async function POST(req: NextRequest) {
     // ── STEP 3: Merge with REAL agency pool — real contacts take priority ────
     const realPoolMatches = matchRealPool(propType, country, city, priceEur)
     if (realPoolMatches.length > 0) {
-      agencies = mergeAgencies(realPoolMatches, agencies)
+      agencies = mergeAgencies(realPoolMatches, agencies, country, city)
       provider = provider + '+real_pool'
       console.log(`[apex] Real pool: ${realPoolMatches.length} matches merged (priority)`)
     } else {

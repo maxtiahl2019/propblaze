@@ -203,6 +203,16 @@ export default function ApexDemoPage() {
         select option{background:#1a1a1a;color:#fff}
         .fl{display:block;font-size:0.66rem;font-weight:700;color:${C.w40};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px}
         .req{color:${C.gold};margin-left:2px}
+        .apex-types{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
+        .apex-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .apex-wave-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:26px}
+        .apex-results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;margin-bottom:40px}
+        @media(max-width:600px){
+          .apex-types{grid-template-columns:repeat(2,1fr)!important}
+          .apex-form-row{grid-template-columns:1fr!important}
+          .apex-wave-stats{grid-template-columns:repeat(2,1fr)!important}
+          .apex-results-grid{grid-template-columns:1fr!important}
+        }
       `}</style>
 
       {/* NAV */}
@@ -239,7 +249,7 @@ export default function ApexDemoPage() {
               Step 1 of 2 — What are you selling?
             </p>
 
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:28 }}>
+            <div className="apex-types">
               {PROP_TYPES.map(t => (
                 <button key={t.id} className={`type-btn${propType===t.id?' sel':''}`} onClick={() => setPropType(t.id)}>
                   <div style={{ fontSize:'1.5rem',marginBottom:8 }}>{t.icon}</div>
@@ -276,7 +286,7 @@ export default function ApexDemoPage() {
             <p style={{ fontSize:'0.7rem',fontWeight:700,color:C.w40,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:20 }}>Step 2 of 2 — Property details</p>
 
             <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+              <div className="apex-form-row">
                 <div>
                   <label className="fl">Country <span className="req">*</span></label>
                   <select value={country} onChange={e => { setCountry(e.target.value); setCity(''); }}>
@@ -308,7 +318,7 @@ export default function ApexDemoPage() {
                   <input type="number" placeholder={propType === 'land' ? 'e.g. 1200' : 'e.g. 350'} value={sqm} onChange={e => setSqm(e.target.value)} min={0} />
                 </div>
               ) : (
-                <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+                <div className="apex-form-row">
                   <div>
                     <label className="fl">Size (m²)</label>
                     <input type="number" placeholder="e.g. 120" value={sqm} onChange={e => setSqm(e.target.value)} min={0} />
@@ -458,7 +468,7 @@ export default function ApexDemoPage() {
             </div>
 
             {/* Stats */}
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:26 }}>
+            <div className="apex-wave-stats">
               {[
                 { label:'Agencies matched', value:`${matches.length}`,      icon:'🎯' },
                 { label:'Avg APEX score',   value:`${avgScore}/99`,          icon:'⚡' },
@@ -573,7 +583,7 @@ on behalf of the property owner`}
             )}
 
             {/* Agency grid */}
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:10,marginBottom:40 }}>
+            <div className="apex-results-grid">
               {filtered.map((m, i) => {
                 const wColor = m.wave===1?C.green:m.wave===2?C.blue:C.purple;
                 const sColor = m.score>=90?C.green:m.score>=80?C.gold:C.w60;
