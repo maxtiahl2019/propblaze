@@ -1468,7 +1468,7 @@ export default function LandingPage() {
             flexWrap: 'wrap', gap: 40, marginBottom: 64,
           }}>
             {/* Brand */}
-            <div style={{ maxWidth: 340 }}>
+            <div style={{ maxWidth: 320 }}>
               <div style={{
                 fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: 900,
                 letterSpacing: '-0.05em', lineHeight: 1,
@@ -1476,64 +1476,29 @@ export default function LandingPage() {
               }}>
                 PROP<br />BLAZE
               </div>
-              <p style={{ fontSize: '0.85rem', color: C.white40, lineHeight: 1.7, marginBottom: 14 }}>
-                AI-powered property distribution. Reach 30+ specialised agencies across EU, US, and Canada in one click.
-              </p>
-              <p style={{ fontSize: '0.75rem', color: C.white40, lineHeight: 1.6, opacity: 0.7 }}>
-                PropBlaze is a property marketing and agency-matching platform. We are not a licensed real estate broker, agent, or financial advisor. All property transactions must be conducted through appropriately licensed professionals in the relevant jurisdiction.
+              <p style={{ fontSize: '0.85rem', color: C.white40, lineHeight: 1.7 }}>
+                AI-powered property distribution. Reach 30+ specialised EU agencies in one click.
               </p>
             </div>
 
             {/* Links */}
             <div style={{ display: 'flex', gap: 60, flexWrap: 'wrap' }}>
               {[
-                { title: 'Product', links: [
-                  { label: 'Features', href: '#features' },
-                  { label: 'How it works', href: '#how-it-works' },
-                  { label: 'Pricing', href: '#pricing' },
-                  { label: 'APEX Engine', href: '#apex' },
-                ]},
-                { title: 'Legal', links: [
-                  { label: 'Privacy Policy', href: '/privacy' },
-                  { label: 'Terms & Conditions', href: '/terms' },
-                  { label: 'GDPR / Data Rights', href: '/gdpr' },
-                  { label: 'Cookie Policy', href: '/privacy#cookies' },
-                ]},
-                { title: 'Company', links: [
-                  { label: 'About', href: '#' },
-                  { label: 'Contact', href: '#' },
-                  { label: 'Blog', href: '#' },
-                  { label: 'Careers', href: '#' },
-                ]},
+                { title: 'Product', links: ['Features', 'How it works', 'Pricing', 'APEX Engine'] },
+                { title: 'Legal', links: ['Privacy Policy', 'Terms of Service', 'GDPR', 'Cookie Policy'] },
+                { title: 'Company', links: ['About', 'Contact', 'Blog', 'Careers'] },
               ].map(col => (
                 <div key={col.title}>
                   <div style={{ fontSize: '0.68rem', fontWeight: 700, color: C.white40, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{col.title}</div>
                   {col.links.map(l => (
-                    <a key={l.label} href={l.href} style={{ display: 'block', fontSize: '0.85rem', color: C.white60, textDecoration: 'none', marginBottom: 10, transition: 'color 0.2s' }}
+                    <a key={l} href="#" style={{ display: 'block', fontSize: '0.85rem', color: C.white60, textDecoration: 'none', marginBottom: 10, transition: 'color 0.2s' }}
                       onMouseEnter={e => { (e.target as HTMLElement).style.color = C.white; }}
                       onMouseLeave={e => { (e.target as HTMLElement).style.color = C.white60; }}
-                    >{l.label}</a>
+                    >{l}</a>
                   ))}
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Legal disclaimer block */}
-          <div style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: `1px solid ${C.border}`,
-            borderRadius: 8,
-            padding: '20px 24px',
-            marginBottom: 28,
-          }}>
-            <p style={{ fontSize: '0.70rem', color: C.white40, lineHeight: 1.7, margin: 0 }}>
-              <strong style={{ color: C.white60, fontWeight: 600 }}>Legal Disclaimer:</strong>{' '}
-              PropBlaze does not act as a real estate broker, agent, attorney, or financial advisor. The platform facilitates connections between property owners and licensed real estate agencies only. PropBlaze does not represent buyers or sellers, does not negotiate transactions, and does not provide legal or financial advice. All agency contacts, negotiations, and property transactions are solely between the property owner and the respective licensed agency.
-              {' '}Use of this platform in the United States and Canada is subject to applicable federal, state/provincial, and local real estate laws. PropBlaze does not hold a real estate license in any US state or Canadian province. Users are responsible for ensuring compliance with local regulations.
-              {' '}EU users: Your data is processed in accordance with GDPR (Regulation 2016/679). For data rights and deletion requests, see our{' '}
-              <a href="/gdpr" style={{ color: C.white60, textDecoration: 'underline' }}>GDPR page</a>.
-            </p>
           </div>
 
           <hr className="divider" style={{ marginBottom: 28 }} />
@@ -1541,13 +1506,10 @@ export default function LandingPage() {
           {/* Bottom row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
             <p style={{ fontSize: '0.75rem', color: C.white40 }}>
-              © 2026 PropBlaze. All rights reserved. EU · US · Canada.
-              {' '}<a href="/privacy" style={{ color: C.white40, textDecoration: 'underline', marginLeft: 8 }}>Privacy</a>
-              {' '}·{' '}<a href="/terms" style={{ color: C.white40, textDecoration: 'underline' }}>Terms</a>
-              {' '}·{' '}<a href="/gdpr" style={{ color: C.white40, textDecoration: 'underline' }}>GDPR</a>
+              © 2026 PropBlaze. All rights reserved. Built for EU property owners.
             </p>
             <div style={{ display: 'flex', gap: 20 }}>
-              {['🇪🇺 GDPR Compliant', '🇺🇸🇨🇦 US & CA Ready', '🔒 AES-256', '⚡ APEX AI v3'].map(t => (
+              {['🇪🇺 GDPR Ready', '🔒 AES-256', '⚡ Powered by APEX AI'].map(t => (
                 <span key={t} style={{ fontSize: '0.72rem', color: C.white40, fontWeight: 500 }}>{t}</span>
               ))}
             </div>

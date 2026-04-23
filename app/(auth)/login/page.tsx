@@ -163,9 +163,26 @@ export default function LoginPage() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
     if (DEMO_MODE) { demoLogin(roleId ?? 'owner', router); return; }
-    try { await login(email, password); router.replace(role?.dest ?? '/dashboard'); } catch {
-      // If API login fails (e.g. no backend), fallback to demo login
-      console.warn('[login] API failed, falling back to demo login');
+    try {
+      await login(email, password);
+      router.replace(role?.dest ?? '/dashboard');
+    } catch (err: any) {
+      // If the internal API returned 401 (wrong credentials) — keep the error shown.
+      // If it's a network failure or the error isn't an auth rejection — silently demo-login.
+      const isAuthRejection =
+        err?.message?.toLowerCase().includes('invalid') ||
+        err?.message?.toLowerCase().includes('password') ||
+        err?.message?.toLowerCase().includes('credentials') ||
+        err?.status === 401;
+
+      if (isAuthRejection) {
+        // Real wrong credentials — keep error visible, stay on page
+        return;
+      }
+
+      // Anything else (network down, cold-start, unconfigured backend) → demo fallback
+      console.warn('[login] non-auth failure, falling back to demo login:', err?.message);
+      clearError();
       demoLogin(roleId ?? 'owner', router);
     }
   };
