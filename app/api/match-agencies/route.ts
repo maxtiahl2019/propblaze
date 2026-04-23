@@ -4,15 +4,21 @@
  * Autonomous matching — no questions to user.
  * Send property data → receive ranked agency list + auto-routing intel.
  *
+ * Sources (priority order):
+ *  1. Registered agencies from registeredAgenciesStore (real, self-registered)
+ *  2. DEMO_AGENCY_POOL fallback when store is empty (dev / before first registration)
+ *
  * Body: { property: Property }
  * Returns: MatchResult
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { runMatchingEngine } from '@/lib/ai-matching/engine'
+import { activeAgencies, toApexAgency } from '@/lib/api-globals'
 import type { Property } from '@/lib/ai-matching/engine'
 
-const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,28 +32,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    let agencies
+    // ── Agency source: registered first, demo pool as fallback ────────────────
+    const registered = activeAgencies()
+    let agencies: any[]
+    let agencySource: 'registered' | 'demo_pool'
 
-    if (DEMO_MODE) {
-      // Use demo pool — no DB needed
-      const { DEMO_AGENCY_POOL } = await import('@/lib/ai-matching/demo-agencies')
-      agencies = DEMO_AGENCY_POOL
+    if (registered.length > 0) {
+      agencies = registered.map(toApexAgency)
+      agencySource = 'registered'
     } else {
-      // In production: fetch from database
-      // agencies = await db.agencies.findMany({ where: { is_active: true } })
-      // For now fall back to demo
+      // No agencies registered yet — use demo pool
       const { DEMO_AGENCY_POOL } = await import('@/lib/ai-matching/demo-agencies')
       agencies = DEMO_AGENCY_POOL
+      agencySource = 'demo_pool'
     }
 
-    // Optional: LLM boost if OpenAI/Anthropic key available
+    // Optional: LLM boost if AI key available
     let llmBoostFn: ((agency: any, prop: any) => Promise<number>) | undefined
 
     if (process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY) {
-      llmBoostFn = async (agency, property) => {
-        // In production: call LLM with structured prompt
-        // Return 0–30 boost score
-        // For now: simulate based on quality_score
+      llmBoostFn = async (agency: any) => {
+        // Simulate quality-based boost — replace with real LLM call in production
         return Math.round((agency.quality_score / 100) * 15)
       }
     }
@@ -58,9 +63,10 @@ export async function POST(req: NextRequest) {
       success: true,
       data: result,
       meta: {
-        demo_mode: DEMO_MODE,
+        agency_source: agencySource,
+        agency_pool_size: agencies.length,
         llm_boost_active: !!llmBoostFn,
-        engine_version: '2.0',
+        engine_version: '3.0',
       },
     })
   } catch (err: any) {
@@ -72,7 +78,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Test the engine with GET (dev only)
+// ── Dev-only GET test ──────────────────────────────────────────────────────────
 export async function GET() {
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
@@ -96,6 +102,23 @@ export async function GET() {
     owner_languages: ['ru', 'en'],
   }
 
+  const registered = activeAgencies()
+  let agencies: any[]
+  let agencySource: 'registered' | 'demo_pool'
+
+  if (registered.length > 0) {
+    agencies = registered.map(toApexAgency)
+    agencySource = 'registered'
+  } else {
+    const { DEMO_AGENCY_POOL } = await import('@/lib/ai-matching/demo-agencies')
+    agencies = DEMO_AGENCY_POOL
+    agencySource = 'demo_pool'
+  }
+
   const result = await runDemoMatching(testProperty)
-  return NextResponse.json({ success: true, data: result })
+  return NextResponse.json({
+    success: true,
+    data: result,
+    meta: { agency_source: agencySource, agency_pool_size: agencies.length },
+  })
 }

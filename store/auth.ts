@@ -73,57 +73,27 @@ export const useAuth = create<AuthStore>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
 
-        // ── Supabase auth (only if configured AND reachable) ───────────────────
+        // ── Supabase auth ──────────────────────────────────────────────────────
         if (isSupabaseConfigured) {
-          try {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-            if (error) {
-              // Distinguish: network/fetch errors → fall through to internal API
-              // Auth errors (wrong password, not confirmed) → show message, stop
-              const isNetworkError =
-                error.message?.toLowerCase().includes('fetch') ||
-                error.message?.toLowerCase().includes('network') ||
-                error.message?.toLowerCase().includes('failed to') ||
-                error.status === 0 ||
-                error.status == null;
-
-              if (isNetworkError) {
-                // Supabase unreachable — silently fall through to internal API below
-                console.warn('[auth] Supabase unreachable, falling through to internal API:', error.message);
-              } else {
-                // Real auth failure (invalid credentials, email not confirmed, etc.)
-                set({ error: error.message, isLoading: false });
-                throw error;
-              }
-            } else {
-              // Supabase succeeded
-              const token = data.session?.access_token ?? null;
-              if (typeof window !== 'undefined' && token) {
-                localStorage.setItem('access_token', token);
-              }
-              set({ user: mapSupabaseUser(data.user), token, isAuthenticated: true, isLoading: false });
-              return;
-            }
-          } catch (sbErr: any) {
-            // TypeError from fetch itself (no network, CORS, DNS failure)
-            const isNetworkError =
-              sbErr instanceof TypeError ||
-              (sbErr?.message ?? '').toLowerCase().includes('fetch') ||
-              (sbErr?.message ?? '').toLowerCase().includes('network') ||
-              (sbErr?.status === 0);
-
-            if (isNetworkError) {
-              console.warn('[auth] Supabase fetch failed, falling through to internal API:', sbErr.message);
-              // Fall through to internal API
-            } else {
-              // Real Supabase auth error — already set in error state above, re-throw
-              throw sbErr;
-            }
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) {
+            set({ error: error.message, isLoading: false });
+            throw error;
           }
+          const token = data.session?.access_token ?? null;
+          if (typeof window !== 'undefined' && token) {
+            localStorage.setItem('access_token', token);
+          }
+          set({
+            user: mapSupabaseUser(data.user),
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return;
         }
 
-        // ── Fallback: Next.js in-memory auth API (same-origin, always works) ──
+        // ── Fallback: Next.js in-memory auth API (same origin) ────────────────
         try {
           const res = await fetch(`/api/auth/login`, {
             method: 'POST',
@@ -131,8 +101,8 @@ export const useAuth = create<AuthStore>()(
             body: JSON.stringify({ email, password }),
           });
           if (!res.ok) {
-            const detail = await res.json().catch(() => ({ detail: 'Invalid email or password' }));
-            set({ error: detail.detail || 'Invalid email or password', isLoading: false });
+            const detail = await res.json().catch(() => ({ detail: 'Login failed' }));
+            set({ error: detail.detail || 'Login failed', isLoading: false });
             throw new Error(detail.detail);
           }
           const loginData = await res.json();
@@ -140,7 +110,7 @@ export const useAuth = create<AuthStore>()(
           if (typeof window !== 'undefined') localStorage.setItem('access_token', token);
           set({ user: loginData.user, token, isAuthenticated: true, isLoading: false });
         } catch (err: any) {
-          if (!err.message) set({ error: 'Login failed — check your connection and try again', isLoading: false });
+          if (!err.message) set({ error: 'Login failed — check your email and password', isLoading: false });
           throw err;
         }
       },
