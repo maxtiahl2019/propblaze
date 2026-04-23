@@ -111,28 +111,6 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    // ── Owner summary email ────────────────────────────────────────────────────
-    // Send a confirmation to the owner after distribution completes
-    if (!demoMode && ownerEmail && sent > 0) {
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-      const ownerSummaryHtml = buildOwnerSummaryEmail(property, ownerName, sent, failed, simulated, agencies)
-      try {
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: `PropBlaze Platform <${fromEmail}>`,
-            to: [ownerEmail],
-            reply_to: 'hello@propblaze.com',
-            subject: testMode
-              ? `[TEST] Your property was distributed to ${sent} agencies`
-              : `✅ Your property was distributed to ${sent} agencies — PropBlaze`,
-            html: ownerSummaryHtml,
-          }),
-        })
-      } catch {}
-    }
-
     return NextResponse.json({ success: true, sent, failed, simulated, total: agencies.length, results, test_mode: testMode ?? false, demo_mode: demoMode ?? false })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
@@ -213,67 +191,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
     <p style="margin-top:8px;font-size:10px;color:#CBD5E1">To unsubscribe reply with subject "unsubscribe"</p>
   </div>
 </div></body></html>`
-}
-
-function buildOwnerSummaryEmail(p: PropertyData, ownerName: string, sent: number, failed: number, simulated: number, agencies: DistributeAgency[]): string {
-  const price = p.price ? `€${p.price.toLocaleString('de-DE')}` : ''
-  const area  = p.areaSqm ? `${p.areaSqm} m²` : ''
-  const topAgencies = agencies.slice(0, 5).map(a => `<tr>
-    <td style="padding:8px 12px;border-bottom:1px solid #1e293b;color:#e2e8f0">${a.flag || ''} ${a.name}</td>
-    <td style="padding:8px 12px;border-bottom:1px solid #1e293b;color:#94a3b8">${a.city}, ${a.country}</td>
-    <td style="padding:8px 12px;border-bottom:1px solid #1e293b;color:#f97316;font-weight:700;text-align:center">Wave ${a.wave}</td>
-  </tr>`).join('')
-
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;padding:40px 20px;margin:0">
-  <div style="max-width:580px;margin:0 auto">
-    <div style="margin-bottom:28px">
-      <span style="font-size:20px;font-weight:800">Prop<span style="color:#f97316">Blaze</span></span>
-    </div>
-
-    <div style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);border-radius:16px;padding:24px;margin-bottom:28px">
-      <p style="font-size:22px;font-weight:900;margin:0 0 8px">✅ Distribution Complete!</p>
-      <p style="color:rgba(255,255,255,.5);margin:0;font-size:14px">Your property has been sent to <strong style="color:#fff">${sent} agencies</strong> from our registered network.</p>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px">
-      <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:16px;text-align:center">
-        <p style="font-size:28px;font-weight:900;color:#22c55e;margin:0">${sent}</p>
-        <p style="font-size:11px;color:rgba(255,255,255,.4);margin:4px 0 0;text-transform:uppercase;letter-spacing:.05em">Sent</p>
-      </div>
-      <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:16px;text-align:center">
-        <p style="font-size:28px;font-weight:900;color:#f97316;margin:0">${simulated}</p>
-        <p style="font-size:11px;color:rgba(255,255,255,.4);margin:4px 0 0;text-transform:uppercase;letter-spacing:.05em">Simulated</p>
-      </div>
-      <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:16px;text-align:center">
-        <p style="font-size:28px;font-weight:900;color:${failed > 0 ? '#ef4444' : '#64748b'};margin:0">${failed}</p>
-        <p style="font-size:11px;color:rgba(255,255,255,.4);margin:4px 0 0;text-transform:uppercase;letter-spacing:.05em">Failed</p>
-      </div>
-    </div>
-
-    <div style="background:rgba(255,255,255,.04);border-radius:14px;padding:20px;margin-bottom:24px">
-      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin:0 0 4px">Property</p>
-      <p style="font-size:18px;font-weight:800;margin:0 0 4px">${p.type} · ${area} · ${price}</p>
-      <p style="color:rgba(255,255,255,.5);font-size:13px;margin:0">📍 ${[p.address || p.city, p.country].filter(Boolean).join(', ')}</p>
-    </div>
-
-    ${topAgencies ? `<div style="margin-bottom:24px">
-      <p style="font-size:13px;font-weight:700;color:rgba(255,255,255,.6);margin:0 0 12px">Agencies contacted (top 5):</p>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;background:rgba(255,255,255,.03);border-radius:10px;overflow:hidden">
-        ${topAgencies}
-      </table>
-    </div>` : ''}
-
-    <div style="background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);border-radius:12px;padding:16px;margin-bottom:24px">
-      <p style="font-size:13px;color:rgba(255,255,255,.6);margin:0">📨 <strong style="color:#f97316">Replies go directly to you</strong> — agencies will contact you at this email address. Expect responses within 24–72 hours from the best matches.</p>
-    </div>
-
-    <p style="text-align:center;color:rgba(255,255,255,.2);font-size:12px">PropBlaze · hello@propblaze.com · propblaze.com</p>
-  </div>
-</body>
-</html>`
 }
 
 function buildDefaultLetter(p: PropertyData, a: DistributeAgency, ownerName: string, ownerEmail: string, ownerPhone?: string): string {
