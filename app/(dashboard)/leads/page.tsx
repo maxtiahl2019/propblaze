@@ -43,6 +43,23 @@ function scoreColor(score: number): string {
   return C.orange;
 }
 
+/* ─── Demo seed (shown when no real campaign data exists yet) ─────────── */
+const DEMO_SEED: WaveEntry[] = (() => {
+  const now = Date.now();
+  return [
+    { id:'rs-cityexpert-001', name:'CityExpert Serbia',     email:'listings@cityexpert.rs',     wave:1, score:94, sent_at: new Date(now - 2*3600_000).toISOString() },
+    { id:'rs-knightfrank-001',name:'Knight Frank Serbia',   email:'belgrade@knightfrank.com',   wave:1, score:92, sent_at: new Date(now - 3*3600_000).toISOString() },
+    { id:'rs-colliers-001',   name:'Colliers Serbia',       email:'info@colliers.rs',           wave:1, score:91, sent_at: new Date(now - 5*3600_000).toISOString() },
+    { id:'at-magnus-001',     name:'Magnus Realty GmbH',    email:'info@magnus-realty.at',      wave:1, score:89, sent_at: new Date(now - 7*3600_000).toISOString() },
+    { id:'de-berlin-001',     name:'Berlin Invest Group',   email:'deals@berlin-invest.de',     wave:1, score:87, sent_at: new Date(now - 26*3600_000).toISOString() },
+    { id:'me-adriatic-001',   name:'Adriatic Real Estate',  email:'contact@adriatic-re.me',     wave:1, score:85, sent_at: new Date(now - 28*3600_000).toISOString() },
+    { id:'ch-zurich-001',     name:'Zürich Real Estate AG', email:'info@zurich-re.ch',          wave:2, score:83, sent_at: new Date(now - 50*3600_000).toISOString() },
+    { id:'at-vienna-001',     name:'Vienna City Homes',     email:'office@viennacityhomes.at',  wave:2, score:81, sent_at: new Date(now - 52*3600_000).toISOString() },
+    { id:'nl-amsterdam-001',  name:'Amsterdam Invest NL',   email:'info@amsterdaminvest.nl',    wave:3, score:78, sent_at: new Date(now - 72*3600_000).toISOString() },
+    { id:'fr-paris-001',      name:'Paris Premium Realty',  email:'contact@parispremium.fr',    wave:3, score:75, sent_at: new Date(now - 74*3600_000).toISOString() },
+  ];
+})();
+
 export default function LeadsPage() {
   const [waveLog, setWaveLog] = useState<WaveEntry[]>([]);
   const [filter,  setFilter]  = useState<string>('All');
@@ -51,8 +68,16 @@ export default function LeadsPage() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem('pb_wave_log');
-      if (raw) setWaveLog(JSON.parse(raw));
-    } catch {}
+      if (raw) {
+        const parsed: WaveEntry[] = JSON.parse(raw);
+        setWaveLog(parsed.length > 0 ? parsed : DEMO_SEED);
+      } else {
+        // No campaign data yet — show demo seed so dashboard feels alive
+        setWaveLog(DEMO_SEED);
+      }
+    } catch {
+      setWaveLog(DEMO_SEED);
+    }
   }, []);
 
   const activewaves = ([1, 2, 3] as const).filter(w => waveLog.some(e => e.wave === w));

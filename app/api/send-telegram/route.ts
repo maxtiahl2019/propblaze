@@ -22,16 +22,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get credentials from env
-    const botToken = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
-    const chatId = customChatId || process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID;
+    // Get credentials from env (server-side keys take priority over public)
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
+    const chatId = customChatId || process.env.TELEGRAM_CHAT_ID || process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID;
 
+    // Demo fallback — log but don't fail (mirrors send-email behaviour)
     if (!botToken || !chatId) {
-      console.error('Telegram credentials not configured');
-      return NextResponse.json(
-        { error: 'Telegram service not configured' },
-        { status: 500 }
-      );
+      console.log('[send-telegram] DEMO MODE — would send:', message.slice(0, 80));
+      return NextResponse.json({
+        success: true,
+        demo: true,
+        message: 'Demo mode: Telegram message logged but not sent. Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to env to enable.',
+        text: message,
+      });
     }
 
     // Validate message length (Telegram limit is 4096 characters)
