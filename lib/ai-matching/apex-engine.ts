@@ -145,58 +145,101 @@ export interface DeadListingDiagnosis {
 // ─── Money Flow Matrix ────────────────────────────────────────────────────────
 
 const MONEY_FLOW: Record<string, { market: string; share: number }[]> = {
+  // ── EU / Balkan source countries ──────────────────────────────────────────────
+  // US/CA diaspora weight increased: significant Serbian-American, Croatian-American,
+  // Montenegrin-American communities actively buy back home.
   RS: [
-    { market: 'DE', share: 0.31 }, { market: 'RU', share: 0.28 },
-    { market: 'GB', share: 0.14 }, { market: 'AE', share: 0.11 },
-    { market: 'CH', share: 0.08 }, { market: 'US', share: 0.05 }, { market: 'AT', share: 0.03 },
+    { market: 'DE', share: 0.27 }, { market: 'RU', share: 0.22 },
+    { market: 'US', share: 0.14 }, { market: 'GB', share: 0.12 },
+    { market: 'AE', share: 0.10 }, { market: 'CH', share: 0.08 },
+    { market: 'CA', share: 0.04 }, { market: 'AT', share: 0.03 },
   ],
   ME: [
-    { market: 'RU', share: 0.34 }, { market: 'DE', share: 0.22 },
-    { market: 'SA', share: 0.14 }, { market: 'GB', share: 0.12 },
-    { market: 'AE', share: 0.09 }, { market: 'CH', share: 0.05 }, { market: 'FR', share: 0.04 },
+    { market: 'RU', share: 0.30 }, { market: 'DE', share: 0.20 },
+    { market: 'US', share: 0.12 }, { market: 'SA', share: 0.11 },
+    { market: 'GB', share: 0.10 }, { market: 'AE', share: 0.08 },
+    { market: 'CA', share: 0.05 }, { market: 'CH', share: 0.04 },
   ],
   HR: [
-    { market: 'DE', share: 0.38 }, { market: 'AT', share: 0.18 },
-    { market: 'NL', share: 0.14 }, { market: 'GB', share: 0.12 },
-    { market: 'CH', share: 0.08 }, { market: 'BE', share: 0.06 }, { market: 'RU', share: 0.04 },
+    { market: 'DE', share: 0.33 }, { market: 'AT', share: 0.16 },
+    { market: 'US', share: 0.13 }, { market: 'NL', share: 0.11 },
+    { market: 'GB', share: 0.10 }, { market: 'CH', share: 0.07 },
+    { market: 'CA', share: 0.06 }, { market: 'BE', share: 0.04 },
   ],
   GR: [
-    { market: 'DE', share: 0.26 }, { market: 'GB', share: 0.22 },
-    { market: 'US', share: 0.16 }, { market: 'AE', share: 0.12 },
-    { market: 'FR', share: 0.10 }, { market: 'CN', share: 0.08 }, { market: 'RU', share: 0.06 },
+    { market: 'DE', share: 0.22 }, { market: 'US', share: 0.20 },
+    { market: 'GB', share: 0.18 }, { market: 'AE', share: 0.12 },
+    { market: 'CA', share: 0.10 }, { market: 'FR', share: 0.10 },
+    { market: 'CN', share: 0.05 }, { market: 'AU', share: 0.03 },
   ],
   PT: [
-    { market: 'GB', share: 0.30 }, { market: 'FR', share: 0.22 },
-    { market: 'DE', share: 0.16 }, { market: 'US', share: 0.12 },
-    { market: 'BR', share: 0.10 }, { market: 'NL', share: 0.06 }, { market: 'CH', share: 0.04 },
+    { market: 'GB', share: 0.26 }, { market: 'US', share: 0.18 },
+    { market: 'FR', share: 0.16 }, { market: 'DE', share: 0.14 },
+    { market: 'CA', share: 0.10 }, { market: 'BR', share: 0.08 },
+    { market: 'NL', share: 0.05 }, { market: 'CH', share: 0.03 },
   ],
   ES: [
-    { market: 'GB', share: 0.28 }, { market: 'DE', share: 0.20 },
-    { market: 'FR', share: 0.16 }, { market: 'NL', share: 0.10 },
-    { market: 'BE', share: 0.08 }, { market: 'US', share: 0.08 },
-    { market: 'SE', share: 0.06 }, { market: 'NO', share: 0.04 },
+    { market: 'GB', share: 0.24 }, { market: 'DE', share: 0.18 },
+    { market: 'US', share: 0.14 }, { market: 'FR', share: 0.14 },
+    { market: 'NL', share: 0.09 }, { market: 'CA', share: 0.08 },
+    { market: 'BE', share: 0.07 }, { market: 'SE', share: 0.04 },
+    { market: 'NO', share: 0.02 },
   ],
   DE: [
-    { market: 'DE', share: 0.45 }, { market: 'AT', share: 0.15 },
-    { market: 'CH', share: 0.12 }, { market: 'NL', share: 0.08 },
-    { market: 'US', share: 0.08 }, { market: 'GB', share: 0.07 }, { market: 'FR', share: 0.05 },
+    { market: 'DE', share: 0.42 }, { market: 'AT', share: 0.14 },
+    { market: 'CH', share: 0.12 }, { market: 'US', share: 0.10 },
+    { market: 'NL', share: 0.08 }, { market: 'GB', share: 0.07 },
+    { market: 'CA', share: 0.04 }, { market: 'FR', share: 0.03 },
   ],
   BG: [
-    { market: 'RU', share: 0.35 }, { market: 'DE', share: 0.22 },
-    { market: 'GB', share: 0.18 }, { market: 'UA', share: 0.10 },
-    { market: 'IL', share: 0.08 }, { market: 'AT', share: 0.07 },
+    { market: 'RU', share: 0.30 }, { market: 'DE', share: 0.20 },
+    { market: 'GB', share: 0.16 }, { market: 'US', share: 0.12 },
+    { market: 'UA', share: 0.10 }, { market: 'CA', share: 0.07 },
+    { market: 'IL', share: 0.05 },
   ],
   TR: [
-    { market: 'RU', share: 0.32 }, { market: 'DE', share: 0.18 },
-    { market: 'GB', share: 0.14 }, { market: 'AE', share: 0.12 },
-    { market: 'UA', share: 0.10 }, { market: 'IR', share: 0.08 }, { market: 'SA', share: 0.06 },
+    { market: 'RU', share: 0.28 }, { market: 'DE', share: 0.18 },
+    { market: 'US', share: 0.14 }, { market: 'GB', share: 0.12 },
+    { market: 'AE', share: 0.11 }, { market: 'CA', share: 0.06 },
+    { market: 'UA', share: 0.06 }, { market: 'SA', share: 0.05 },
+  ],
+  IT: [
+    { market: 'DE', share: 0.20 }, { market: 'US', share: 0.18 },
+    { market: 'GB', share: 0.16 }, { market: 'FR', share: 0.12 },
+    { market: 'CH', share: 0.10 }, { market: 'CA', share: 0.09 },
+    { market: 'NL', share: 0.08 }, { market: 'AU', share: 0.07 },
+  ],
+
+  // ── North American source countries (US/CA as destination) ───────────────────
+  // When the property IS in the US or Canada, these are the typical buyer markets.
+  US: [
+    { market: 'US', share: 0.50 },   // domestic Americans — primary
+    { market: 'CA', share: 0.16 },   // Canadians (snowbirds, relocation)
+    { market: 'GB', share: 0.10 },   // British expats
+    { market: 'DE', share: 0.07 },   // German-Americans
+    { market: 'MX', share: 0.07 },   // Mexican diaspora (especially FL, TX, CA)
+    { market: 'CN', share: 0.05 },   // Chinese investors (NY, LA, SF)
+    { market: 'AU', share: 0.03 },   // Australian expats
+    { market: 'IN', share: 0.02 },   // Indian tech investors (Bay Area)
+  ],
+  CA: [
+    { market: 'CA', share: 0.44 },   // domestic Canadians
+    { market: 'US', share: 0.22 },   // Americans (border cities, lifestyle)
+    { market: 'GB', share: 0.11 },   // British-Canadians
+    { market: 'HK', share: 0.08 },   // Hong Kong diaspora (Vancouver, Toronto)
+    { market: 'IN', share: 0.07 },   // Indian immigrants
+    { market: 'FR', share: 0.05 },   // Quebec connection
+    { market: 'DE', share: 0.03 },   // German-Canadians
   ],
 }
 
 function getTargetMarkets(countryISO: string): string[] {
   const flows = MONEY_FLOW[countryISO] ?? [
-    { market: 'DE', share: 0.30 }, { market: 'GB', share: 0.25 },
-    { market: 'RU', share: 0.20 }, { market: 'AE', share: 0.15 }, { market: 'FR', share: 0.10 },
+    // Default for unknown EU/other countries — US/CA included as diaspora channel
+    { market: 'DE', share: 0.26 }, { market: 'GB', share: 0.20 },
+    { market: 'US', share: 0.18 }, { market: 'RU', share: 0.14 },
+    { market: 'CA', share: 0.10 }, { market: 'AE', share: 0.08 },
+    { market: 'FR', share: 0.04 },
   ]
   return flows.sort((a, b) => b.share - a.share).map(f => f.market)
 }
@@ -205,14 +248,21 @@ function getTargetMarkets(countryISO: string): string[] {
 // If owner explicitly says who they want to sell to, we reprioritize markets.
 
 const BUYER_TYPE_MARKETS: Record<string, string[]> = {
-  investor:       ['DE', 'AE', 'GB', 'CH', 'NL', 'US', 'AT'],
-  expat:          ['DE', 'AT', 'CH', 'GB', 'NL', 'SE', 'NO'],
-  russian_buyer:  ['RU', 'UA', 'KZ', 'BY', 'AZ', 'GE'],
-  family:         [],  // will be filled with property country + neighbors
-  developer:      [],  // property country + DE + AT
-  vacation_home:  ['DE', 'GB', 'NO', 'SE', 'DK', 'NL', 'BE', 'CH'],
-  luxury:         ['AE', 'CH', 'GB', 'SG', 'HK', 'US', 'DE'],
-  local:          [],  // handled separately — just property country
+  investor:         ['DE', 'AE', 'GB', 'CH', 'NL', 'US', 'CA', 'AT'],
+  expat:            ['DE', 'AT', 'CH', 'GB', 'NL', 'SE', 'NO', 'US', 'CA'],
+  russian_buyer:    ['RU', 'UA', 'KZ', 'BY', 'AZ', 'GE'],
+  family:           [],   // property country + neighbors (filled in buildOverrideMarkets)
+  developer:        [],   // property country + DE + AT + US (filled in buildOverrideMarkets)
+  vacation_home:    ['DE', 'GB', 'NO', 'SE', 'DK', 'NL', 'BE', 'CH', 'US', 'CA'],
+  luxury:           ['AE', 'CH', 'GB', 'SG', 'HK', 'US', 'CA', 'DE'],
+  local:            [],   // property country only
+  // North American–specific overrides
+  north_american:   ['US', 'CA', 'GB', 'AU'],
+  us_diaspora:      ['US', 'CA'],   // diaspora buying back in home country
+  canadian:         ['CA', 'US', 'GB'],
+  // Investor subtypes
+  golden_visa:      ['US', 'CA', 'GB', 'CN', 'HK', 'SG', 'AE', 'BR'],
+  commercial_buyer: ['US', 'CA', 'DE', 'GB', 'NL', 'AE', 'SG'],
 }
 
 function buildOverrideMarkets(
@@ -230,10 +280,10 @@ function buildOverrideMarkets(
       const NEIGHBOURS: Record<string, string[]> = {
         RS: ['ME','HR','BA','BG','RO'],  ME: ['RS','HR','BA','AL'],
         HR: ['RS','ME','BA','SI','AT'],  DE: ['AT','CH','NL','FR','PL'],
-        AT: ['DE','CH','IT','HU','SI'],
+        AT: ['DE','CH','IT','HU','SI'],  US: ['CA','MX'],  CA: ['US','GB'],
       }
       markets.push(countryISO, ...(NEIGHBOURS[countryISO] ?? []))
-      if (key === 'developer') markets.push('DE', 'AT')
+      if (key === 'developer') markets.push('DE', 'AT', 'US')
     } else {
       markets.push(...list)
     }
@@ -246,6 +296,7 @@ function buildOverrideMarkets(
 
 function normalizeCountryToISO(country: string): string {
   const map: Record<string, string> = {
+    // EU / Balkan
     'serbia': 'RS', 'montenegro': 'ME', 'croatia': 'HR', 'slovenia': 'SI',
     'bosnia': 'BA', 'bosnia and herzegovina': 'BA', 'north macedonia': 'MK',
     'germany': 'DE', 'austria': 'AT', 'switzerland': 'CH',
@@ -253,15 +304,29 @@ function normalizeCountryToISO(country: string): string {
     'greece': 'GR', 'netherlands': 'NL', 'belgium': 'BE',
     'poland': 'PL', 'czech republic': 'CZ', 'czechia': 'CZ', 'hungary': 'HU',
     'romania': 'RO', 'bulgaria': 'BG', 'albania': 'AL',
-    'united kingdom': 'GB', 'uk': 'GB', 'england': 'GB',
+    'united kingdom': 'GB', 'uk': 'GB', 'england': 'GB', 'great britain': 'GB',
     'uae': 'AE', 'united arab emirates': 'AE', 'dubai': 'AE',
     'turkey': 'TR', 'russia': 'RU', 'ukraine': 'UA', 'israel': 'IL',
     'sweden': 'SE', 'norway': 'NO', 'denmark': 'DK', 'finland': 'FI',
-    'usa': 'US', 'united states': 'US', 'canada': 'CA',
+    // North America — expanded
+    'usa': 'US', 'united states': 'US', 'united states of america': 'US',
+    'u.s.': 'US', 'u.s.a.': 'US', 'america': 'US',
+    'canada': 'CA', 'québec': 'CA', 'quebec': 'CA', 'ontario': 'CA',
+    'british columbia': 'CA', 'alberta': 'CA',
+    'mexico': 'MX',
+    // Asia-Pacific
     'singapore': 'SG', 'hong kong': 'HK', 'china': 'CN',
+    'australia': 'AU', 'new zealand': 'NZ', 'japan': 'JP', 'india': 'IN',
+    // Other
+    'brazil': 'BR', 'south africa': 'ZA',
   }
   const lower = country.toLowerCase().trim()
   return map[lower] ?? (country.length === 2 ? country.toUpperCase() : country.substring(0, 2).toUpperCase())
+}
+
+// ─── Is property in North America? ────────────────────────────────────────────
+function isNorthAmerica(countryISO: string): boolean {
+  return ['US', 'CA', 'MX'].includes(countryISO)
 }
 
 // ─── Feature signals detector ─────────────────────────────────────────────────
@@ -306,9 +371,12 @@ function buildPropertyDNA(prop: WizardProperty): PropertyDNA {
   const priceEUR =
     prop.currency === 'EUR' ? prop.price :
     prop.currency === 'USD' ? prop.price * 0.92 :
+    prop.currency === 'CAD' ? prop.price * 0.69 :
     prop.currency === 'CHF' ? prop.price * 1.03 :
     prop.currency === 'GBP' ? prop.price * 1.16 :
-    prop.price * 0.0085  // RSD
+    prop.currency === 'AUD' ? prop.price * 0.59 :
+    prop.currency === 'MXN' ? prop.price * 0.052 :
+    prop.price * 0.0085  // RSD fallback
 
   const price_band: PropertyDNA['price_band'] =
     priceEUR < 150_000 ? 'budget' :
@@ -381,13 +449,17 @@ function buildPropertyDNA(prop: WizardProperty): PropertyDNA {
     demand_markets = [...new Set(['CH', 'AT', 'DE', ...demand_markets])].slice(0, 10)
   }
 
-  // ── Per-type channel weights (v2.0) ───────────────────────────────────────────
+  // US/CA property → boost North American buyers, add diaspora channels
+  if (isNorthAmerica(countryISO)) {
+    const naBoost = countryISO === 'CA' ? ['CA', 'US', 'GB', 'HK'] : ['US', 'CA', 'GB', 'MX']
+    demand_markets = [...new Set([...naBoost, ...demand_markets])].slice(0, 10)
+  }
+
+  // ── Per-type channel weights ───────────────────────────────────────────────────
   //
-  // Key insight: different property types have fundamentally different buyer geographies.
-  // Land/commercial → mostly local developers → heavier LOCAL weight
-  // Villa → cross-border lifestyle buyers → heavier CROSS-BORDER
-  // Apartment in capital → local first, cross-border secondary
-  // Rental → heavily local (tenants usually local/nearby)
+  // US/CA properties: domestic market is dominant so LOCAL weight is highest.
+  // For EU properties: villa/new_build push toward cross-border.
+  // Rental: always local-heavy.
 
   const base_weights: Record<string, { local: number; cross_border: number; stealth: number }> = {
     apartment:  { local: 0.50, cross_border: 0.38, stealth: 0.12 },
@@ -400,20 +472,33 @@ function buildPropertyDNA(prop: WizardProperty): PropertyDNA {
 
   let cw = { ...(base_weights[type_key] ?? { local: 0.35, cross_border: 0.40, stealth: 0.25 }) }
 
+  // North American property → domestic-first logic
+  // US/CA real estate is primarily sold through local MLS agents, not cross-border
+  if (isNorthAmerica(countryISO)) {
+    cw = {
+      local: 0.62,       // local US/CA agents are the primary channel
+      cross_border: 0.28, // international buyers (Chinese, British, Mexican diaspora)
+      stealth: 0.10,     // HNWI network
+    }
+    if (price_band === 'luxury' || price_band === 'ultra') {
+      cw = { local: 0.45, cross_border: 0.30, stealth: 0.25 }
+    }
+  }
+
   // Rental mode → shift heavily local (tenants are local)
   if (isRental) {
     cw = { local: 0.65, cross_border: 0.28, stealth: 0.07 }
   }
 
   // Luxury/ultra → more stealth
-  if (price_band === 'luxury' || price_band === 'ultra') {
+  if (!isNorthAmerica(countryISO) && (price_band === 'luxury' || price_band === 'ultra')) {
     cw.stealth = Math.min(0.40, cw.stealth + 0.15)
     cw.cross_border = Math.max(0.15, cw.cross_border - 0.08)
     cw.local = Math.max(0.15, 1 - cw.stealth - cw.cross_border)
   }
 
-  // Seaside → cross-border lifestyle demand increases
-  if (signals.hasSeaside && !isRental) {
+  // Seaside → cross-border lifestyle demand increases (EU only)
+  if (signals.hasSeaside && !isRental && !isNorthAmerica(countryISO)) {
     cw.cross_border = Math.min(0.65, cw.cross_border + 0.10)
     cw.local = Math.max(0.15, cw.local - 0.10)
   }
