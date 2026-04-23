@@ -6,8 +6,9 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 
-const RESEND_API_KEY = process.env.NEXT_PUBLIC_RESEND_API_KEY || process.env.RESEND_API_KEY
-const FROM_EMAIL = process.env.NEXT_PUBLIC_RESEND_FROM_EMAIL || 'PropBlaze <noreply@propblaze.com>'
+// Server-only vars preferred; NEXT_PUBLIC_ kept as legacy fallback (do not add new NEXT_PUBLIC_ keys)
+const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || process.env.NEXT_PUBLIC_RESEND_FROM_EMAIL || 'PropBlaze <noreply@propblaze.com>'
 
 export async function POST(req: NextRequest) {
   try {

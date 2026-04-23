@@ -14,11 +14,14 @@ About PropBlaze:
 - GDPR-compliant, EU-hosted, encrypted document handling
 - Owner contacts are NEVER shared — all communication goes through PropBlaze's agency ID system
 
-Pricing:
-- Starter: €49/month — 1 active property, up to 20 agencies per wave, Email + Telegram notifications
-- Pro: €149/month — 5 active properties, up to 50 agencies per wave, all channels
-- Agency: €499/month — unlimited properties, full API access
-- 14-day free trial, billing stops automatically when marked as Sold
+Pricing (Launch pricing — active until October 2026):
+- Starter Launch: €4.90/month — 1 property, Wave 1 (10 agencies), email distribution, AI sales pack
+- Pro Launch: €14.90/month — 3 properties, full 3-wave distribution (30 agencies), WhatsApp + Email, advanced analytics
+- Business Launch: €34.90/month — 10 properties, all channels (WhatsApp + Email + Telegram), API access
+- Enterprise: €99/month — unlimited properties, white-label outreach, dedicated account manager
+- Agency plans: Free tier available for receiving listings; paid tiers for agencies wanting more leads
+- Plus 1.5% success fee on completed sales
+- Billing stops automatically when property is marked as Sold
 
 Supported languages: English, Russian, Serbian (platform interface)
 Target markets: EU + neighboring countries (Montenegro, Serbia, Croatia, Bulgaria, Greece, Spain, Portugal, Italy, Germany, Austria, UK, UAE and more)
