@@ -1,13 +1,21 @@
 /**
- * PropBlaze APEX Matching Engine v1.0
+ * PropBlaze APEX Matching Engine v2.0
  * Autonomous Property Exchange Intelligence
  *
  * Three-channel architecture:
- *   LOCAL CHANNEL      (35%) — agencies with local buyer base
- *   CROSS-BORDER       (40%) — agencies with foreign buyer pipeline
- *   STEALTH NETWORK    (25%) — private/off-market agencies, HNW access
+ *   LOCAL CHANNEL      — agencies with local buyer base
+ *   CROSS-BORDER       — agencies with foreign buyer pipeline
+ *   STEALTH NETWORK    — private/off-market agencies, HNW access
  *
- * + Dead Listing Detection: auto-diagnosis if no replies in 7 days
+ * v2.0 changes:
+ *   - Per-type channel weights (apartment ≠ villa ≠ land ≠ commercial)
+ *   - mode: 'rent' handled separately (rental mgmt agencies boosted)
+ *   - features[] used in scoring (pool/sea_view → luxury boost, etc.)
+ *   - condition, floor, total_floors, furnished fed into buyer profile
+ *   - exclusiveAgreement: 'yes' → hard filter top-tier agencies only
+ *   - targetBuyerTypes: owner-specified demand override
+ *   - Type-specific sub-scores: land uses developer signals, commercial uses yield signals
+ *   + Dead Listing Detection (unchanged)
  */
 
 import type { Agency } from './engine'
@@ -16,19 +24,33 @@ import { DEMO_AGENCY_POOL, type RealAgency } from './demo-agencies'
 // ─── Input from wizard ─────────────────────────────────────────────────────────
 
 export interface WizardProperty {
-  type: string
-  address: string
+  // Core (required)
+  type: string            // 'Apartment' | 'Villa' | 'House' | 'Land' | 'Commercial' | 'New Build'
   city: string
   country: string
-  areaSqm: number
-  bedrooms: number
-  bathrooms: number
-  mode: 'sale' | 'rent'
   price: number
   currency: string
+  mode: 'sale' | 'rent'
+
+  // Basic details (optional but strongly recommended)
+  address?: string
+  areaSqm?: number
+  bedrooms?: number
+  bathrooms?: number
+
+  // Extended wizard fields (v2.0)
+  condition?: 'new' | 'good' | 'renovation' | string
+  floor?: number
+  total_floors?: number
+  furnished?: 'unfurnished' | 'partial' | 'full' | string
+  exclusiveAgreement?: 'yes' | 'no' | 'maybe' | string
+  remoteViewing?: boolean
+  features?: string[]          // e.g. ['pool', 'sea_view', 'garage', 'garden', 'mountain_view']
+  proximityTags?: string[]     // e.g. ['beach', 'ski_resort', 'city_center', 'airport', 'school']
+  targetBuyerTypes?: string[]  // e.g. ['investor', 'expat', 'family', 'developer', 'russian_buyer']
   description?: string
-  features?: string[]
   isOffMarket?: boolean
+  ownerLanguages?: string[]    // ISO 639-1 e.g. ['ru', 'en']
 }
 
 // ─── Output types ──────────────────────────────────────────────────────────────
@@ -38,15 +60,15 @@ export type AgencyChannel = 'local' | 'cross_border' | 'stealth'
 export interface APEXAgencyResult {
   agency: RealAgency
   channel: AgencyChannel
-  apex_score: number         // 0–100 final
+  apex_score: number
   local_score: number
   cross_border_score: number
   stealth_score: number
   wave: 1 | 2 | 3
-  send_at: string            // ISO timestamp — when to send
-  why_matched: string[]      // human-readable reasons
-  deal_signals: string[]     // active signals (buyer pipeline, urgency, etc.)
-  fatigue_penalty: number    // 0–1 multiplier
+  send_at: string
+  why_matched: string[]
+  deal_signals: string[]
+  fatigue_penalty: number
 }
 
 export interface APEXResult {
@@ -71,13 +93,23 @@ export interface APEXResult {
 export interface PropertyDNA {
   price_band: 'budget' | 'mid' | 'premium' | 'luxury' | 'ultra'
   price_eur: number
-  seller_urgency: number       // 0–10
-  liquidity_score: number      // 0–10
-  demand_markets: string[]     // target buyer countries
+  seller_urgency: number
+  liquidity_score: number
+  demand_markets: string[]
   buyer_archetypes: string[]
   seasonal_peak_months: number[]
   is_off_market: boolean
   channel_weights: { local: number; cross_border: number; stealth: number }
+  // v2.0 additions
+  type_key: string
+  is_rental: boolean
+  is_penthouse: boolean
+  has_luxury_features: boolean
+  has_seaside: boolean
+  has_mountain: boolean
+  is_urban: boolean
+  target_buyer_override: string[]
+  exclusive: boolean
 }
 
 export interface WaveTiming {
@@ -91,118 +123,192 @@ export interface WaveTiming {
 // ─── Dead Listing Detection ────────────────────────────────────────────────────
 
 export type DiagnosisType =
-  | 'price_outlier'
-  | 'wrong_channel_mix'
-  | 'agency_fatigue'
-  | 'wrong_market_target'
-  | 'seasonal_mismatch'
-  | 'description_weak'
-  | 'stealth_needed'
+  | 'price_outlier' | 'wrong_channel_mix' | 'agency_fatigue'
+  | 'wrong_market_target' | 'seasonal_mismatch' | 'description_weak' | 'stealth_needed'
 
 export type RecampaignStrategy = 'A' | 'B' | 'C' | 'D'
 
 export interface DeadListingDiagnosis {
   days_since_launch: number
-  open_rate: number           // 0–100
-  reply_rate: number          // 0–100
+  open_rate: number
+  reply_rate: number
   diagnosis: DiagnosisType[]
   primary_diagnosis: DiagnosisType
-  confidence: number          // 0–100
+  confidence: number
   recommended_strategy: RecampaignStrategy
   strategy_description: string
   owner_message: string
   action_items: string[]
-  price_adjustment_suggested?: number   // % to reduce
+  price_adjustment_suggested?: number
 }
 
 // ─── Money Flow Matrix ────────────────────────────────────────────────────────
-// Who actually buys in each country right now (weighted by market share)
 
 const MONEY_FLOW: Record<string, { market: string; share: number }[]> = {
   RS: [
-    { market: 'DE', share: 0.31 },
-    { market: 'RU', share: 0.28 },
-    { market: 'GB', share: 0.14 },
-    { market: 'AE', share: 0.11 },
-    { market: 'CH', share: 0.08 },
-    { market: 'US', share: 0.05 },
-    { market: 'AT', share: 0.03 },
+    { market: 'DE', share: 0.31 }, { market: 'RU', share: 0.28 },
+    { market: 'GB', share: 0.14 }, { market: 'AE', share: 0.11 },
+    { market: 'CH', share: 0.08 }, { market: 'US', share: 0.05 }, { market: 'AT', share: 0.03 },
   ],
   ME: [
-    { market: 'RU', share: 0.34 },
-    { market: 'DE', share: 0.22 },
-    { market: 'SA', share: 0.14 },
-    { market: 'GB', share: 0.12 },
-    { market: 'AE', share: 0.09 },
-    { market: 'CH', share: 0.05 },
-    { market: 'FR', share: 0.04 },
+    { market: 'RU', share: 0.34 }, { market: 'DE', share: 0.22 },
+    { market: 'SA', share: 0.14 }, { market: 'GB', share: 0.12 },
+    { market: 'AE', share: 0.09 }, { market: 'CH', share: 0.05 }, { market: 'FR', share: 0.04 },
   ],
   HR: [
-    { market: 'DE', share: 0.38 },
-    { market: 'AT', share: 0.18 },
-    { market: 'NL', share: 0.14 },
-    { market: 'GB', share: 0.12 },
-    { market: 'CH', share: 0.08 },
-    { market: 'BE', share: 0.06 },
-    { market: 'RU', share: 0.04 },
+    { market: 'DE', share: 0.38 }, { market: 'AT', share: 0.18 },
+    { market: 'NL', share: 0.14 }, { market: 'GB', share: 0.12 },
+    { market: 'CH', share: 0.08 }, { market: 'BE', share: 0.06 }, { market: 'RU', share: 0.04 },
   ],
   GR: [
-    { market: 'DE', share: 0.26 },
-    { market: 'GB', share: 0.22 },
-    { market: 'US', share: 0.16 },
-    { market: 'AE', share: 0.12 },
-    { market: 'FR', share: 0.10 },
-    { market: 'CN', share: 0.08 },
-    { market: 'RU', share: 0.06 },
+    { market: 'DE', share: 0.26 }, { market: 'GB', share: 0.22 },
+    { market: 'US', share: 0.16 }, { market: 'AE', share: 0.12 },
+    { market: 'FR', share: 0.10 }, { market: 'CN', share: 0.08 }, { market: 'RU', share: 0.06 },
   ],
   PT: [
-    { market: 'GB', share: 0.30 },
-    { market: 'FR', share: 0.22 },
-    { market: 'DE', share: 0.16 },
-    { market: 'US', share: 0.12 },
-    { market: 'BR', share: 0.10 },
-    { market: 'NL', share: 0.06 },
-    { market: 'CH', share: 0.04 },
+    { market: 'GB', share: 0.30 }, { market: 'FR', share: 0.22 },
+    { market: 'DE', share: 0.16 }, { market: 'US', share: 0.12 },
+    { market: 'BR', share: 0.10 }, { market: 'NL', share: 0.06 }, { market: 'CH', share: 0.04 },
   ],
   ES: [
-    { market: 'GB', share: 0.28 },
-    { market: 'DE', share: 0.20 },
-    { market: 'FR', share: 0.16 },
-    { market: 'NL', share: 0.10 },
-    { market: 'BE', share: 0.08 },
-    { market: 'US', share: 0.08 },
-    { market: 'SE', share: 0.06 },
-    { market: 'NO', share: 0.04 },
+    { market: 'GB', share: 0.28 }, { market: 'DE', share: 0.20 },
+    { market: 'FR', share: 0.16 }, { market: 'NL', share: 0.10 },
+    { market: 'BE', share: 0.08 }, { market: 'US', share: 0.08 },
+    { market: 'SE', share: 0.06 }, { market: 'NO', share: 0.04 },
   ],
   DE: [
-    { market: 'DE', share: 0.45 },
-    { market: 'AT', share: 0.15 },
-    { market: 'CH', share: 0.12 },
-    { market: 'NL', share: 0.08 },
-    { market: 'US', share: 0.08 },
-    { market: 'GB', share: 0.07 },
-    { market: 'FR', share: 0.05 },
+    { market: 'DE', share: 0.45 }, { market: 'AT', share: 0.15 },
+    { market: 'CH', share: 0.12 }, { market: 'NL', share: 0.08 },
+    { market: 'US', share: 0.08 }, { market: 'GB', share: 0.07 }, { market: 'FR', share: 0.05 },
+  ],
+  BG: [
+    { market: 'RU', share: 0.35 }, { market: 'DE', share: 0.22 },
+    { market: 'GB', share: 0.18 }, { market: 'UA', share: 0.10 },
+    { market: 'IL', share: 0.08 }, { market: 'AT', share: 0.07 },
+  ],
+  TR: [
+    { market: 'RU', share: 0.32 }, { market: 'DE', share: 0.18 },
+    { market: 'GB', share: 0.14 }, { market: 'AE', share: 0.12 },
+    { market: 'UA', share: 0.10 }, { market: 'IR', share: 0.08 }, { market: 'SA', share: 0.06 },
   ],
 }
 
 function getTargetMarkets(countryISO: string): string[] {
   const flows = MONEY_FLOW[countryISO] ?? [
-    { market: 'DE', share: 0.30 },
-    { market: 'GB', share: 0.25 },
-    { market: 'RU', share: 0.20 },
-    { market: 'AE', share: 0.15 },
-    { market: 'FR', share: 0.10 },
+    { market: 'DE', share: 0.30 }, { market: 'GB', share: 0.25 },
+    { market: 'RU', share: 0.20 }, { market: 'AE', share: 0.15 }, { market: 'FR', share: 0.10 },
   ]
   return flows.sort((a, b) => b.share - a.share).map(f => f.market)
 }
 
-// ─── Property DNA builder ─────────────────────────────────────────────────────
+// ─── TARGET BUYER TYPE → MARKET OVERRIDE ─────────────────────────────────────
+// If owner explicitly says who they want to sell to, we reprioritize markets.
+
+const BUYER_TYPE_MARKETS: Record<string, string[]> = {
+  investor:       ['DE', 'AE', 'GB', 'CH', 'NL', 'US', 'AT'],
+  expat:          ['DE', 'AT', 'CH', 'GB', 'NL', 'SE', 'NO'],
+  russian_buyer:  ['RU', 'UA', 'KZ', 'BY', 'AZ', 'GE'],
+  family:         [],  // will be filled with property country + neighbors
+  developer:      [],  // property country + DE + AT
+  vacation_home:  ['DE', 'GB', 'NO', 'SE', 'DK', 'NL', 'BE', 'CH'],
+  luxury:         ['AE', 'CH', 'GB', 'SG', 'HK', 'US', 'DE'],
+  local:          [],  // handled separately — just property country
+}
+
+function buildOverrideMarkets(
+  targetBuyerTypes: string[],
+  countryISO: string
+): string[] {
+  if (!targetBuyerTypes.length) return []
+  const markets: string[] = []
+  for (const t of targetBuyerTypes) {
+    const key = t.toLowerCase().replace(/[- ]/g, '_')
+    const list = BUYER_TYPE_MARKETS[key]
+    if (!list) continue
+    if (list.length === 0) {
+      // family / developer / local → add property country + neighbors
+      const NEIGHBOURS: Record<string, string[]> = {
+        RS: ['ME','HR','BA','BG','RO'],  ME: ['RS','HR','BA','AL'],
+        HR: ['RS','ME','BA','SI','AT'],  DE: ['AT','CH','NL','FR','PL'],
+        AT: ['DE','CH','IT','HU','SI'],
+      }
+      markets.push(countryISO, ...(NEIGHBOURS[countryISO] ?? []))
+      if (key === 'developer') markets.push('DE', 'AT')
+    } else {
+      markets.push(...list)
+    }
+  }
+  // Deduplicate preserving order
+  return [...new Set(markets)]
+}
+
+// ─── Country ISO normalizer ───────────────────────────────────────────────────
+
+function normalizeCountryToISO(country: string): string {
+  const map: Record<string, string> = {
+    'serbia': 'RS', 'montenegro': 'ME', 'croatia': 'HR', 'slovenia': 'SI',
+    'bosnia': 'BA', 'bosnia and herzegovina': 'BA', 'north macedonia': 'MK',
+    'germany': 'DE', 'austria': 'AT', 'switzerland': 'CH',
+    'france': 'FR', 'italy': 'IT', 'spain': 'ES', 'portugal': 'PT',
+    'greece': 'GR', 'netherlands': 'NL', 'belgium': 'BE',
+    'poland': 'PL', 'czech republic': 'CZ', 'czechia': 'CZ', 'hungary': 'HU',
+    'romania': 'RO', 'bulgaria': 'BG', 'albania': 'AL',
+    'united kingdom': 'GB', 'uk': 'GB', 'england': 'GB',
+    'uae': 'AE', 'united arab emirates': 'AE', 'dubai': 'AE',
+    'turkey': 'TR', 'russia': 'RU', 'ukraine': 'UA', 'israel': 'IL',
+    'sweden': 'SE', 'norway': 'NO', 'denmark': 'DK', 'finland': 'FI',
+    'usa': 'US', 'united states': 'US', 'canada': 'CA',
+    'singapore': 'SG', 'hong kong': 'HK', 'china': 'CN',
+  }
+  const lower = country.toLowerCase().trim()
+  return map[lower] ?? (country.length === 2 ? country.toUpperCase() : country.substring(0, 2).toUpperCase())
+}
+
+// ─── Feature signals detector ─────────────────────────────────────────────────
+
+function detectFeatureSignals(prop: WizardProperty): {
+  hasLuxury: boolean
+  hasSeaside: boolean
+  hasMountain: boolean
+  isUrban: boolean
+  isPenthouse: boolean
+  isFurnishedInvestment: boolean
+} {
+  const features = (prop.features ?? []).map(f => f.toLowerCase())
+  const proximity = (prop.proximityTags ?? []).map(p => p.toLowerCase())
+  const all = [...features, ...proximity]
+
+  const hasLuxury = all.some(f => ['pool', 'sea_view', 'yacht_dock', 'rooftop', 'penthouse', 'spa', 'concierge'].includes(f))
+    || (prop.price >= 500_000)
+
+  const hasSeaside = all.some(f => ['beach', 'seaside', 'sea', 'coast', 'waterfront', 'sea_view', 'seafront', 'ocean'].includes(f))
+
+  const hasMountain = all.some(f => ['mountain', 'ski', 'alpine', 'mountain_view', 'ski_resort', 'hiking'].includes(f))
+
+  const isUrban = all.some(f => ['city_center', 'urban', 'downtown', 'metro', 'central', 'old_town'].includes(f))
+
+  const isPenthouse =
+    features.includes('penthouse') ||
+    (prop.floor != null && prop.total_floors != null
+      && prop.floor >= prop.total_floors - 1
+      && prop.bedrooms != null && prop.bedrooms >= 2)
+
+  const isFurnishedInvestment =
+    (prop.furnished === 'full' || prop.furnished === 'partial') &&
+    (prop.mode === 'rent' || prop.type.toLowerCase() === 'apartment')
+
+  return { hasLuxury, hasSeaside, hasMountain, isUrban, isPenthouse, isFurnishedInvestment }
+}
+
+// ─── Property DNA builder (v2.0) ──────────────────────────────────────────────
 
 function buildPropertyDNA(prop: WizardProperty): PropertyDNA {
-  const priceEUR = prop.currency === 'EUR' ? prop.price
-    : prop.currency === 'USD' ? prop.price * 0.92
-    : prop.currency === 'CHF' ? prop.price * 1.03
-    : prop.price * 0.0085  // RSD
+  const priceEUR =
+    prop.currency === 'EUR' ? prop.price :
+    prop.currency === 'USD' ? prop.price * 0.92 :
+    prop.currency === 'CHF' ? prop.price * 1.03 :
+    prop.currency === 'GBP' ? prop.price * 1.16 :
+    prop.price * 0.0085  // RSD
 
   const price_band: PropertyDNA['price_band'] =
     priceEUR < 150_000 ? 'budget' :
@@ -210,92 +316,181 @@ function buildPropertyDNA(prop: WizardProperty): PropertyDNA {
     priceEUR < 1_500_000 ? 'premium' :
     priceEUR < 5_000_000 ? 'luxury' : 'ultra'
 
-  // Buyer archetypes by property type
+  const type_key = prop.type.toLowerCase().replace(/\s+/g, '_')
+    .replace('new_build', 'new_build')
+    .replace('new build', 'new_build')
+
+  const countryISO = normalizeCountryToISO(prop.country)
+  const signals = detectFeatureSignals(prop)
+  const isRental = prop.mode === 'rent'
+
+  // ── Buyer archetypes by type + mode ──────────────────────────────────────────
   const archetypeMap: Record<string, string[]> = {
-    apartment:   ['yield_investor', 'relocation_family', 'lifestyle_second_home'],
-    house:       ['relocation_family', 'lifestyle_migrant', 'lifestyle_second_home'],
-    villa:       ['lifestyle_second_home', 'capital_preserver', 'ultra_hnwi'],
-    land:        ['developer_landbank', 'yield_investor', 'capital_preserver'],
+    apartment:  isRental
+      ? ['rental_investor', 'yield_investor', 'relocation_family']
+      : ['yield_investor', 'relocation_family', 'lifestyle_second_home'],
+    house:      isRental
+      ? ['relocation_family', 'lifestyle_migrant', 'rental_investor']
+      : ['relocation_family', 'lifestyle_migrant', 'lifestyle_second_home'],
+    villa:      isRental
+      ? ['vacation_rental', 'lifestyle_second_home', 'ultra_hnwi']
+      : ['lifestyle_second_home', 'capital_preserver', 'ultra_hnwi'],
+    land:        ['developer_landbank', 'capital_preserver', 'yield_investor'],
     commercial:  ['yield_investor', 'commercial_investor', 'developer_landbank'],
-    new_build:   ['off_plan_investor', 'yield_investor', 'relocation_family'],
+    new_build:   isRental
+      ? ['yield_investor', 'rental_investor', 'off_plan_investor']
+      : ['off_plan_investor', 'yield_investor', 'relocation_family'],
   }
 
-  const type_key = prop.type.toLowerCase().replace(/\s+/g, '_')
-  const buyer_archetypes = archetypeMap[type_key] ?? ['yield_investor', 'lifestyle_migrant']
+  let buyer_archetypes: string[] = archetypeMap[type_key] ?? ['yield_investor', 'lifestyle_migrant']
 
   // Luxury override
   if (price_band === 'luxury' || price_band === 'ultra') {
-    buyer_archetypes.unshift('ultra_hnwi', 'capital_preserver')
+    buyer_archetypes = ['ultra_hnwi', 'capital_preserver', ...buyer_archetypes]
   }
 
-  // Seasonal peak: land/commercial → year-round; sea → Feb-May; city → Sep-Nov
+  // Penthouse override
+  if (signals.isPenthouse) {
+    buyer_archetypes = ['ultra_hnwi', ...buyer_archetypes]
+  }
+
+  // Furnished investment → rental investor first
+  if (signals.isFurnishedInvestment && !buyer_archetypes[0].includes('rental')) {
+    buyer_archetypes = ['rental_investor', ...buyer_archetypes]
+  }
+
+  // ── Demand markets ────────────────────────────────────────────────────────────
+  let demand_markets: string[]
+
+  // Owner-specified buyer types override everything
+  const overrideMarkets = buildOverrideMarkets(prop.targetBuyerTypes ?? [], countryISO)
+  if (overrideMarkets.length > 0) {
+    // Merge: owner preference first, then base MONEY_FLOW for fill-up
+    demand_markets = [...new Set([...overrideMarkets, ...getTargetMarkets(countryISO)])].slice(0, 10)
+  } else {
+    demand_markets = getTargetMarkets(countryISO)
+  }
+
+  // Seaside property → add Northern European lifestyle buyers
+  if (signals.hasSeaside && !demand_markets.includes('NO')) {
+    demand_markets = [...new Set([...demand_markets, 'NO', 'SE', 'DK', 'FI'])].slice(0, 10)
+  }
+
+  // Mountain/ski → add Swiss, Scandinavian, German alpine buyers
+  if (signals.hasMountain) {
+    demand_markets = [...new Set(['CH', 'AT', 'DE', ...demand_markets])].slice(0, 10)
+  }
+
+  // ── Per-type channel weights (v2.0) ───────────────────────────────────────────
+  //
+  // Key insight: different property types have fundamentally different buyer geographies.
+  // Land/commercial → mostly local developers → heavier LOCAL weight
+  // Villa → cross-border lifestyle buyers → heavier CROSS-BORDER
+  // Apartment in capital → local first, cross-border secondary
+  // Rental → heavily local (tenants usually local/nearby)
+
+  const base_weights: Record<string, { local: number; cross_border: number; stealth: number }> = {
+    apartment:  { local: 0.50, cross_border: 0.38, stealth: 0.12 },
+    house:      { local: 0.38, cross_border: 0.45, stealth: 0.17 },
+    villa:      { local: 0.20, cross_border: 0.58, stealth: 0.22 },
+    land:       { local: 0.55, cross_border: 0.33, stealth: 0.12 },
+    commercial: { local: 0.52, cross_border: 0.35, stealth: 0.13 },
+    new_build:  { local: 0.28, cross_border: 0.55, stealth: 0.17 },
+  }
+
+  let cw = { ...(base_weights[type_key] ?? { local: 0.35, cross_border: 0.40, stealth: 0.25 }) }
+
+  // Rental mode → shift heavily local (tenants are local)
+  if (isRental) {
+    cw = { local: 0.65, cross_border: 0.28, stealth: 0.07 }
+  }
+
+  // Luxury/ultra → more stealth
+  if (price_band === 'luxury' || price_band === 'ultra') {
+    cw.stealth = Math.min(0.40, cw.stealth + 0.15)
+    cw.cross_border = Math.max(0.15, cw.cross_border - 0.08)
+    cw.local = Math.max(0.15, 1 - cw.stealth - cw.cross_border)
+  }
+
+  // Seaside → cross-border lifestyle demand increases
+  if (signals.hasSeaside && !isRental) {
+    cw.cross_border = Math.min(0.65, cw.cross_border + 0.10)
+    cw.local = Math.max(0.15, cw.local - 0.10)
+  }
+
+  // Normalize to sum = 1
+  const total = cw.local + cw.cross_border + cw.stealth
+  const channel_weights = {
+    local: cw.local / total,
+    cross_border: cw.cross_border / total,
+    stealth: cw.stealth / total,
+  }
+
+  // ── Seasonal peak ─────────────────────────────────────────────────────────────
   const seasonal_peak_months =
-    type_key === 'land' || type_key === 'commercial' ? [1,2,3,4,5,6,7,8,9,10,11,12] :
-    prop.city?.toLowerCase().includes('coast') ||
-    prop.country === 'ME' || prop.country === 'HR' || prop.country === 'GR' ? [2,3,4,5,9,10] :
-    [9, 10, 11, 1, 2, 3]
+    type_key === 'land' || type_key === 'commercial'
+      ? [1,2,3,4,5,6,7,8,9,10,11,12]
+      : signals.hasSeaside
+        ? [2,3,4,5,9,10]
+        : signals.hasMountain
+          ? [1,2,10,11,12]
+          : [9,10,11,1,2,3]
 
-  // Seller urgency: inferred (neutral 5 unless price is very low → urgency high)
-  const seller_urgency = 5
-
-  // Liquidity: land is less liquid; apartment in capital city is most liquid
+  // ── Liquidity ─────────────────────────────────────────────────────────────────
   const liquidityMap: Record<string, number> = {
     apartment: 8, house: 7, villa: 6, new_build: 7, commercial: 5, land: 4
   }
   const liquidity_score = liquidityMap[type_key] ?? 5
 
-  // ISO country code (normalize)
-  const countryISO = normalizeCountryToISO(prop.country)
-  const demand_markets = getTargetMarkets(countryISO)
-
-  // Channel weights — depends on price band and type
-  const channel_weights = {
-    local: type_key === 'commercial' || type_key === 'land' ? 0.45 : 0.35,
-    cross_border: type_key === 'villa' || price_band === 'premium' || price_band === 'luxury' ? 0.50 : 0.40,
-    stealth: price_band === 'luxury' || price_band === 'ultra' ? 0.35 : price_band === 'premium' ? 0.20 : 0.10,
-  }
-
-  // Normalize channel weights to sum to 1
-  const total = channel_weights.local + channel_weights.cross_border + channel_weights.stealth
-  channel_weights.local = channel_weights.local / total
-  channel_weights.cross_border = channel_weights.cross_border / total
-  channel_weights.stealth = channel_weights.stealth / total
-
   return {
     price_band,
     price_eur: priceEUR,
-    seller_urgency,
+    seller_urgency: 5,
     liquidity_score,
     demand_markets,
     buyer_archetypes,
     seasonal_peak_months,
     is_off_market: prop.isOffMarket ?? false,
     channel_weights,
+    // v2.0 DNA fields
+    type_key,
+    is_rental: isRental,
+    is_penthouse: signals.isPenthouse,
+    has_luxury_features: signals.hasLuxury,
+    has_seaside: signals.hasSeaside,
+    has_mountain: signals.hasMountain,
+    is_urban: signals.isUrban,
+    target_buyer_override: prop.targetBuyerTypes ?? [],
+    exclusive: prop.exclusiveAgreement === 'yes',
   }
 }
 
-// ─── Country ISO normalizer ───────────────────────────────────────────────────
+// ─── Hard filter (v2.0) ───────────────────────────────────────────────────────
 
-function normalizeCountryToISO(country: string): string {
-  const map: Record<string, string> = {
-    'serbia': 'RS', 'montenegro': 'ME', 'croatia': 'HR',
-    'germany': 'DE', 'austria': 'AT', 'france': 'FR',
-    'spain': 'ES', 'portugal': 'PT', 'italy': 'IT',
-    'greece': 'GR', 'netherlands': 'NL', 'poland': 'PL',
-    'united kingdom': 'GB', 'uk': 'GB', 'uae': 'AE',
-    'united arab emirates': 'AE', 'switzerland': 'CH',
-    'sweden': 'SE', 'norway': 'NO', 'czech republic': 'CZ',
-    'russia': 'RU', 'bulgaria': 'BG', 'romania': 'RO',
-  }
-  return map[country.toLowerCase()] ?? country.substring(0, 2).toUpperCase()
+function passesFilter(agency: Agency, prop: WizardProperty, dna: PropertyDNA): boolean {
+  if (!agency.is_active) return false
+  if (agency.contact_policy === 'blacklisted') return false
+
+  const typeKey = dna.type_key as any
+  if (!agency.property_types.includes(typeKey)) return false
+
+  // Exclusive listing → only quality agencies (avoids wasting exclusive on bargain hunters)
+  if (dna.exclusive && agency.quality_score < 72) return false
+
+  const countryISO = normalizeCountryToISO(prop.country)
+  const hasMarketOverlap = agency.buyer_markets.some(m =>
+    dna.demand_markets.includes(m) || m === countryISO
+  )
+  if (!hasMarketOverlap) return false
+
+  // For rental mode: prefer agencies with residential/rental specialization
+  // (don't hard-filter, but this is used in score)
+
+  return true
 }
 
 // ─── Stealth classifier ───────────────────────────────────────────────────────
-// An agency is "stealth" if it works quietly at premium level
 
-// FIX P0-4: classifyChannel now uses property country (not demand_markets[0])
-// Previously was comparing agency country to buyer country (RU for ME) — causing all
-// Montenegro agencies to be misclassified as cross_border instead of local.
 function classifyChannel(agency: Agency, prop: WizardProperty, dna: PropertyDNA): AgencyChannel {
   const isStealthEligible = dna.price_band === 'luxury' || dna.price_band === 'ultra' || dna.price_band === 'premium'
   const isStealthAgency =
@@ -306,12 +501,11 @@ function classifyChannel(agency: Agency, prop: WizardProperty, dna: PropertyDNA)
 
   if (isStealthEligible && isStealthAgency) return 'stealth'
 
-  // LOCAL = agency is in the SAME country as the property (or neighbouring)
   const propCountryISO = normalizeCountryToISO(prop.country)
   const isLocal =
     agency.country === propCountryISO ||
     (agency.regions ?? []).some(r =>
-      r.toLowerCase().includes(prop.city?.toLowerCase() ?? '')
+      r.toLowerCase().includes((prop.city ?? '').toLowerCase())
     )
 
   const isCrossBorder =
@@ -323,81 +517,146 @@ function classifyChannel(agency: Agency, prop: WizardProperty, dna: PropertyDNA)
   return 'local'
 }
 
-// ─── LOCAL channel scorer ─────────────────────────────────────────────────────
+// ─── LOCAL channel scorer (v2.0) ─────────────────────────────────────────────
+// Weights: geo proximity, city match, type match, price band, speed, type-specific signals
 
 function scoreLocal(agency: Agency, prop: WizardProperty, dna: PropertyDNA): number {
   const countryISO = normalizeCountryToISO(prop.country)
   let score = 0
 
-  // Same country → strong base
-  if (agency.country === countryISO) score += 35
-  else {
+  // 1. Country geo match (0–35)
+  if (agency.country === countryISO) {
+    score += 35
+  } else {
     const NEIGHBOUR: Record<string, string[]> = {
       RS: ['ME','HR','BA','BG','HU'], ME: ['RS','HR','BA','AL'],
-      HR: ['RS','ME','BA','SI','AT'], DE: ['AT','CH','NL','FR'],
+      HR: ['RS','ME','BA','SI','AT'], DE: ['AT','CH','NL','FR','PL'],
+      AT: ['DE','CH','IT','HU','SI'],
     }
-    if ((NEIGHBOUR[countryISO] ?? []).includes(agency.country)) score += 18
+    if ((NEIGHBOUR[countryISO] ?? []).includes(agency.country)) score += 16
   }
 
-  // City match bonus (Neighbourhood Intel)
-  const agencyCities = (agency as any).city ? [(agency as any).city.toLowerCase()] : []
-  if (agencyCities.some((c: string) => c.includes(prop.city.toLowerCase()))) score += 15
+  // 2. City match (0–18) — direct neighborhood intelligence
+  const agencyCity = ((agency as any).city ?? '').toLowerCase()
+  const propCity = (prop.city ?? '').toLowerCase()
+  if (agencyCity && propCity) {
+    if (agencyCity === propCity) score += 18
+    else if (agencyCity.includes(propCity) || propCity.includes(agencyCity)) score += 10
+    else if ((agency.regions ?? []).some(r => r.toLowerCase().includes(propCity))) score += 8
+  }
 
-  // Local buyer ratio
-  const localBuyerRatio = agency.buyer_markets.filter(m => m === countryISO).length
-  score += localBuyerRatio * 10
+  // 3. Property type match (0–20)
+  if (agency.property_types.includes(dna.type_key as any)) score += 20
 
-  // Type match
-  const typeKey = prop.type.toLowerCase().replace(/\s+/g,'_') as any
-  if (agency.property_types.includes(typeKey)) score += 20
-
-  // Price band match
+  // 4. Price band match (0–15)
   if (agency.price_bands.includes(dna.price_band as any)) score += 15
 
-  // Response speed (faster = better for local market)
-  const speedScore = Math.max(0, 15 - agency.historical.avg_response_hours * 0.5)
+  // 5. Response speed (0–12) — local buyers respond fast
+  const speedScore = Math.max(0, 12 - agency.historical.avg_response_hours * 0.4)
   score += speedScore
+
+  // 6. Type-specific bonuses (v2.0)
+  if (dna.type_key === 'land' || dna.type_key === 'commercial') {
+    // Land/commercial: developer contacts and commercial specialization are critical
+    if (agency.specializations.includes('commercial')) score += 8
+    if (agency.specializations.includes('investment')) score += 6
+    if (agency.historical.cross_border_deals_12m >= 3) score += 4  // land developers are often international
+  }
+
+  if (dna.type_key === 'apartment') {
+    // Apartments: local residential expertise and turnover speed
+    if (agency.specializations.includes('residential')) score += 7
+    if (agency.historical.conversion_rate >= 18) score += 5
+  }
+
+  if (dna.type_key === 'new_build') {
+    // New build: local new-build specialists, off-plan know-how
+    if (agency.property_types.includes('new_build')) score += 8
+    if (agency.specializations.includes('new_build')) score += 5
+  }
+
+  // 7. Rental mode bonus
+  if (dna.is_rental) {
+    if (agency.specializations.includes('residential')) score += 8
+    // Rental agencies need fast local response
+    if (agency.historical.avg_response_hours <= 6) score += 5
+  }
+
+  // 8. Exclusive listing: boost high-quality local agencies
+  if (dna.exclusive && agency.quality_score >= 85) score += 8
 
   return Math.min(100, score)
 }
 
-// ─── CROSS-BORDER channel scorer ──────────────────────────────────────────────
+// ─── CROSS-BORDER channel scorer (v2.0) ──────────────────────────────────────
+// Weights: money-flow alignment, CB deal history, language, channel diversity, type signals
 
 function scoreCrossBorder(agency: Agency, dna: PropertyDNA): number {
   let score = 0
 
-  // Money flow alignment — how well does this agency's buyer markets match our target?
-  const flows = MONEY_FLOW[Object.keys(MONEY_FLOW).find(k =>
-    dna.demand_markets[0] === MONEY_FLOW[k]?.[0]?.market
-  ) ?? ''] ?? []
-
+  // 1. Demand market overlap (0–38)
   let flowScore = 0
-  for (const flow of flows) {
-    if (agency.buyer_markets.includes(flow.market)) {
-      flowScore += flow.share * 100
-    }
+  const demandWeights = dna.demand_markets.reduce((acc, m, i) => {
+    acc[m] = Math.max(0.05, 0.35 - i * 0.03)  // decreasing weight by rank
+    return acc
+  }, {} as Record<string, number>)
+
+  for (const market of agency.buyer_markets) {
+    if (demandWeights[market]) flowScore += demandWeights[market] * 100
   }
-  score += Math.min(35, flowScore * 0.8)
+  score += Math.min(38, flowScore * 0.75)
 
-  // Cross-border deal history
-  const cbDeals = Math.min(25, agency.historical.cross_border_deals_12m * 0.9)
-  score += cbDeals
+  // 2. Cross-border deal history (0–22)
+  score += Math.min(22, agency.historical.cross_border_deals_12m * 0.85)
 
-  // Language coverage of target markets
+  // 3. Language coverage of target markets (0–18)
   const marketLangMap: Record<string, string> = {
-    DE:'de', AT:'de', CH:'de', FR:'fr', RU:'ru', GB:'en', AE:'ar',
-    US:'en', IT:'it', ES:'es', NL:'nl', RS:'sr', ME:'sr',
+    DE:'de', AT:'de', CH:'de', FR:'fr', RU:'ru', UA:'ru', KZ:'ru',
+    GB:'en', AE:'ar', SA:'ar', US:'en', IT:'it', ES:'es',
+    NL:'nl', RS:'sr', ME:'sr', HR:'hr', TR:'tr', CN:'zh', SG:'zh',
+    NO:'no', SE:'sv', DK:'da', FI:'fi', PL:'pl', CZ:'cs', HU:'hu', BG:'bg', RO:'ro',
   }
-  const targetLangs = dna.demand_markets.slice(0, 4).map(m => marketLangMap[m] ?? 'en')
+  const targetLangs = [...new Set(dna.demand_markets.slice(0, 5).map(m => marketLangMap[m] ?? 'en'))]
   const langCoverage = targetLangs.filter(l => agency.languages.includes(l)).length
-  score += (langCoverage / Math.max(targetLangs.length, 1)) * 20
+  score += (langCoverage / Math.max(targetLangs.length, 1)) * 18
 
-  // Response rate (essential for cross-border — they need to be reliable)
+  // 4. Response reliability (0–12) — cross-border clients need consistent follow-through
   score += agency.historical.response_rate * 0.12
 
-  // Channel diversity (cross-border needs WhatsApp/Telegram, not just email)
+  // 5. Delivery channel diversity (0–8) — WhatsApp/Telegram essential for international buyers
   if (agency.delivery_channels.includes('whatsapp')) score += 5
   if (agency.delivery_channels.includes('telegram')) score += 3
+
+  // 6. Type-specific signals (v2.0)
+  if (dna.type_key === 'villa') {
+    // Villas: lifestyle buyer pipeline is critical
+    if (agency.specializations.includes('luxury')) score += 6
+    if (dna.has_seaside && agency.buyer_markets.some(m => ['NO','SE','DK','GB'].includes(m))) score += 4
+    if (dna.has_mountain && agency.buyer_markets.some(m => ['CH','AT','DE'].includes(m))) score += 4
+  }
+
+  if (dna.type_key === 'new_build') {
+    // Off-plan international investors
+    if (agency.specializations.includes('investment') || agency.specializations.includes('new_build')) score += 6
+  }
+
+  if (dna.type_key === 'land') {
+    // International developers
+    if (agency.buyer_markets.some(m => ['DE','AT','GB','AE'].includes(m))) score += 5
+    if (agency.specializations.includes('investment')) score += 4
+  }
+
+  // 7. Penthouse / luxury feature boost
+  if (dna.is_penthouse || dna.has_luxury_features) {
+    if (agency.price_bands.includes('premium') || agency.price_bands.includes('luxury')) score += 5
+  }
+
+  // 8. Owner-specified buyer type override — if agency covers those exact markets, boost
+  if (dna.target_buyer_override.length > 0) {
+    const overrideMarkets = buildOverrideMarkets(dna.target_buyer_override, '')
+    const overlapCount = overrideMarkets.filter(m => agency.buyer_markets.includes(m)).length
+    score += Math.min(8, overlapCount * 2)
+  }
 
   return Math.min(100, score)
 }
@@ -409,18 +668,13 @@ function scoreStealth(agency: Agency, dna: PropertyDNA): number {
 
   let score = 0
 
-  // Premium network access: quality score is a proxy for exclusivity
   score += agency.quality_score * 0.40
-
-  // Ticket alignment: luxury agencies for luxury property
   if (agency.price_bands.includes('luxury')) score += 25
   if (agency.price_bands.includes('premium') && dna.price_band === 'premium') score += 15
 
-  // Luxury deal volume
   const luxDeals = Math.min(25, agency.historical.luxury_deals_12m * 1.5)
   score += luxDeals
 
-  // Conversion rate (stealth agencies close, not just talk)
   score += Math.min(10, agency.historical.conversion_rate * 0.5)
 
   return Math.min(100, score)
@@ -437,27 +691,7 @@ function computeFatiguePenalty(agency: Agency): number {
   return 1.0
 }
 
-// ─── Hard filter ─────────────────────────────────────────────────────────────
-
-function passesFilter(agency: Agency, prop: WizardProperty, dna: PropertyDNA): boolean {
-  if (!agency.is_active) return false
-  if (agency.contact_policy === 'blacklisted') return false
-
-  const typeKey = prop.type.toLowerCase().replace(/\s+/g,'_') as any
-  if (!agency.property_types.includes(typeKey)) return false
-
-  // Must overlap with at least one target market or property country
-  const countryISO = normalizeCountryToISO(prop.country)
-  const hasMarketOverlap = agency.buyer_markets.some(m =>
-    dna.demand_markets.includes(m) || m === countryISO
-  )
-  if (!hasMarketOverlap) return false
-
-  return true
-}
-
 // ─── Wave timing ─────────────────────────────────────────────────────────────
-// Smart send times: Tue 10:00 → Thu 14:00 → Mon 09:00 (agency local time)
 
 function computeSendAt(wave: 1 | 2 | 3, agencyCountry: string): string {
   const now = new Date()
@@ -470,22 +704,17 @@ function computeSendAt(wave: 1 | 2 | 3, agencyCountry: string): string {
   }
   const tzOffset = offsets[agencyCountry] ?? 1
   const base = new Date(now)
-
-  // Wave 1: next Tuesday 10:00 agency time
-  // Wave 2: next Thursday 14:00
-  // Wave 3: following Monday 09:00
-  const waveDay = wave === 1 ? 2 : wave === 2 ? 4 : 1  // 0=Sun, 1=Mon...
+  const waveDay = wave === 1 ? 2 : wave === 2 ? 4 : 1
   const waveHour = wave === 1 ? 10 : wave === 2 ? 14 : 9
-  const waveDelay = wave === 1 ? 0 : wave === 2 ? 2 : 7  // days from now
+  const waveDelay = wave === 1 ? 0 : wave === 2 ? 2 : 7
 
   base.setDate(base.getDate() + waveDelay)
-  // Adjust to nearest correct day-of-week
   while (base.getDay() !== waveDay) base.setDate(base.getDate() + 1)
   base.setHours(waveHour - tzOffset, 0, 0, 0)
   return base.toISOString()
 }
 
-// ─── Why-matched explanation builder ─────────────────────────────────────────
+// ─── Explanation builders ─────────────────────────────────────────────────────
 
 function buildWhyMatched(
   agency: Agency,
@@ -509,6 +738,18 @@ function buildWhyMatched(
   }
   if (apex_score >= 90) reasons.push('Top 5% in database')
 
+  // v2.0: type-specific reasons
+  if (dna.type_key === 'land' && agency.specializations.includes('investment'))
+    reasons.push('Developer & land investment specialist')
+  if (dna.type_key === 'villa' && agency.specializations.includes('luxury'))
+    reasons.push('Luxury villa specialist')
+  if (dna.is_rental && agency.specializations.includes('residential'))
+    reasons.push('Residential rental specialist')
+  if (dna.target_buyer_override.length > 0) {
+    const covered = dna.target_buyer_override.slice(0, 2).join(', ')
+    reasons.push(`Matches your target: ${covered}`)
+  }
+
   return reasons.slice(0, 3)
 }
 
@@ -519,19 +760,26 @@ function buildDealSignals(agency: Agency, dna: PropertyDNA): string[] {
   if (agency.historical.luxury_deals_12m >= 5 && dna.price_band !== 'budget')
     signals.push(`${agency.historical.luxury_deals_12m} luxury deals active`)
   if (agency.delivery_channels.length >= 3) signals.push('Multi-channel outreach')
+  if (dna.is_rental && agency.specializations.includes('residential'))
+    signals.push('Rental specialist')
   return signals
 }
 
-// ─── MAIN APEX RUN ────────────────────────────────────────────────────────────
+// ─── MAIN APEX RUN (v2.0) ─────────────────────────────────────────────────────
 
 export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGENCY_POOL): APEXResult {
   const dna = buildPropertyDNA(prop)
   const warnings: string[] = []
 
-  // Current month seasonal check
+  // Seasonal check
   const currentMonth = new Date().getMonth() + 1
   if (!dna.seasonal_peak_months.includes(currentMonth)) {
     warnings.push(`Current month (${currentMonth}) is off-peak for this property type. Response rates may be 20–30% lower.`)
+  }
+
+  // Rental mode warning
+  if (dna.is_rental) {
+    warnings.push('Rental mode active: matching rental management agencies with local buyer base.')
   }
 
   // Filter
@@ -541,7 +789,7 @@ export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGEN
     warnings.push('Fewer than 5 agencies passed the filter. Consider expanding property type or location criteria.')
   }
 
-  // Score each agency in all three channels
+  // Score each agency across all three channels
   const scored: APEXAgencyResult[] = filtered.map(agency => {
     const channel = classifyChannel(agency, prop, dna)
     const fatigue = computeFatiguePenalty(agency)
@@ -550,22 +798,17 @@ export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGEN
     const cross_border_score = scoreCrossBorder(agency, dna)
     const stealth_score = scoreStealth(agency, dna)
 
-    // Weighted APEX score based on channel + property DNA weights
+    // Weighted APEX score using per-type channel weights
     const raw_apex =
-      local_score * dna.channel_weights.local +
+      local_score    * dna.channel_weights.local +
       cross_border_score * dna.channel_weights.cross_border +
-      stealth_score * dna.channel_weights.stealth
+      stealth_score  * dna.channel_weights.stealth
 
     const apex_score = Math.round(raw_apex * fatigue)
 
-    // Wave assignment
     const wave: 1 | 2 | 3 =
       apex_score >= 70 ? 1 :
       apex_score >= 45 ? 2 : 3
-
-    const send_at = computeSendAt(wave, agency.country)
-    const why_matched = buildWhyMatched(agency, channel, prop, dna, apex_score)
-    const deal_signals = buildDealSignals(agency, dna)
 
     return {
       agency,
@@ -575,9 +818,9 @@ export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGEN
       cross_border_score: Math.round(cross_border_score),
       stealth_score: Math.round(stealth_score),
       wave,
-      send_at,
-      why_matched,
-      deal_signals,
+      send_at: computeSendAt(wave, agency.country),
+      why_matched: buildWhyMatched(agency, channel, prop, dna, apex_score),
+      deal_signals: buildDealSignals(agency, dna),
       fatigue_penalty: fatigue,
     }
   })
@@ -585,21 +828,18 @@ export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGEN
   // Sort by APEX score descending
   const results = scored.sort((a, b) => b.apex_score - a.apex_score)
 
-  // Wave/channel breakdowns
   const wave1 = results.filter(r => r.wave === 1)
   const wave2 = results.filter(r => r.wave === 2)
   const wave3 = results.filter(r => r.wave === 3)
-
   const local = results.filter(r => r.channel === 'local')
   const cross_border = results.filter(r => r.channel === 'cross_border')
   const stealth = results.filter(r => r.channel === 'stealth')
 
-  // Send schedule
   const send_schedule: WaveTiming[] = [
     {
       wave: 1, send_at: computeSendAt(1, 'DE'),
       agencies_count: wave1.length,
-      channel: 'LOCAL + CROSS-BORDER top matches',
+      channel: dna.is_rental ? 'LOCAL rental specialists' : 'LOCAL + CROSS-BORDER top matches',
       rationale: 'Tuesday 10:00 — highest b2b open rates. Immediate outreach to top-scored agencies.',
     },
     {
@@ -628,13 +868,13 @@ export function runAPEX(prop: WizardProperty, agencies: RealAgency[] = DEMO_AGEN
   }
 }
 
-// ─── DEAD LISTING DETECTION ───────────────────────────────────────────────────
+// ─── DEAD LISTING DETECTION (unchanged) ──────────────────────────────────────
 
 export interface CampaignStats {
   days_since_launch: number
   emails_sent: number
-  open_rate: number       // 0–100
-  reply_rate: number      // 0–100
+  open_rate: number
+  reply_rate: number
   negative_replies: number
 }
 
@@ -645,50 +885,29 @@ export function runDiagnosis(
   const dna = buildPropertyDNA(prop)
   const diagnoses: DiagnosisType[] = []
 
-  // Rule 1: Low open rate → delivery/channel problem
   if (stats.open_rate < 30) {
     diagnoses.push('wrong_channel_mix')
     if (stats.days_since_launch > 10) diagnoses.push('agency_fatigue')
   }
-
-  // Rule 2: High open, zero replies → content or price problem
   if (stats.open_rate >= 50 && stats.reply_rate === 0) {
     diagnoses.push('description_weak')
     diagnoses.push('price_outlier')
   }
-
-  // Rule 3: All replies are negative → price confirmed outlier
   if (stats.reply_rate > 0 && stats.negative_replies / Math.max(stats.reply_rate,1) > 0.7) {
     diagnoses.push('price_outlier')
   }
-
-  // Rule 4: Seasonal mismatch
   const currentMonth = new Date().getMonth() + 1
-  if (!dna.seasonal_peak_months.includes(currentMonth)) {
-    diagnoses.push('seasonal_mismatch')
-  }
-
-  // Rule 5: If premium/luxury and no stealth yet → recommend stealth
+  if (!dna.seasonal_peak_months.includes(currentMonth)) diagnoses.push('seasonal_mismatch')
   if ((dna.price_band === 'premium' || dna.price_band === 'luxury') && stats.days_since_launch >= 14) {
     diagnoses.push('stealth_needed')
   }
-
-  // Rule 6: Zero opens at all → wrong market targeting
-  if (stats.open_rate === 0 && stats.emails_sent >= 5) {
-    diagnoses.push('wrong_market_target')
-  }
+  if (stats.open_rate === 0 && stats.emails_sent >= 5) diagnoses.push('wrong_market_target')
 
   const primary = diagnoses[0] ?? 'wrong_channel_mix'
 
-  // Strategy selection
   const strategyMap: Record<DiagnosisType, RecampaignStrategy> = {
-    wrong_channel_mix: 'A',
-    agency_fatigue: 'B',
-    description_weak: 'C',
-    price_outlier: 'C',
-    wrong_market_target: 'B',
-    seasonal_mismatch: 'D',
-    stealth_needed: 'D',
+    wrong_channel_mix: 'A', agency_fatigue: 'B', description_weak: 'C',
+    price_outlier: 'C', wrong_market_target: 'B', seasonal_mismatch: 'D', stealth_needed: 'D',
   }
   const strategy = strategyMap[primary] ?? 'B'
 
@@ -708,17 +927,13 @@ export function runDiagnosis(
 
   const ownerMessages: Record<DiagnosisType, string> = {
     wrong_channel_mix: `${stats.emails_sent} agencies received your listing, only ${stats.open_rate}% opened it. Diagnosis: email channel underperforming. Switching to WhatsApp — open rates typically 3× higher.`,
-    agency_fatigue: `Agencies contacted recently are not responding. Activating fresh pool of ${Math.min(20, DEMO_AGENCY_POOL.length)} new agencies.`,
+    agency_fatigue: `Agencies contacted recently are not responding. Activating fresh pool of agencies.`,
     description_weak: `Agencies opened your listing but didn't reply — the offer language isn't converting. AI is rewriting the pitch with a new angle.`,
-    price_outlier: `Market is silent. Data suggests your price may be ${Math.round(dna.price_eur * 0.08 / 1000)}k above comparable properties. Suggested adjustment: −8%.`,
-    wrong_market_target: `Zero engagement from current markets. APEX is recalculating buyer profiles and switching to ${dna.demand_markets.slice(2,5).join(', ')} markets.`,
+    price_outlier: `Market is silent. Data suggests your price may be above comparable properties. Suggested adjustment: −8%.`,
+    wrong_market_target: `Zero engagement from current markets. APEX is recalculating buyer profiles and switching markets.`,
     seasonal_mismatch: `Current month is off-peak for this property type. Recommend a 30-day pause or switching to STEALTH channel which operates year-round.`,
-    stealth_needed: `After ${stats.days_since_launch} days, switching to private networks. 6 stealth agencies have been identified with direct HNW buyer access.`,
+    stealth_needed: `After ${stats.days_since_launch} days, switching to private networks. Stealth agencies with direct HNW buyer access activated.`,
   }
-
-  const priceSuggestion = primary === 'price_outlier'
-    ? -8
-    : primary === 'description_weak' ? undefined : undefined
 
   return {
     days_since_launch: stats.days_since_launch,
@@ -731,6 +946,6 @@ export function runDiagnosis(
     strategy_description: strategyDescriptions[strategy],
     owner_message: ownerMessages[primary],
     action_items: actionMap[strategy],
-    price_adjustment_suggested: priceSuggestion ?? undefined,
+    price_adjustment_suggested: primary === 'price_outlier' ? -8 : undefined,
   }
 }

@@ -41,6 +41,16 @@ interface PropertyData {
   price: number;
   currency: 'EUR' | 'USD' | 'CHF' | 'RSD';
   ownerName?: string;
+  // v2.0: extended fields for APEX matching
+  condition?: 'new' | 'good' | 'renovation';
+  floor?: number;
+  totalFloors?: number;
+  furnished?: 'unfurnished' | 'partial' | 'full';
+  exclusiveAgreement?: 'yes' | 'no' | 'maybe';
+  remoteViewing?: boolean;
+  features?: string[];            // e.g. ['pool', 'sea_view', 'garage']
+  proximityTags?: string[];       // e.g. ['beach', 'city_center', 'ski_resort']
+  targetBuyerTypes?: string[];    // e.g. ['investor', 'expat', 'russian_buyer']
 }
 
 interface AIPackData {
@@ -77,6 +87,14 @@ export default function PropertiesNewPage() {
     mode: 'sale',
     price: 0,
     currency: 'EUR',
+    // v2.0 defaults
+    condition: 'good',
+    furnished: 'unfurnished',
+    exclusiveAgreement: 'maybe',
+    remoteViewing: true,
+    features: [],
+    proximityTags: [],
+    targetBuyerTypes: [],
   });
 
   // Step 2: AI Description
@@ -136,6 +154,17 @@ export default function PropertiesNewPage() {
               mode: property.mode,
               price: property.price,
               currency: property.currency,
+              // v2.0: extended fields
+              condition: property.condition,
+              floor: property.floor,
+              total_floors: property.totalFloors,
+              furnished: property.furnished,
+              exclusiveAgreement: property.exclusiveAgreement,
+              remoteViewing: property.remoteViewing,
+              features: property.features,
+              proximityTags: property.proximityTags,
+              targetBuyerTypes: property.targetBuyerTypes,
+              description: shortDesc || undefined,
             },
             DEMO_AGENCY_POOL
           );
@@ -687,7 +716,23 @@ export default function PropertiesNewPage() {
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {/* Floor / total floors — only for Apartment type */}
+            {property.type === 'Apartment' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Floor number</label>
+                  <input type="number" placeholder="e.g. 4" value={property.floor ?? ''} onChange={(e) => setProperty({ ...property, floor: parseInt(e.target.value) || undefined })}
+                    style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const, background: CSS_VARS.inputBg }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>Total floors in building</label>
+                  <input type="number" placeholder="e.g. 10" value={property.totalFloors ?? ''} onChange={(e) => setProperty({ ...property, totalFloors: parseInt(e.target.value) || undefined })}
+                    style={{ width: '100%', padding: '10px 12px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 8, fontSize: 13, color: CSS_VARS.text, boxSizing: 'border-box' as const, background: CSS_VARS.inputBg }} />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: CSS_VARS.text, marginBottom: 6 }}>
                   Price *
@@ -717,6 +762,164 @@ export default function PropertiesNewPage() {
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* ── APEX-relevant fields (v2.0) ── */}
+            <div style={{ background: CSS_VARS.surface2, border: `1px solid ${CSS_VARS.border}`, borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: CSS_VARS.text, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                🎯 APEX Matching Signals
+                <span style={{ fontWeight: 400, color: CSS_VARS.textTertiary, fontSize: 11 }}>— helps find the right agencies for your property</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 5 }}>Condition</label>
+                  <select
+                    value={property.condition ?? 'good'}
+                    onChange={(e) => setProperty({ ...property, condition: e.target.value as any })}
+                    style={{ width: '100%', padding: '8px 10px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 7, fontSize: 12, color: CSS_VARS.text, background: CSS_VARS.surface }}
+                  >
+                    <option value="new">New / Under construction</option>
+                    <option value="good">Good condition</option>
+                    <option value="renovation">Needs renovation</option>
+                  </select>
+                </div>
+                {!isLandOrCommercial && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 5 }}>Furnished</label>
+                    <select
+                      value={property.furnished ?? 'unfurnished'}
+                      onChange={(e) => setProperty({ ...property, furnished: e.target.value as any })}
+                      style={{ width: '100%', padding: '8px 10px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 7, fontSize: 12, color: CSS_VARS.text, background: CSS_VARS.surface }}
+                    >
+                      <option value="unfurnished">Unfurnished</option>
+                      <option value="partial">Partially furnished</option>
+                      <option value="full">Fully furnished</option>
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 5 }}>Exclusive agreement?</label>
+                  <select
+                    value={property.exclusiveAgreement ?? 'maybe'}
+                    onChange={(e) => setProperty({ ...property, exclusiveAgreement: e.target.value as any })}
+                    style={{ width: '100%', padding: '8px 10px', border: `1px solid ${CSS_VARS.border}`, borderRadius: 7, fontSize: 12, color: CSS_VARS.text, background: CSS_VARS.surface }}
+                  >
+                    <option value="maybe">Open to discuss</option>
+                    <option value="yes">Yes — exclusive only</option>
+                    <option value="no">No — non-exclusive</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Location tags */}
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 6 }}>
+                  Location proximity <span style={{ fontWeight: 400 }}>(select all that apply)</span>
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                  {[
+                    { value: 'beach', label: '🏖 Beach / Seaside' },
+                    { value: 'ski_resort', label: '⛷ Ski resort' },
+                    { value: 'city_center', label: '🏙 City center' },
+                    { value: 'airport', label: '✈️ Near airport' },
+                    { value: 'school', label: '🎓 Near schools' },
+                    { value: 'marina', label: '⚓ Marina / Port' },
+                    { value: 'golf', label: '⛳ Golf course' },
+                    { value: 'highway', label: '🛣 Highway access' },
+                  ].map(({ value, label }) => {
+                    const selected = (property.proximityTags ?? []).includes(value)
+                    return (
+                      <button key={value} onClick={() => {
+                        const cur = property.proximityTags ?? []
+                        setProperty({ ...property, proximityTags: selected ? cur.filter(t => t !== value) : [...cur, value] })
+                      }} style={{
+                        padding: '5px 10px', borderRadius: 16,
+                        border: `1px solid ${selected ? CSS_VARS.primary : CSS_VARS.border}`,
+                        background: selected ? CSS_VARS.primaryLight : CSS_VARS.surface,
+                        color: selected ? CSS_VARS.primary : CSS_VARS.textSecondary,
+                        fontSize: 11, fontWeight: selected ? 600 : 400, cursor: 'pointer',
+                      }}>
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Feature tags */}
+              {!isLandOrCommercial && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 6 }}>
+                    Property features <span style={{ fontWeight: 400 }}>(select all that apply)</span>
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                    {[
+                      { value: 'pool', label: '🏊 Pool' },
+                      { value: 'sea_view', label: '🌊 Sea view' },
+                      { value: 'mountain_view', label: '🏔 Mountain view' },
+                      { value: 'garden', label: '🌿 Garden' },
+                      { value: 'garage', label: '🚗 Garage' },
+                      { value: 'terrace', label: '🌅 Terrace / Balcony' },
+                      { value: 'elevator', label: '🛗 Elevator' },
+                      { value: 'basement', label: '🏚 Basement / Storage' },
+                      { value: 'rooftop', label: '🏙 Rooftop' },
+                      { value: 'smart_home', label: '🏠 Smart home' },
+                    ].map(({ value, label }) => {
+                      const selected = (property.features ?? []).includes(value)
+                      return (
+                        <button key={value} onClick={() => {
+                          const cur = property.features ?? []
+                          setProperty({ ...property, features: selected ? cur.filter(f => f !== value) : [...cur, value] })
+                        }} style={{
+                          padding: '5px 10px', borderRadius: 16,
+                          border: `1px solid ${selected ? CSS_VARS.primary : CSS_VARS.border}`,
+                          background: selected ? CSS_VARS.primaryLight : CSS_VARS.surface,
+                          color: selected ? CSS_VARS.primary : CSS_VARS.textSecondary,
+                          fontSize: 11, fontWeight: selected ? 600 : 400, cursor: 'pointer',
+                        }}>
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Target buyer types */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: CSS_VARS.textSecondary, marginBottom: 6 }}>
+                  Who do you want to sell to? <span style={{ fontWeight: 400 }}>(optional — APEX uses this to route to the right agencies)</span>
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                  {[
+                    { value: 'investor', label: '💼 Investor' },
+                    { value: 'expat', label: '🌍 EU expat' },
+                    { value: 'russian_buyer', label: '🇷🇺 Russian-speaking' },
+                    { value: 'family', label: '👨‍👩‍👧 Family' },
+                    { value: 'developer', label: '🏗 Developer' },
+                    { value: 'vacation_home', label: '🏖 Vacation home' },
+                    { value: 'luxury', label: '💎 Luxury / HNWI' },
+                    { value: 'local', label: '📍 Local buyer' },
+                  ].map(({ value, label }) => {
+                    const selected = (property.targetBuyerTypes ?? []).includes(value)
+                    return (
+                      <button key={value} onClick={() => {
+                        const cur = property.targetBuyerTypes ?? []
+                        setProperty({ ...property, targetBuyerTypes: selected ? cur.filter(t => t !== value) : [...cur, value] })
+                      }} style={{
+                        padding: '5px 10px', borderRadius: 16,
+                        border: `1px solid ${selected ? CSS_VARS.blue : CSS_VARS.border}`,
+                        background: selected ? 'rgba(59,91,219,0.08)' : CSS_VARS.surface,
+                        color: selected ? CSS_VARS.blue : CSS_VARS.textSecondary,
+                        fontSize: 11, fontWeight: selected ? 600 : 400, cursor: 'pointer',
+                      }}>
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
