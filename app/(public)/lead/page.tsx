@@ -14,19 +14,31 @@ interface Agency {
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const PROPERTY_TYPES = [
-  { id: 'apartment', label: 'Apartment', icon: '🏢' },
-  { id: 'villa',     label: 'Villa',     icon: '🌴' },
-  { id: 'house',     label: 'House',     icon: '🏡' },
-  { id: 'land',      label: 'Land',      icon: '🌍' },
-  { id: 'commercial',label: 'Commercial',icon: '🏗️' },
+const RESIDENTIAL_TYPES = [
+  { id: 'apartment', label: 'Apartment',  icon: '🏢' },
+  { id: 'villa',     label: 'Villa',      icon: '🌴' },
+  { id: 'house',     label: 'House',      icon: '🏡' },
+  { id: 'land',      label: 'Land / Plot',icon: '🌍' },
 ]
 
+const COMMERCIAL_TYPES = [
+  { id: 'office',    label: 'Office',     icon: '💼' },
+  { id: 'retail',    label: 'Retail / Shop', icon: '🏪' },
+  { id: 'mall',      label: 'Mall / SC',  icon: '🏬' },
+  { id: 'warehouse', label: 'Warehouse',  icon: '🏭' },
+  { id: 'hotel',     label: 'Hotel',      icon: '🏨' },
+  { id: 'land',      label: 'Land / Plot',icon: '🌍' },
+]
+
+const PROPERTY_TYPES = [...RESIDENTIAL_TYPES, { id: 'commercial', label: 'Commercial', icon: '🏗️' }]
+
 const RENTAL_TYPES = [
-  { id: 'apartment', label: 'Apartment', icon: '🏢' },
+  { id: 'apartment', label: 'Apartment',  icon: '🏢' },
   { id: 'house',     label: 'House / Villa', icon: '🏡' },
-  { id: 'room',      label: 'Room',      icon: '🛏️' },
-  { id: 'commercial',label: 'Commercial',icon: '🏗️' },
+  { id: 'room',      label: 'Room',       icon: '🛏️' },
+  { id: 'office',    label: 'Office',     icon: '💼' },
+  { id: 'retail',    label: 'Retail',     icon: '🏪' },
+  { id: 'warehouse', label: 'Warehouse',  icon: '🏭' },
 ]
 
 const COUNTRIES = [
@@ -56,11 +68,14 @@ const PRICE_PRESETS_SELL = ['50,000','100,000','200,000','350,000','500,000','80
 const PRICE_PRESETS_BUY  = ['100,000','200,000','350,000','500,000','800,000','1,500,000','3,000,000+']
 const PRICE_PRESETS_RENT = ['400','700','1,000','1,500','2,500','4,000','7,000','10,000+']
 
-const INTENT_CONFIG: Record<Intent, { icon: string; label: string; desc: string; color: string }> = {
-  sell:    { icon: '🏠', label: 'Sell Property',   desc: 'Find agencies to sell faster',       color: '#F59E0B' },
-  buy:     { icon: '🔍', label: 'Buy Property',    desc: 'Find agencies & developers',          color: '#3B82F6' },
-  rent_out:{ icon: '🔑', label: 'Rent Out',        desc: 'Find tenants & property managers',   color: '#10B981' },
-  rent_in: { icon: '🏡', label: 'Rent a Home',     desc: 'Find rental agencies near you',      color: '#A78BFA' },
+const INTENT_CONFIG: Record<Intent, {
+  icon: string; label: string; verb: string; role: string; roleColor: string
+  desc: string; color: string; bg: string
+}> = {
+  sell:    { icon: '🏷️', label: 'Sell',     verb: 'SELL',     role: 'Seller',   roleColor: '#F59E0B', desc: 'Find agencies to sell your property faster',  color: '#F59E0B', bg: 'rgba(245,158,11,0.08)' },
+  buy:     { icon: '🔑', label: 'Buy',      verb: 'BUY',      role: 'Buyer',    roleColor: '#3B82F6', desc: 'Find agencies & developers with listings',     color: '#3B82F6', bg: 'rgba(59,130,246,0.08)' },
+  rent_out:{ icon: '📋', label: 'Rent Out', verb: 'RENT OUT', role: 'Landlord', roleColor: '#10B981', desc: 'Find tenants & property managers',             color: '#10B981', bg: 'rgba(16,185,129,0.08)' },
+  rent_in: { icon: '🏡', label: 'Rent In',  verb: 'RENT IN',  role: 'Tenant',   roleColor: '#A78BFA', desc: 'Find rental agencies near you',               color: '#A78BFA', bg: 'rgba(167,139,250,0.08)' },
 }
 
 const WAVE_CONFIG = {
@@ -440,8 +455,13 @@ export default function LeadPage() {
 </html>`
   }
 
+  const [propCategory, setPropCategory] = useState<'residential' | 'commercial'>('residential')
+
   const ic = intent ? INTENT_CONFIG[intent] : null
-  const typeOptions = (intent === 'rent_in' || intent === 'rent_out') ? RENTAL_TYPES : PROPERTY_TYPES
+  const isRental = intent === 'rent_in' || intent === 'rent_out'
+  const typeOptions = isRental
+    ? RENTAL_TYPES
+    : (propCategory === 'commercial' ? COMMERCIAL_TYPES : RESIDENTIAL_TYPES)
   const pricePresets = (intent === 'sell') ? PRICE_PRESETS_SELL
     : (intent === 'buy') ? PRICE_PRESETS_BUY
     : PRICE_PRESETS_RENT
@@ -479,24 +499,24 @@ export default function LeadPage() {
         .page-title .hl { color: #F59E0B; }
         .page-sub { font-size: 14px; color: #94A3B8; margin-bottom: 28px; line-height: 1.55; }
 
-        /* Intent 2×2 grid */
-        .intent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        /* Quiz step 1 */
+        .quiz-q { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #475569; text-transform: uppercase; text-align: center; margin-bottom: 24px; }
+        .intent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
         .intent-btn {
-          background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.08);
-          border-radius: 16px; padding: 20px 16px; cursor: pointer; text-align: left;
-          transition: all 0.2s; color: #E2E8F0; position: relative; overflow: hidden;
+          background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.07);
+          border-radius: 18px; padding: 28px 18px 22px; cursor: pointer; text-align: center;
+          transition: all 0.22s; color: #E2E8F0; position: relative; overflow: hidden;
+          display: flex; flex-direction: column; align-items: center;
         }
-        .intent-btn:hover { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.04); transform: translateY(-1px); }
-        .intent-btn.sel { border-color: #F59E0B; background: rgba(245,158,11,0.08); }
-        .ib-icon { font-size: 30px; margin-bottom: 10px; display: block; }
-        .ib-label { font-size: 15px; font-weight: 700; display: block; }
-        .ib-desc { font-size: 12px; color: #64748B; margin-top: 3px; display: block; }
-        .ib-dot {
-          position: absolute; top: 12px; right: 12px; width: 8px; height: 8px;
-          border-radius: 50%; background: #34D399; opacity: 0;
-          box-shadow: 0 0 6px #34D399;
-        }
-        .intent-btn.sel .ib-dot { opacity: 1; }
+        .intent-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .ib-icon { font-size: 40px; margin-bottom: 12px; display: block; line-height: 1; }
+        .ib-verb { font-size: 18px; font-weight: 900; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+        .ib-role { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
+        .ib-desc { font-size: 12px; color: #64748B; line-height: 1.4; display: block; }
+        .ib-check { position: absolute; top: 12px; right: 14px; width: 20px; height: 20px; border-radius: 50%; background: #34D399; display: flex; align-items: center; justify-content: center; font-size: 11px; opacity: 0; transition: opacity 0.2s; }
+        .intent-btn.sel .ib-check { opacity: 1; }
+        /* Role badge (persistent) */
+        .role-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 700; margin-bottom: 20px; }
 
         /* Section labels */
         .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #475569; text-transform: uppercase; margin: 20px 0 10px; }
@@ -651,6 +671,16 @@ export default function LeadPage() {
         .offer-feats li { font-size: 13px; color: #94A3B8; padding: 4px 0; }
         .offer-feats li::before { content: '✓ '; color: #34D399; font-weight: 700; }
 
+        /* Category tabs */
+        .cat-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .cat-tab {
+          flex: 1; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.09);
+          border-radius: 10px; padding: 11px 8px; font-size: 13px; font-weight: 600;
+          color: #64748B; cursor: pointer; transition: all 0.18s; text-align: center;
+        }
+        .cat-tab:hover { border-color: rgba(255,255,255,0.2); color: #94A3B8; }
+        .cat-tab.sel { border-color: #F59E0B; background: rgba(245,158,11,0.1); color: #F59E0B; }
+
         /* Full list */
         .section-title { font-size: 16px; font-weight: 700; color: #E2E8F0; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); }
         hr.divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 28px 0; }
@@ -679,33 +709,51 @@ export default function LeadPage() {
             ))}
           </div>
 
-          {/* ─── STEP 1: Choose flow ───────────────────────────────────── */}
+          {/* ─── STEP 1: Quiz ─────────────────────────────────────────── */}
           {step === 1 && (
             <>
-              <h1 className="page-title">Find the best <span className="hl">real estate agencies</span> in 30 seconds</h1>
-              <p className="page-sub">AI matches your request to 2,800+ verified agencies across 30+ countries. Free, instant, no registration.</p>
+              <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                <h1 className="page-title" style={{ textAlign: 'center', marginBottom: 8 }}>
+                  Find the best <span className="hl">real estate agencies</span> in 30 sec
+                </h1>
+                <p className="page-sub" style={{ textAlign: 'center', maxWidth: 420, margin: '0 auto' }}>
+                  AI matches your request to 2,800+ verified agencies. Free, instant, no registration.
+                </p>
+              </div>
 
-              <div className="section-label">What would you like to do?</div>
+              <p className="quiz-q">— Who are you? —</p>
+
               <div className="intent-grid">
                 {(Object.entries(INTENT_CONFIG) as [Intent, typeof INTENT_CONFIG[Intent]][]).map(([key, cfg]) => (
                   <button
                     key={key}
                     className={`intent-btn${intent === key ? ' sel' : ''}`}
-                    onClick={() => { setIntent(key); setTimeout(() => setStep(2), 200) }}
+                    style={{
+                      borderColor: intent === key ? cfg.color : 'rgba(255,255,255,0.07)',
+                      background: intent === key ? cfg.bg : 'rgba(255,255,255,0.03)',
+                      boxShadow: intent === key ? `0 0 0 1px ${cfg.color}40, 0 8px 24px rgba(0,0,0,0.3)` : 'none',
+                    }}
+                    onClick={() => { setIntent(key); setTimeout(() => setStep(2), 280) }}
                   >
-                    <div className="ib-dot" />
+                    <div className="ib-check">✓</div>
                     <span className="ib-icon">{cfg.icon}</span>
-                    <span className="ib-label">{cfg.label}</span>
+                    <span className="ib-verb" style={{ color: cfg.color }}>{cfg.verb}</span>
+                    <span
+                      className="ib-role"
+                      style={{ background: `${cfg.color}18`, color: cfg.color, border: `1px solid ${cfg.color}30` }}
+                    >
+                      I am a {cfg.role}
+                    </span>
                     <span className="ib-desc">{cfg.desc}</span>
                   </button>
                 ))}
               </div>
 
               <div className="trust">
-                <div className="trust-item"><b>2,800+</b> verified agencies</div>
+                <div className="trust-item"><b>2,800+</b> agencies</div>
                 <div className="trust-item"><b>30+</b> countries</div>
-                <div className="trust-item"><b>AI</b>-ranked results</div>
-                <div className="trust-item"><b>Free</b> — no credit card</div>
+                <div className="trust-item"><b>Free</b></div>
+                <div className="trust-item"><b>AI</b>-ranked</div>
               </div>
             </>
           )}
@@ -713,6 +761,11 @@ export default function LeadPage() {
           {/* ─── STEP 2: Details ───────────────────────────────────────── */}
           {step === 2 && intent && ic && (
             <>
+              {/* Role badge */}
+              <div className="role-badge" style={{ background: ic.bg, color: ic.color, border: `1px solid ${ic.color}30` }}>
+                {ic.icon} You are a <b style={{ marginLeft: 3 }}>{ic.role}</b>
+              </div>
+
               <h1 className="page-title">
                 {intent === 'sell'    && <>Tell us about <span className="hl">your property</span></>}
                 {intent === 'buy'     && <>What are you <span className="hl">looking to buy?</span></>}
@@ -727,6 +780,27 @@ export default function LeadPage() {
               </p>
 
               <div className="section-label">Property type</div>
+
+              {/* Residential / Commercial tabs — only for sell & buy */}
+              {!isRental && (
+                <div className="cat-tabs">
+                  <button
+                    type="button"
+                    className={`cat-tab${propCategory === 'residential' ? ' sel' : ''}`}
+                    onClick={() => { setPropCategory('residential'); setPropType('') }}
+                  >
+                    🏠 Residential
+                  </button>
+                  <button
+                    type="button"
+                    className={`cat-tab${propCategory === 'commercial' ? ' sel' : ''}`}
+                    onClick={() => { setPropCategory('commercial'); setPropType('') }}
+                  >
+                    🏢 Commercial
+                  </button>
+                </div>
+              )}
+
               <div className="type-grid">
                 {typeOptions.map(t => (
                   <button key={t.id} className={`type-btn${propType === t.id ? ' sel' : ''}`}
