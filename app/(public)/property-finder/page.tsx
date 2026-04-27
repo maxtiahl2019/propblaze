@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import * as XLSX from 'xlsx'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = 1 | 2 | 3 | 4 | 5
@@ -235,25 +236,33 @@ export default function PropertyFinderPage() {
     })
   }
 
-  function downloadPropertiesCSV() {
+  function downloadPropertiesXLSX() {
     const listProps = properties.filter(p => saved.has(p.id))
     const exportProps = listProps.length > 0 ? listProps : properties
     const rows = [
       ['#', 'Title', 'City', 'Country', 'Price', 'Type', 'Beds', 'Size m²', 'Portal', 'URL', 'Score'],
       ...exportProps.map((p, i) => [
-        String(i + 1), p.title, p.city, p.country,
+        i + 1, p.title, p.city, p.country,
         p.price_formatted, p.type,
-        p.beds !== undefined ? String(p.beds) : '',
-        p.size_m2 !== undefined ? String(p.size_m2) : '',
-        p.portal, p.url, String(p.score),
+        p.beds !== undefined ? p.beds : '',
+        p.size_m2 !== undefined ? p.size_m2 : '',
+        p.portal, p.url, p.score,
       ]),
     ]
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+    ws['!cols'] = [
+      { wch: 4 }, { wch: 38 }, { wch: 16 }, { wch: 14 },
+      { wch: 14 }, { wch: 14 }, { wch: 6 }, { wch: 9 },
+      { wch: 14 }, { wch: 40 }, { wch: 7 },
+    ]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Properties')
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `propblaze-properties-${propType}-${country.toLowerCase()}.csv`
+    a.download = `propblaze-properties-${propType}-${country.toLowerCase()}.xlsx`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -263,7 +272,7 @@ export default function PropertyFinderPage() {
     if (!email || !consent) return
     setSubmitting(true)
     // Download CSV immediately — no subscription required
-    if (properties.length > 0) downloadPropertiesCSV()
+    if (properties.length > 0) downloadPropertiesXLSX()
     try {
       const savedProps = properties.filter(p => saved.has(p.id))
 

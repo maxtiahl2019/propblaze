@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import * as XLSX from 'xlsx'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type RentalIntent = 'find' | 'list'
@@ -189,20 +190,27 @@ export default function RentalMatchPage() {
     })
   }
 
-  function downloadCSV() {
+  function downloadXLSX() {
     const rows = [
       ['#', 'Agency', 'City', 'Country', 'Website', 'Phone', 'Score', 'Wave', 'Specialisation'],
       ...agencies.map((a, i) => [
-        String(i + 1), a.name, a.city, a.country,
-        a.website, a.phone || '', String(a.score), String(a.wave), a.spec,
+        i + 1, a.name, a.city, a.country,
+        a.website || '', a.phone || '', a.score, a.wave, a.spec || '',
       ]),
     ]
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+    ws['!cols'] = [
+      { wch: 4 }, { wch: 32 }, { wch: 16 }, { wch: 14 },
+      { wch: 30 }, { wch: 20 }, { wch: 7 }, { wch: 6 }, { wch: 40 },
+    ]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Rental Agencies')
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `propblaze-rental-agencies-${propType}-${country.toLowerCase()}.csv`
+    a.download = `propblaze-rental-agencies-${propType}-${country.toLowerCase()}.xlsx`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -211,8 +219,8 @@ export default function RentalMatchPage() {
     e.preventDefault()
     if (!email || !consent) return
     setSubmitting(true)
-    // Download CSV immediately — no subscription required
-    if (agencies.length > 0) downloadCSV()
+    // Download Excel immediately — no subscription required
+    if (agencies.length > 0) downloadXLSX()
     try {
       // 1. Save lead + Telegram
       fetch('/api/save-lead', {

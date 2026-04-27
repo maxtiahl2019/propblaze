@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import * as XLSX from 'xlsx'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Intent = 'sell' | 'buy' | 'rent_out' | 'rent_in'
@@ -298,21 +299,28 @@ export default function LeadPage() {
     finally { setLoading(false) }
   }
 
-  function downloadCSV() {
+  function downloadXLSX() {
     const rows = [
       ['#', 'Agency', 'City', 'Country', 'Website', 'Phone', 'Email', 'Score', 'Wave', 'Specialisation'],
       ...agencies.map((a, i) => [
-        String(i + 1), a.name, a.city, a.country,
-        a.website, a.phone || '', a.email || '',
-        String(a.score), String(a.wave), a.spec,
+        i + 1, a.name, a.city, a.country,
+        a.website || '', a.phone || '', a.email || '',
+        a.score, a.wave, a.spec || '',
       ]),
     ]
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+    ws['!cols'] = [
+      { wch: 4 }, { wch: 32 }, { wch: 16 }, { wch: 14 },
+      { wch: 30 }, { wch: 20 }, { wch: 26 }, { wch: 7 }, { wch: 6 }, { wch: 40 },
+    ]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Agencies')
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `propblaze-${intent}-${propType}-${country.toLowerCase()}.csv`
+    a.download = `propblaze-${intent}-${propType}-${country.toLowerCase()}.xlsx`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -321,7 +329,7 @@ export default function LeadPage() {
     e.preventDefault()
     if (!email || !consent) return
     setSubmitting(true)
-    if (agencies.length > 0) downloadCSV()
+    if (agencies.length > 0) downloadXLSX()
     fetch('/api/save-lead', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -957,7 +965,7 @@ export default function LeadPage() {
                 </label>
 
                 <button type="submit" className="btn-cta" disabled={!email || !consent || submitting}>
-                  {submitting ? 'Preparing...' : `⬇️ Download ${agencies.length || 28} Agencies (CSV + Email)`}
+                  {submitting ? 'Preparing...' : `⬇️ Download ${agencies.length || 28} Agencies (Excel + Email)`}
                 </button>
               </form>
 
