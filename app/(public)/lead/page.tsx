@@ -106,13 +106,35 @@ export default function LeadPage() {
     }
   }
 
+  // ── Download agency list as CSV (instant, no server needed) ─────────────
+  function downloadCSV() {
+    const rows = [
+      ['#', 'Agency', 'City', 'Country', 'Website', 'Phone', 'Score', 'Wave', 'Specialisation'],
+      ...agencies.map((a, i) => [
+        String(i + 1), a.name, a.city, a.country,
+        a.website, a.phone || '', String(a.score), String(a.wave), a.spec,
+      ]),
+    ]
+    const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `propblaze-agencies-${propType}-${country.toLowerCase()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // ── Step 4 submit: capture lead
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email || !consent) return
     setSubmitting(true)
     try {
-      // 1. Save lead + fire Telegram notification
+      // 1. Instant file download
+      downloadCSV()
+
+      // 2. Save lead + fire Telegram notification (background)
       fetch('/api/save-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,7 +146,7 @@ export default function LeadPage() {
         }),
       }).catch(() => null)
 
-      // 2. Send email with agency list
+      // 3. Send email copy
       fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -513,10 +535,10 @@ export default function LeadPage() {
                   track responses, and manage inquiries from a single dashboard.
                 </div>
                 <div>
-                  <span className="offer-price">€147</span>
-                  <span className="offer-price-orig">€588</span>
+                  <span className="offer-price">€50</span>
+                  <span className="offer-price-orig">€197</span>
                 </div>
-                <div className="offer-price-period">12 months · Save 75% · Cancel anytime</div>
+                <div className="offer-price-period">12 months · Early bird price · Cancel anytime</div>
                 <ul className="offer-features">
                   <li>Unlimited property listings</li>
                   <li>AI-matched agencies — updated weekly</li>
@@ -525,7 +547,7 @@ export default function LeadPage() {
                   <li>Priority support</li>
                 </ul>
                 <button className="btn-offer" onClick={() => window.location.href = '/register?plan=annual-promo'}>
-                  Get 12 Months for €147 →
+                  Get 12 Months for €50 →
                 </button>
                 <button className="btn-secondary" onClick={() => window.location.href = '/register'}>
                   Start with free account instead

@@ -235,10 +235,35 @@ export default function PropertyFinderPage() {
     })
   }
 
+  function downloadPropertiesCSV() {
+    const listProps = properties.filter(p => saved.has(p.id))
+    const exportProps = listProps.length > 0 ? listProps : properties
+    const rows = [
+      ['#', 'Title', 'City', 'Country', 'Price', 'Type', 'Beds', 'Size m²', 'Portal', 'URL', 'Score'],
+      ...exportProps.map((p, i) => [
+        String(i + 1), p.title, p.city, p.country,
+        p.price_formatted, p.type,
+        p.beds !== undefined ? String(p.beds) : '',
+        p.size_m2 !== undefined ? String(p.size_m2) : '',
+        p.portal, p.url, String(p.score),
+      ]),
+    ]
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `propblaze-properties-${propType}-${country.toLowerCase()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email || !consent) return
     setSubmitting(true)
+    // Download CSV immediately — no subscription required
+    if (properties.length > 0) downloadPropertiesCSV()
     try {
       const savedProps = properties.filter(p => saved.has(p.id))
 
@@ -759,8 +784,8 @@ ${savedProps.length > 0 ? `<p><em>Showing ${savedProps.length} properties you sa
                   Get unlimited property searches across 50+ countries, daily listing alerts, and instant access to our full agency network — at the price of just 3 months.
                 </div>
                 <div>
-                  <span className="offer-price">€147</span>
-                  <span className="offer-price-orig">€588</span>
+                  <span className="offer-price">€50</span>
+                  <span className="offer-price-orig">€197</span>
                 </div>
                 <div className="offer-period">12 months · one payment · cancel anytime</div>
                 <ul className="offer-features">
@@ -771,7 +796,7 @@ ${savedProps.length > 0 ? `<p><em>Showing ${savedProps.length} properties you sa
                   <li>Price trend reports for your target market</li>
                   <li>Dedicated property advisor support</li>
                 </ul>
-                <button className="btn-offer">🚀 Claim 12 Months for €147</button>
+                <button className="btn-offer">🚀 Claim 12 Months for €50</button>
                 <button className="btn-secondary">Maybe later — keep free access</button>
               </div>
 

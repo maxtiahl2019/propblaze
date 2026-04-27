@@ -8,7 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Server-only vars preferred; NEXT_PUBLIC_ kept as legacy fallback (do not add new NEXT_PUBLIC_ keys)
 const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || process.env.NEXT_PUBLIC_RESEND_FROM_EMAIL || 'PropBlaze <noreply@propblaze.com>'
+// Use onboarding@resend.dev as default — works without domain verification.
+// Once propblaze.com is verified in Resend dashboard, set RESEND_FROM_EMAIL=PropBlaze <noreply@propblaze.com>
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || process.env.NEXT_PUBLIC_RESEND_FROM_EMAIL || 'PropBlaze <onboarding@resend.dev>'
 
 export async function POST(req: NextRequest) {
   try {

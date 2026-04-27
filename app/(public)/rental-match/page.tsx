@@ -189,10 +189,30 @@ export default function RentalMatchPage() {
     })
   }
 
+  function downloadCSV() {
+    const rows = [
+      ['#', 'Agency', 'City', 'Country', 'Website', 'Phone', 'Score', 'Wave', 'Specialisation'],
+      ...agencies.map((a, i) => [
+        String(i + 1), a.name, a.city, a.country,
+        a.website, a.phone || '', String(a.score), String(a.wave), a.spec,
+      ]),
+    ]
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `propblaze-rental-agencies-${propType}-${country.toLowerCase()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email || !consent) return
     setSubmitting(true)
+    // Download CSV immediately — no subscription required
+    if (agencies.length > 0) downloadCSV()
     try {
       // 1. Save lead + Telegram
       fetch('/api/save-lead', {
@@ -673,8 +693,8 @@ ${savedSection}
                   Get unlimited agency searches, live market data, and priority matching for any property type across 50+ countries — at the price of just 3 months.
                 </div>
                 <div>
-                  <span className="offer-price">€147</span>
-                  <span className="offer-price-orig">€588</span>
+                  <span className="offer-price">€50</span>
+                  <span className="offer-price-orig">€197</span>
                 </div>
                 <div className="offer-period">12 months · one payment · cancel anytime</div>
                 <ul className="offer-features">
@@ -685,7 +705,7 @@ ${savedSection}
                   <li>New property listings alerts</li>
                   <li>Dedicated account manager</li>
                 </ul>
-                <button className="btn-offer">🚀 Claim 12 Months for €147</button>
+                <button className="btn-offer">🚀 Claim 12 Months for €50</button>
                 <button className="btn-secondary">Maybe later — keep free access</button>
               </div>
 
