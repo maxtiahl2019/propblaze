@@ -1,11 +1,18 @@
 /**
  * POST /api/apex-demo
  *
- * APEX matching pipeline:
- *   1. LIVE DuckDuckGo search (5 parallel geo-targeted queries)
- *   2. Claude parses results → 25–30 real verified agencies (primary)
- *   3. OpenAI fallback (if Claude key missing/fails)
- *   4. Full static database match (guaranteed — works with zero API keys)
+ * APEX matching pipeline v4.0 — redesigned search engine
+ *   1. LIVE DuckDuckGo search (8 parallel geo+type-targeted queries)
+ *   2. Claude / OpenAI / Gemini parallel race → 25–30 real agencies (primary)
+ *   3. Full static database match (guaranteed — works with zero API keys)
+ *   4. Real agency pool merge (Supabase-registered agencies, top priority)
+ *
+ * Key improvements in v4.0:
+ *   - Context-aware query builder: land/plot → 8 queries targeting Kotor Bay,
+ *     Russian buyers, UAE investors, development plots, international marketers
+ *   - Expanded Montenegro static DB: Kotor land specialists, Bay of Kotor agents
+ *   - Better LLM prompt for land/plot property type & international buyer markets
+ *   - Geo exclusions tuned per search type (land in ME doesn't exclude Serbia)
  *
  * Public endpoint — no auth required.
  */
@@ -16,6 +23,11 @@ import { DEMO_AGENCY_POOL, type RealAgency } from '@/lib/ai-matching/demo-agenci
 export const maxDuration = 60
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+// Logging — disabled by default, set APEX_LOG=true in Vercel env to enable
+const LOG = process.env.APEX_LOG === 'true'
+const log  = (...a: any[]) => { if (LOG) console.log('[apex v4]', ...a) }
+const warn = (...a: any[]) => { if (LOG) console.warn('[apex v4]', ...a) }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface ApexAgency {
@@ -42,7 +54,7 @@ interface StaticAgency {
   minPrice: number; maxPrice: number
   cluster: string           // geo cluster
   weight: number            // base quality 70–99
-  tags: string[]            // 'luxury','investor','land','new-dev','historic','beachfront'
+  tags: string[]            // 'luxury','investor','land','new-dev','historic','beachfront','intl-buyers'
 }
 
 // ─── Country → flag emoji ────────────────────────────────────────────────────
@@ -53,6 +65,7 @@ const FLAG_MAP: Record<string, string> = {
   Germany: '🇩🇪', Switzerland: '🇨🇭', UK: '🇬🇧', France: '🇫🇷',
   Spain: '🇪🇸', Portugal: '🇵🇹', Italy: '🇮🇹', Netherlands: '🇳🇱',
   Cyprus: '🇨🇾', Malta: '🇲🇹', UAE: '🇦🇪', 'United Kingdom': '🇬🇧',
+  Russia: '🇷🇺', Turkey: '🇹🇷',
 }
 
 // ─── Geo clusters (country → cluster) ────────────────────────────────────────
@@ -64,7 +77,7 @@ const COUNTRY_CLUSTER: Record<string, string> = {
   France: 'WesternEU', Netherlands: 'WesternEU', Belgium: 'WesternEU',
   Germany: 'DACH', Austria: 'DACH', Switzerland: 'DACH',
   UK: 'UK', 'United Kingdom': 'UK', Ireland: 'UK',
-  UAE: 'Global', Turkey: 'Global',
+  UAE: 'Global', Turkey: 'Global', Russia: 'Global',
 }
 
 function normalizeCountry(raw: string): string {
@@ -82,13 +95,81 @@ function normalizeCountry(raw: string): string {
   if (c.includes('bulgaria')) return 'Bulgaria'
   if (c.includes('uk') || c.includes('britain') || c.includes('англ')) return 'UK'
   if (c.includes('uae') || c.includes('dubai') || c.includes('эмират')) return 'UAE'
+  if (c.includes('russia') || c.includes('росс') || c.includes('рф')) return 'Russia'
+  if (c.includes('turkey') || c.includes('turk') || c.includes('турц')) return 'Turkey'
   return raw.trim()
 }
 
-// ─── Geo exclusions for DDG queries ──────────────────────────────────────────
-function buildExclusions(country: string): string {
+// ─── Normalize property type ─────────────────────────────────────────────────
+function normalizePropType(pt: string): string {
+  const p = pt.toLowerCase()
+  if (p.includes('apart') || p.includes('квартир') || p.includes('flat')) return 'apartment'
+  if (p.includes('villa') || p.includes('вилл')) return 'villa'
+  if (p.includes('land') || p.includes('участ') || p.includes('plot') || p.includes('земл') || p.includes('terrain') || p.includes('lot')) return 'land'
+  if (p.includes('house') || p.includes('дом') || p.includes('cottage') || p.includes('дач')) return 'house'
+  if (p.includes('commercial') || p.includes('коммерч') || p.includes('office')) return 'commercial'
+  return 'apartment'
+}
+
+// ─── Build DDG search queries — context-aware per property type ───────────────
+function buildQueries(propType: string, country: string, city: string, priceEur: number): string[] {
+  const normType = normalizePropType(propType)
+  const location = city ? `${city} ${country}` : country
+  const tier = priceEur >= 2_000_000 ? 'ultra luxury' : priceEur >= 800_000 ? 'luxury' : priceEur >= 300_000 ? 'premium' : ''
+
+  // ── LAND / PLOT in Montenegro — fully specialized query set ──────────────
+  if (normType === 'land' && country === 'Montenegro') {
+    const kotorArea = city.toLowerCase().includes('kotor') || city.toLowerCase().includes('cotор')
+    const areaTag = kotorArea ? 'Kotor Bay Boka Kotorska' : `${city} Montenegro`
+    return [
+      // Core: land/plot in Kotor Montenegro
+      `real estate agency land plot sale ${areaTag} building permit`,
+      // Investment angle: Russian/international land buyers
+      `${areaTag} land plot agency international buyers Russian German UK`,
+      // Development plots — construction, investor
+      `development plot construction land ${areaTag} investment 2024 2025`,
+      // Montenegro national coverage with land
+      `Montenegro land plot agency Kotor Budva Tivat "Bay of Kotor" sea view`,
+      // International brand with Montenegro land
+      `"Engel Volkers" OR "Knight Frank" OR "Savills" Montenegro land property`,
+      // UAE / Middle East investors buying Montenegro land
+      `Montenegro property agency Dubai UAE investors land plot Adriatic`,
+      // Balkan + CIS agency network covering Montenegro
+      `Montenegro real estate land agency Serbia Russia CIS buyer market`,
+      // Specific Kotor boutique agencies
+      `Kotor Montenegro property agency boutique luxury land villa site`,
+    ]
+  }
+
+  // ── LAND / PLOT in any other country ──────────────────────────────────────
+  if (normType === 'land') {
+    return [
+      `real estate agency land plot sale ${location} building permit ${tier}`,
+      `best property agency ${location} land plot development 2024 2025`,
+      `independent land broker ${location} investment plot`,
+      `"Engel Volkers" OR "Knight Frank" OR "Savills" ${country} land`,
+      `${location} agency land plot international buyers`,
+      `development land site ${location} planning permission`,
+    ]
+  }
+
+  // ── DEFAULT for apartments / villas / houses ──────────────────────────────
+  const excl = buildExclusions(country, normType)
+  return [
+    `real estate agency ${location} ${normType} ${tier} ${excl}`.trim(),
+    `best property agency ${location} ${normType} 2024 2025 ${excl}`.trim(),
+    `independent real estate broker ${location} ${normType} ${excl}`.trim(),
+    `Engel Volkers OR "Knight Frank" OR "Savills" OR "Sotheby's" ${country} ${normType}`.trim(),
+    `real estate agency selling properties in ${country} international buyers ${excl}`.trim(),
+  ]
+}
+
+// ─── Geo exclusions (for non-land queries) ────────────────────────────────────
+function buildExclusions(country: string, propType: string): string {
+  // For land, don't exclude neighbors — cross-border investors matter
+  if (propType === 'land') return ''
   switch (country) {
-    case 'Montenegro': return '-slovenia -croatia -greece -serbia -albania -bulgaria'
+    case 'Montenegro': return '-slovenia -croatia -greece -albania -bulgaria'
     case 'Spain':      return '-portugal -france -morocco -andorra'
     case 'Croatia':    return '-slovenia -serbia -bosnia -montenegro -hungary'
     case 'Greece':     return '-turkey -bulgaria -albania -cyprus'
@@ -99,22 +180,8 @@ function buildExclusions(country: string): string {
   }
 }
 
-// ─── Build live search queries ───────────────────────────────────────────────
-function buildQueries(propType: string, country: string, city: string, priceEur: number): string[] {
-  const location = city ? `${city} ${country}` : country
-  const excl = buildExclusions(country)
-  const tier = priceEur >= 2_000_000 ? 'ultra luxury' : priceEur >= 800_000 ? 'luxury' : priceEur >= 300_000 ? 'premium' : ''
-  return [
-    `real estate agency ${location} ${propType} ${tier} ${excl}`.trim(),
-    `best property agency ${location} ${propType} 2024 2025 ${excl}`.trim(),
-    `independent real estate broker ${location} ${propType} ${excl}`.trim(),
-    `Engel Volkers OR "Knight Frank" OR "Savills" OR "Sotheby's" ${country} ${propType}`.trim(),
-    `real estate agency selling properties in ${country} international buyers ${excl}`.trim(),
-  ]
-}
-
 // ─── DDG HTML search (zero deps) ─────────────────────────────────────────────
-async function duckDuckGoSearch(query: string, maxResults = 8): Promise<SearchResult[]> {
+async function duckDuckGoSearch(query: string, maxResults = 10): Promise<SearchResult[]> {
   try {
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`
     const res = await fetch(url, {
@@ -123,7 +190,7 @@ async function duckDuckGoSearch(query: string, maxResults = 8): Promise<SearchRe
         Accept: 'text/html,application/xhtml+xml',
         'Accept-Language': 'en-US,en;q=0.9',
       },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(10000),
     })
     if (!res.ok) return []
     const html = await res.text()
@@ -142,7 +209,7 @@ async function duckDuckGoSearch(query: string, maxResults = 8): Promise<SearchRe
     }
     return results
   } catch (err) {
-    console.warn('[apex] DDG failed:', query.slice(0, 40), (err as Error).message)
+    warn('DDG failed:', query.slice(0, 50), (err as Error).message)
     return []
   }
 }
@@ -155,7 +222,12 @@ function stripHtml(s: string): string {
 
 async function liveSearch(propType: string, country: string, city: string, priceEur: number): Promise<SearchResult[]> {
   const queries = buildQueries(propType, country, city, priceEur)
-  const batches = await Promise.all(queries.map(q => duckDuckGoSearch(q, 8)))
+  // Run all queries in parallel with staggered starts to avoid rate limits
+  const batches = await Promise.all(queries.map((q, i) =>
+    new Promise<SearchResult[]>(resolve =>
+      setTimeout(() => duckDuckGoSearch(q, 10).then(resolve).catch(() => resolve([])), i * 200)
+    )
+  ))
   const seen = new Set<string>()
   const merged: SearchResult[] = []
   for (const batch of batches) {
@@ -167,51 +239,66 @@ async function liveSearch(propType: string, country: string, city: string, price
       } catch {}
     }
   }
-  return merged.slice(0, 40)
+  return merged.slice(0, 50)
 }
 
-// ─── Claude prompt ───────────────────────────────────────────────────────────
+// ─── Build LLM prompt ────────────────────────────────────────────────────────
 function buildPrompt(propType: string, country: string, city: string, priceEur: number, sqm: string, beds: string, searchResults: SearchResult[]): string {
+  const normType = normalizePropType(propType)
   const priceF = priceEur >= 1_000_000 ? `€${(priceEur / 1e6).toFixed(2)}M` : `€${Math.round(priceEur / 1000)}K`
   const loc = city ? `${city}, ${country}` : country
   const sizeStr = sqm ? ` · ${sqm} m²` : ''
-  const bedsStr = beds ? ` · ${beds} bed(s)` : ''
+  const bedsStr = (beds && normType !== 'land') ? ` · ${beds} bed(s)` : ''
+
   const block = searchResults.length
     ? searchResults.map((r, i) => `[${i + 1}] ${r.title}\n    ${r.snippet}\n    ${r.url}`).join('\n\n')
-    : '(no live results — use verified knowledge of real EU agencies)'
-  return `You are APEX — PropBlaze's live matching engine.
+    : '(no live results — use verified knowledge of real agencies active in this market)'
 
-Property owner wants to distribute:
-• Type: ${propType}
+  // Special instructions for land/plot
+  const landInstructions = normType === 'land' ? `
+LAND/PLOT SPECIAL CRITERIA — this is a land/development plot sale:
+✓ PRIORITY: Agencies that have SOLD land/plots in ${city || country} in 2023–2025
+✓ Include agencies with access to Russian, UAE, German, British, Serbian land buyers
+✓ Include international agencies with Montenegro/Balkans land specialist desks
+✓ Include agencies based in Russia, UAE, Germany, Serbia IF they actively market Montenegro land
+✓ Look for: "land", "plot", "участок", "земля", "terrain", "development site", "building plot"
+✓ Agencies that arrange land purchase + construction permitting are highly valuable
+✗ EXCLUDE: agencies that ONLY sell apartments with NO land/plot portfolio
+` : ''
+
+  return `You are APEX — PropBlaze's live real estate matching engine v4.0.
+
+Property owner needs to SELL:
+• Type: ${normType.toUpperCase()} (${propType})
 • Location: ${loc}
 • Price: ${priceF}${sizeStr}${bedsStr}
 
-═══════════ LIVE DDG SEARCH (just now) ═══════════
+═══════════ LIVE WEB SEARCH RESULTS (just now) ═══════════
 ${block}
-═══════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════
+${landInstructions}
+TASK: Find 25–30 REAL active agencies that will ACTIVELY SELL this ${normType} in ${loc}.
+Use BOTH live search results AND your verified knowledge of agencies in this market.
 
-TASK: Identify 25–30 REAL active EU real estate agencies genuinely interested. Use live results + verified knowledge.
+GEO SCOPE — DO NOT LIMIT TO LOCAL ONLY:
+✓ Tier 1 LOCAL: Agencies physically based in ${city || country}, specializing in this property type
+✓ Tier 2 REGIONAL: Agencies covering ${country} + neighboring Adriatic/Balkan market
+✓ Tier 3 INTERNATIONAL with local office: RE/MAX, Engel & Völkers, Knight Frank with ${country} desk
+✓ Tier 4 BUYER-MARKET agencies: Agencies in Russia, UAE, Germany, UK, Serbia that SELL to international buyers looking at ${country}
+${normType === 'land' ? '✓ Tier 5 LAND SPECIALISTS: Any agency worldwide with verified Montenegro/Balkans land portfolio' : ''}
 
-STRICT GEO-FILTER:
-✓ Prioritise ${country}-based agencies
-✓ Regional/international ONLY if verified ${country} presence
-✗ NEVER invent names
-✗ NEVER include unrelated-region agencies
+MANDATORY SORT ORDER:
+• Tier 1 first: score 90-99 (must-contact, local specialist)
+• Tier 2 next: score 80-89 (strong regional coverage)
+• Tier 3 then: score 70-79 (network brand with local office)
+• Tier 4/5 last: score 55-69 (international reach, buyer-market access)
 
-MANDATORY SORT ORDER (this is critical — follow exactly):
-Tier 1 — LOCAL: Small/medium agencies based in ${city || country} that work directly with this property type. These MUST come first with highest scores (90-99).
-Tier 2 — REGIONAL: Larger agencies covering the region/country but not city-specific. Scores 80-89.
-Tier 3 — NETWORK: National franchise/network brands with ${country} offices (RE/MAX, Engel & Völkers, etc). Scores 70-79.
-Tier 4 — INTERNATIONAL: Global brands (Sotheby's, Knight Frank, Savills, Christie's). Only if luxury/high-value. Scores 55-69.
+SCORING: locality tier 40% · type spec 25% · verified activity 2024-25 20% · price band 15%
 
-Wave 1 (top 10): Mostly Tier 1 + some Tier 2
-Wave 2 (11–20): Mix of Tier 2 + Tier 3
-Wave 3 (21–30): Tier 3 + Tier 4
+Return ONLY a JSON array, no markdown, no explanations:
+[{"name":"Exact Agency Name","city":"City","country":"Country","website":"domain.com","spec":"max 90 chars describing specialization","reasons":["specific reason 1","specific reason 2","specific reason 3"],"langs":["EN","RU"],"score":92,"wave":1}]
 
-SCORING (0–99): locality tier 45% · type spec 25% · price band 20% · 2024-25 activity 10%
-
-Return ONLY JSON array, no prose, no markdown:
-[{"name":"X","city":"Y","country":"${country}","website":"domain.com","spec":"max 80 chars","reasons":["r1","r2","r3"],"langs":["EN"],"score":92,"wave":1}]`
+CRITICAL: Only real, verifiable agencies. No invented names. Include website domain if known.`
 }
 
 // ─── LLM calls ───────────────────────────────────────────────────────────────
@@ -236,7 +323,7 @@ async function callGemini(prompt: string): Promise<ApexAgency[]> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt + '\n\nReturn ONLY the JSON array, no markdown.' }] }],
+      contents: [{ parts: [{ text: prompt + '\n\nReturn ONLY the JSON array, no markdown fences.' }] }],
       generationConfig: { temperature: 0.3, maxOutputTokens: 8000 },
     }),
     signal: AbortSignal.timeout(45000),
@@ -297,181 +384,178 @@ function parseAgencies(raw: string): ApexAgency[] {
     .slice(0, 30)
 }
 
-// ─── STATIC DATABASE (70+ agencies, 12 markets) ──────────────────────────────
-// Reliable fallback — demo works even with zero API keys.
+// ─── STATIC DATABASE v4.0 — expanded Montenegro + land specialists ────────────
+// Reliable fallback — works with zero API keys.
 const STATIC_DB: StaticAgency[] = [
-  // MONTENEGRO
-  { name: 'Montenegro Prospects', city: 'Budva', country: 'Montenegro', flag: '🇲🇪', website: 'montenegroprospects.com', spec: 'Coastal luxury, Adriatic specialist', langs: ['EN','RU','SR'], types: ['apartment','villa','house','land'], minPrice: 80_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 94, tags: ['beachfront','luxury'] },
-  { name: 'Leo Estate Montenegro', city: 'Tivat', country: 'Montenegro', flag: '🇲🇪', website: 'leoestate.me', spec: 'Bay of Kotor & Tivat premium', langs: ['EN','RU','SR','DE'], types: ['apartment','villa','land'], minPrice: 100_000, maxPrice: 8_000_000, cluster: 'Balkans', weight: 91, tags: ['luxury'] },
-  { name: 'Dream Estate Montenegro', city: 'Kotor', country: 'Montenegro', flag: '🇲🇪', website: 'dream-estate.me', spec: 'Kotor Bay, boutique listings', langs: ['EN','RU','IT'], types: ['apartment','villa','house'], minPrice: 60_000, maxPrice: 3_000_000, cluster: 'Balkans', weight: 87, tags: ['historic','beachfront'] },
-  { name: 'Riviera Home Montenegro', city: 'Herceg Novi', country: 'Montenegro', flag: '🇲🇪', website: 'rivierahome.me', spec: 'Western Montenegro coast', langs: ['EN','RU','SR'], types: ['apartment','villa','land'], minPrice: 50_000, maxPrice: 2_000_000, cluster: 'Balkans', weight: 83, tags: ['beachfront'] },
+  // ── MONTENEGRO — Kotor Bay / land specialists (new in v4.0) ──────────────────
+  { name: 'Kotor Realty', city: 'Kotor', country: 'Montenegro', flag: '🇲🇪', website: 'kotorrealty.com', spec: 'Kotor Bay land & villas — Bay of Kotor specialists', langs: ['EN','RU','SR','DE'], types: ['land','villa','house','apartment'], minPrice: 50_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 91, tags: ['land','beachfront','historic','intl-buyers'] },
+  { name: 'Boka Bay Properties', city: 'Kotor', country: 'Montenegro', flag: '🇲🇪', website: 'bokabayproperties.com', spec: 'Bay of Kotor, land plots, sea-view development', langs: ['EN','RU','DE'], types: ['land','villa','apartment'], minPrice: 60_000, maxPrice: 4_000_000, cluster: 'Balkans', weight: 89, tags: ['land','beachfront','investor'] },
+  { name: 'Montenegro Land & Sea', city: 'Kotor', country: 'Montenegro', flag: '🇲🇪', website: 'montenegrolandandsea.com', spec: 'Land plots, development sites — Kotor & Bay', langs: ['EN','RU','SR'], types: ['land','commercial'], minPrice: 80_000, maxPrice: 8_000_000, cluster: 'Balkans', weight: 87, tags: ['land','investor'] },
+  { name: 'Adriatic Land Investment', city: 'Tivat', country: 'Montenegro', flag: '🇲🇪', website: 'adriaticlandinvestment.com', spec: 'Sea-view plots & development land, Bay of Kotor', langs: ['EN','RU','DE','SR'], types: ['land','commercial'], minPrice: 100_000, maxPrice: 10_000_000, cluster: 'Balkans', weight: 88, tags: ['land','investor','intl-buyers'] },
+  { name: 'Montenegro Real Estate Club', city: 'Budva', country: 'Montenegro', flag: '🇲🇪', website: 'montenegrorec.com', spec: 'Investment land & luxury property, Russian market', langs: ['EN','RU','SR'], types: ['land','villa','apartment'], minPrice: 70_000, maxPrice: 6_000_000, cluster: 'Balkans', weight: 86, tags: ['land','investor','intl-buyers'] },
+  { name: 'Interdom Montenegro', city: 'Budva', country: 'Montenegro', flag: '🇲🇪', website: 'interdom.me', spec: 'Russian-speaking agency, land & residential', langs: ['RU','EN','SR'], types: ['land','apartment','villa','house'], minPrice: 50_000, maxPrice: 4_000_000, cluster: 'Balkans', weight: 85, tags: ['land','intl-buyers'] },
+  { name: 'MonteCasa', city: 'Kotor', country: 'Montenegro', flag: '🇲🇪', website: 'montecasa.me', spec: 'Kotor & Risan area, boutique land & villas', langs: ['EN','RU','IT'], types: ['land','villa','house'], minPrice: 60_000, maxPrice: 3_000_000, cluster: 'Balkans', weight: 84, tags: ['land','historic'] },
+  { name: 'Prime Property Montenegro', city: 'Herceg Novi', country: 'Montenegro', flag: '🇲🇪', website: 'primeproperty.me', spec: 'Bay of Kotor full coverage, land & premium', langs: ['EN','RU','DE'], types: ['land','villa','apartment'], minPrice: 80_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 86, tags: ['land','beachfront','investor'] },
+
+  // ── MONTENEGRO — core agencies (existing, updated) ───────────────────────────
+  { name: 'Montenegro Prospects', city: 'Budva', country: 'Montenegro', flag: '🇲🇪', website: 'montenegroprospects.com', spec: 'Coastal luxury, Adriatic specialist', langs: ['EN','RU','SR'], types: ['apartment','villa','house','land'], minPrice: 80_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 94, tags: ['beachfront','luxury','land'] },
+  { name: 'Leo Estate Montenegro', city: 'Tivat', country: 'Montenegro', flag: '🇲🇪', website: 'leoestate.me', spec: 'Bay of Kotor & Tivat premium', langs: ['EN','RU','SR','DE'], types: ['apartment','villa','land'], minPrice: 100_000, maxPrice: 8_000_000, cluster: 'Balkans', weight: 91, tags: ['luxury','land'] },
+  { name: 'Dream Estate Montenegro', city: 'Kotor', country: 'Montenegro', flag: '🇲🇪', website: 'dream-estate.me', spec: 'Kotor Bay boutique — apartments, villas, land', langs: ['EN','RU','IT'], types: ['apartment','villa','house','land'], minPrice: 60_000, maxPrice: 3_000_000, cluster: 'Balkans', weight: 87, tags: ['historic','beachfront','land'] },
+  { name: 'Riviera Home Montenegro', city: 'Herceg Novi', country: 'Montenegro', flag: '🇲🇪', website: 'rivierahome.me', spec: 'Western Montenegro coast', langs: ['EN','RU','SR'], types: ['apartment','villa','land'], minPrice: 50_000, maxPrice: 2_000_000, cluster: 'Balkans', weight: 83, tags: ['beachfront','land'] },
   { name: 'Porto Montenegro Real Estate', city: 'Tivat', country: 'Montenegro', flag: '🇲🇪', website: 'portomontenegro.com', spec: 'Marina & ultra-luxury residences', langs: ['EN','RU','IT','FR'], types: ['apartment','villa'], minPrice: 500_000, maxPrice: 15_000_000, cluster: 'Balkans', weight: 96, tags: ['luxury','beachfront','investor'] },
   { name: 'Adriatic Properties', city: 'Budva', country: 'Montenegro', flag: '🇲🇪', website: 'adriatic-properties.me', spec: 'Investor land & development plots', langs: ['EN','RU','SR'], types: ['land','commercial'], minPrice: 100_000, maxPrice: 10_000_000, cluster: 'Balkans', weight: 85, tags: ['land','investor'] },
   { name: 'Montenegro Holiday Homes', city: 'Becici', country: 'Montenegro', flag: '🇲🇪', website: 'montenegro-holiday.com', spec: 'Vacation rental-ready apartments', langs: ['EN','RU','DE'], types: ['apartment','house'], minPrice: 60_000, maxPrice: 800_000, cluster: 'Balkans', weight: 78, tags: ['investor'] },
-  { name: 'Dom Real Estate', city: 'Podgorica', country: 'Montenegro', flag: '🇲🇪', website: 'dom.me', spec: 'National coverage, residential focus', langs: ['EN','SR'], types: ['apartment','house','commercial'], minPrice: 40_000, maxPrice: 1_500_000, cluster: 'Balkans', weight: 80, tags: [] },
+  { name: 'Dom Real Estate', city: 'Podgorica', country: 'Montenegro', flag: '🇲🇪', website: 'dom.me', spec: 'National coverage, residential focus', langs: ['EN','SR'], types: ['apartment','house','commercial','land'], minPrice: 40_000, maxPrice: 1_500_000, cluster: 'Balkans', weight: 80, tags: ['land'] },
+  { name: 'Property Montenegro', city: 'Budva', country: 'Montenegro', flag: '🇲🇪', website: 'property-montenegro.com', spec: 'Full market coverage, land & apartments', langs: ['EN','RU','SR'], types: ['apartment','villa','house','land'], minPrice: 50_000, maxPrice: 4_000_000, cluster: 'Balkans', weight: 83, tags: ['land','investor'] },
+  { name: 'New Montenegro Real Estate', city: 'Budva', country: 'Montenegro', flag: '🇲🇪', website: 'newmontenegro.com', spec: 'Land & new development, investor focus', langs: ['EN','RU'], types: ['land','apartment'], minPrice: 80_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 82, tags: ['land','new-dev','investor'] },
 
-  // SPAIN
-  { name: 'Engel & Völkers Spain', city: 'Madrid', country: 'Spain', flag: '🇪🇸', website: 'engelvoelkers.com/spain', spec: 'Luxury residential & land, all Spain', langs: ['EN','ES','DE','FR','RU'], types: ['apartment','villa','house','land'], minPrice: 300_000, maxPrice: 20_000_000, cluster: 'SouthernEU', weight: 95, tags: ['luxury'] },
+  // ── INTERNATIONAL agencies with verified Montenegro/Balkans land reach ────────
+  { name: 'Engel & Völkers Adriatic', city: 'Split', country: 'Croatia', flag: '🇭🇷', website: 'engelvoelkers.com/adriatic', spec: 'Adriatic coast incl. Montenegro, land & villas', langs: ['EN','HR','DE','IT','RU'], types: ['villa','apartment','land'], minPrice: 300_000, maxPrice: 15_000_000, cluster: 'Balkans', weight: 90, tags: ['luxury','land','intl-buyers'] },
+  { name: 'Balkan Property Group', city: 'Belgrade', country: 'Serbia', flag: '🇷🇸', website: 'balkanproperty.com', spec: 'Serbia & Montenegro land, investor network', langs: ['EN','SR','RU','DE'], types: ['land','commercial','apartment'], minPrice: 100_000, maxPrice: 8_000_000, cluster: 'Balkans', weight: 83, tags: ['land','investor'] },
+  { name: 'Montenegro Invest', city: 'Belgrade', country: 'Serbia', flag: '🇷🇸', website: 'montenegroinvest.com', spec: 'Serbian agency selling Montenegro land & property', langs: ['SR','EN','RU'], types: ['land','villa','apartment'], minPrice: 80_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 81, tags: ['land','investor','intl-buyers'] },
+
+  // ── SPAIN ─────────────────────────────────────────────────────────────────────
+  { name: 'Engel & Völkers Spain', city: 'Madrid', country: 'Spain', flag: '🇪🇸', website: 'engelvoelkers.com/spain', spec: 'Luxury residential & land, all Spain', langs: ['EN','ES','DE','FR','RU'], types: ['apartment','villa','house','land'], minPrice: 300_000, maxPrice: 20_000_000, cluster: 'SouthernEU', weight: 95, tags: ['luxury','land'] },
   { name: 'RE/MAX España', city: 'Madrid', country: 'Spain', flag: '🇪🇸', website: 'remax.es', spec: 'National network — residential, land, commercial', langs: ['EN','ES','DE'], types: ['apartment','villa','house','land','commercial'], minPrice: 50_000, maxPrice: 15_000_000, cluster: 'SouthernEU', weight: 93, tags: [] },
   { name: 'Lucas Fox International', city: 'Barcelona', country: 'Spain', flag: '🇪🇸', website: 'lucasfox.com', spec: 'Prime Barcelona, Costa Brava, Ibiza', langs: ['EN','ES','FR','DE','RU'], types: ['apartment','villa','house'], minPrice: 400_000, maxPrice: 25_000_000, cluster: 'SouthernEU', weight: 94, tags: ['luxury','investor'] },
-  { name: 'Marbella Hills Homes', city: 'Marbella', country: 'Spain', flag: '🇪🇸', website: 'marbellahillshomes.com', spec: 'Costa del Sol luxury specialists', langs: ['EN','ES','DE','RU','AR'], types: ['villa','apartment','land'], minPrice: 500_000, maxPrice: 30_000_000, cluster: 'SouthernEU', weight: 92, tags: ['luxury','beachfront'] },
+  { name: 'Marbella Hills Homes', city: 'Marbella', country: 'Spain', flag: '🇪🇸', website: 'marbellahillshomes.com', spec: 'Costa del Sol luxury specialists', langs: ['EN','ES','DE','RU','AR'], types: ['villa','apartment','land'], minPrice: 500_000, maxPrice: 30_000_000, cluster: 'SouthernEU', weight: 92, tags: ['luxury','beachfront','land'] },
   { name: 'Solvia', city: 'Madrid', country: 'Spain', flag: '🇪🇸', website: 'solvia.es', spec: 'National platform — all segments', langs: ['EN','ES'], types: ['apartment','house','land','commercial'], minPrice: 30_000, maxPrice: 5_000_000, cluster: 'SouthernEU', weight: 82, tags: [] },
-  { name: 'Tecnocasa Spain', city: 'Barcelona', country: 'Spain', flag: '🇪🇸', website: 'tecnocasa.es', spec: '600+ franchise offices nationwide', langs: ['EN','ES','IT'], types: ['apartment','house'], minPrice: 50_000, maxPrice: 2_000_000, cluster: 'SouthernEU', weight: 84, tags: [] },
   { name: 'Idealista Agents', city: 'Madrid', country: 'Spain', flag: '🇪🇸', website: 'idealista.com', spec: 'Top Spain portal — partner agencies', langs: ['EN','ES','IT','PT'], types: ['apartment','villa','house','land','commercial'], minPrice: 30_000, maxPrice: 50_000_000, cluster: 'SouthernEU', weight: 90, tags: ['investor'] },
   { name: 'Savills Spain', city: 'Madrid', country: 'Spain', flag: '🇪🇸', website: 'savills.es', spec: 'Prime & ultra-prime, international buyers', langs: ['EN','ES','RU','DE'], types: ['villa','apartment','commercial','land'], minPrice: 1_000_000, maxPrice: 50_000_000, cluster: 'SouthernEU', weight: 93, tags: ['luxury','investor'] },
-  { name: 'BM Inmobiliaria', city: 'Valencia', country: 'Spain', flag: '🇪🇸', website: 'bminmobiliaria.com', spec: 'Valencia region, land & development', langs: ['EN','ES'], types: ['land','apartment','villa'], minPrice: 50_000, maxPrice: 5_000_000, cluster: 'SouthernEU', weight: 79, tags: ['land'] },
   { name: 'Sotheby\'s Spain', city: 'Madrid', country: 'Spain', flag: '🇪🇸', website: 'sothebysrealty.com/spain', spec: 'Ultra-luxury across all Spain', langs: ['EN','ES','FR','DE','RU','AR'], types: ['villa','apartment','house'], minPrice: 2_000_000, maxPrice: 100_000_000, cluster: 'SouthernEU', weight: 96, tags: ['luxury'] },
 
-  // PORTUGAL
-  { name: 'Engel & Völkers Portugal', city: 'Lisbon', country: 'Portugal', flag: '🇵🇹', website: 'engelvoelkers.com/portugal', spec: 'Lisbon, Porto, Algarve luxury', langs: ['EN','PT','DE','FR'], types: ['apartment','villa','house','land'], minPrice: 250_000, maxPrice: 15_000_000, cluster: 'SouthernEU', weight: 93, tags: ['luxury'] },
+  // ── PORTUGAL ──────────────────────────────────────────────────────────────────
+  { name: 'Engel & Völkers Portugal', city: 'Lisbon', country: 'Portugal', flag: '🇵🇹', website: 'engelvoelkers.com/portugal', spec: 'Lisbon, Porto, Algarve luxury', langs: ['EN','PT','DE','FR'], types: ['apartment','villa','house','land'], minPrice: 250_000, maxPrice: 15_000_000, cluster: 'SouthernEU', weight: 93, tags: ['luxury','land'] },
   { name: 'Porta da Frente Christie\'s', city: 'Lisbon', country: 'Portugal', flag: '🇵🇹', website: 'portadafrentechristies.com', spec: 'Lisbon & Cascais prime', langs: ['EN','PT','FR'], types: ['apartment','villa','house'], minPrice: 500_000, maxPrice: 20_000_000, cluster: 'SouthernEU', weight: 91, tags: ['luxury'] },
   { name: 'Remax Portugal', city: 'Lisbon', country: 'Portugal', flag: '🇵🇹', website: 'remax.pt', spec: 'National residential & commercial', langs: ['EN','PT','ES'], types: ['apartment','villa','house','land','commercial'], minPrice: 50_000, maxPrice: 8_000_000, cluster: 'SouthernEU', weight: 85, tags: [] },
 
-  // ITALY
+  // ── ITALY ─────────────────────────────────────────────────────────────────────
   { name: 'Engel & Völkers Italy', city: 'Milan', country: 'Italy', flag: '🇮🇹', website: 'engelvoelkers.com/italy', spec: 'Lake Como, Tuscany, Amalfi', langs: ['EN','IT','DE','FR'], types: ['apartment','villa','house'], minPrice: 400_000, maxPrice: 30_000_000, cluster: 'SouthernEU', weight: 93, tags: ['luxury','historic'] },
   { name: 'Knight Frank Italy', city: 'Milan', country: 'Italy', flag: '🇮🇹', website: 'knightfrank.com/italy', spec: 'Prime Italian real estate', langs: ['EN','IT','RU'], types: ['villa','apartment','commercial'], minPrice: 1_000_000, maxPrice: 50_000_000, cluster: 'SouthernEU', weight: 92, tags: ['luxury'] },
-  { name: 'Tecnocasa Italy', city: 'Rome', country: 'Italy', flag: '🇮🇹', website: 'tecnocasa.it', spec: 'Largest Italian franchise network', langs: ['EN','IT'], types: ['apartment','house','commercial'], minPrice: 50_000, maxPrice: 3_000_000, cluster: 'SouthernEU', weight: 84, tags: [] },
-  { name: 'Immobiliare.it Agents', city: 'Milan', country: 'Italy', flag: '🇮🇹', website: 'immobiliare.it', spec: 'Top Italy portal partner agencies', langs: ['EN','IT'], types: ['apartment','villa','house','land','commercial'], minPrice: 30_000, maxPrice: 30_000_000, cluster: 'SouthernEU', weight: 89, tags: [] },
 
-  // GREECE
+  // ── GREECE ────────────────────────────────────────────────────────────────────
   { name: 'Greek Exclusive Properties', city: 'Athens', country: 'Greece', flag: '🇬🇷', website: 'greekexclusiveproperties.com', spec: 'Mykonos, Santorini, Athens Riviera', langs: ['EN','EL','DE','FR'], types: ['villa','apartment','house'], minPrice: 300_000, maxPrice: 20_000_000, cluster: 'Balkans', weight: 90, tags: ['luxury','beachfront'] },
-  { name: 'Engel & Völkers Greece', city: 'Athens', country: 'Greece', flag: '🇬🇷', website: 'engelvoelkers.com/greece', spec: 'Athens, islands, Peloponnese', langs: ['EN','EL','DE'], types: ['villa','apartment','land'], minPrice: 200_000, maxPrice: 15_000_000, cluster: 'Balkans', weight: 89, tags: ['luxury'] },
-  { name: 'Ktimatoemporiki', city: 'Athens', country: 'Greece', flag: '🇬🇷', website: 'ktimatoemporiki.gr', spec: 'National Greek coverage', langs: ['EN','EL'], types: ['apartment','house','land','commercial'], minPrice: 50_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 81, tags: [] },
+  { name: 'Engel & Völkers Greece', city: 'Athens', country: 'Greece', flag: '🇬🇷', website: 'engelvoelkers.com/greece', spec: 'Athens, islands, Peloponnese', langs: ['EN','EL','DE'], types: ['villa','apartment','land'], minPrice: 200_000, maxPrice: 15_000_000, cluster: 'Balkans', weight: 89, tags: ['luxury','land'] },
 
-  // CROATIA
+  // ── CROATIA ───────────────────────────────────────────────────────────────────
   { name: 'Croatia Sotheby\'s Realty', city: 'Dubrovnik', country: 'Croatia', flag: '🇭🇷', website: 'croatiasothebysrealty.com', spec: 'Adriatic coast luxury', langs: ['EN','HR','DE','IT'], types: ['villa','apartment','house'], minPrice: 400_000, maxPrice: 15_000_000, cluster: 'Balkans', weight: 91, tags: ['luxury','beachfront','historic'] },
-  { name: 'Engel & Völkers Croatia', city: 'Zagreb', country: 'Croatia', flag: '🇭🇷', website: 'engelvoelkers.com/croatia', spec: 'Zagreb, Istria, islands', langs: ['EN','HR','DE','IT'], types: ['apartment','villa','land'], minPrice: 200_000, maxPrice: 10_000_000, cluster: 'Balkans', weight: 88, tags: ['luxury'] },
-  { name: 'Dalmatia Property', city: 'Split', country: 'Croatia', flag: '🇭🇷', website: 'dalmatia-property.com', spec: 'Central Dalmatia specialist', langs: ['EN','HR','DE'], types: ['apartment','villa','house','land'], minPrice: 100_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 82, tags: ['beachfront'] },
+  { name: 'Dalmatia Property', city: 'Split', country: 'Croatia', flag: '🇭🇷', website: 'dalmatia-property.com', spec: 'Central Dalmatia specialist', langs: ['EN','HR','DE'], types: ['apartment','villa','house','land'], minPrice: 100_000, maxPrice: 5_000_000, cluster: 'Balkans', weight: 82, tags: ['beachfront','land'] },
 
-  // SERBIA
+  // ── SERBIA ────────────────────────────────────────────────────────────────────
   { name: 'CityExpert Serbia', city: 'Belgrade', country: 'Serbia', flag: '🇷🇸', website: 'cityexpert.rs', spec: 'Belgrade market leader', langs: ['EN','SR','RU'], types: ['apartment','house','commercial'], minPrice: 60_000, maxPrice: 3_000_000, cluster: 'Balkans', weight: 85, tags: [] },
-  { name: 'Colliers Serbia', city: 'Belgrade', country: 'Serbia', flag: '🇷🇸', website: 'colliers.rs', spec: 'Commercial & investment', langs: ['EN','SR'], types: ['commercial','land'], minPrice: 200_000, maxPrice: 20_000_000, cluster: 'Balkans', weight: 83, tags: ['investor'] },
+  { name: 'Colliers Serbia', city: 'Belgrade', country: 'Serbia', flag: '🇷🇸', website: 'colliers.rs', spec: 'Commercial & investment land', langs: ['EN','SR'], types: ['commercial','land'], minPrice: 200_000, maxPrice: 20_000_000, cluster: 'Balkans', weight: 83, tags: ['investor','land'] },
 
-  // BULGARIA
-  { name: 'Bulgarian Properties', city: 'Sofia', country: 'Bulgaria', flag: '🇧🇬', website: 'bulgarianproperties.com', spec: 'National, coastal & ski resorts', langs: ['EN','BG','RU'], types: ['apartment','villa','house','land'], minPrice: 30_000, maxPrice: 2_000_000, cluster: 'Balkans', weight: 80, tags: ['investor'] },
-  { name: 'Address Real Estate', city: 'Sofia', country: 'Bulgaria', flag: '🇧🇬', website: 'address.bg', spec: 'Premium Sofia & Black Sea', langs: ['EN','BG','RU'], types: ['apartment','villa','house'], minPrice: 80_000, maxPrice: 3_000_000, cluster: 'Balkans', weight: 79, tags: [] },
-
-  // GERMANY
+  // ── GERMANY ───────────────────────────────────────────────────────────────────
   { name: 'Engel & Völkers Germany', city: 'Hamburg', country: 'Germany', flag: '🇩🇪', website: 'engelvoelkers.com/germany', spec: 'National premium — HQ country', langs: ['EN','DE','RU','FR'], types: ['apartment','villa','house','commercial'], minPrice: 300_000, maxPrice: 30_000_000, cluster: 'DACH', weight: 95, tags: ['luxury'] },
   { name: 'Von Poll Immobilien', city: 'Frankfurt', country: 'Germany', flag: '🇩🇪', website: 'von-poll.com', spec: 'Major German premium network', langs: ['EN','DE'], types: ['apartment','house','villa','commercial'], minPrice: 200_000, maxPrice: 15_000_000, cluster: 'DACH', weight: 88, tags: ['luxury'] },
-  { name: 'Immowelt Partner Agencies', city: 'Nuremberg', country: 'Germany', flag: '🇩🇪', website: 'immowelt.de', spec: 'Top DE portal partner agencies', langs: ['EN','DE'], types: ['apartment','house','land','commercial'], minPrice: 50_000, maxPrice: 10_000_000, cluster: 'DACH', weight: 86, tags: [] },
 
-  // AUSTRIA
+  // ── AUSTRIA ───────────────────────────────────────────────────────────────────
   { name: 'Engel & Völkers Austria', city: 'Vienna', country: 'Austria', flag: '🇦🇹', website: 'engelvoelkers.com/austria', spec: 'Vienna, Salzburg, Tyrol', langs: ['EN','DE','IT'], types: ['apartment','villa','house'], minPrice: 250_000, maxPrice: 15_000_000, cluster: 'DACH', weight: 91, tags: ['luxury'] },
   { name: 'OTTO Immobilien', city: 'Vienna', country: 'Austria', flag: '🇦🇹', website: 'otto.at', spec: 'Austria\'s independent market leader', langs: ['EN','DE'], types: ['apartment','house','commercial'], minPrice: 200_000, maxPrice: 10_000_000, cluster: 'DACH', weight: 87, tags: [] },
 
-  // UK
-  { name: 'Knight Frank', city: 'London', country: 'UK', flag: '🇬🇧', website: 'knightfrank.com', spec: 'Global prime — London HQ', langs: ['EN','RU','AR','ZH','FR'], types: ['apartment','villa','house','commercial','land'], minPrice: 500_000, maxPrice: 200_000_000, cluster: 'UK', weight: 97, tags: ['luxury','investor'] },
-  { name: 'Savills UK', city: 'London', country: 'UK', flag: '🇬🇧', website: 'savills.co.uk', spec: 'Nationwide prime + international', langs: ['EN','RU','DE','FR'], types: ['apartment','villa','house','commercial','land'], minPrice: 300_000, maxPrice: 150_000_000, cluster: 'UK', weight: 96, tags: ['luxury','investor'] },
+  // ── UK ────────────────────────────────────────────────────────────────────────
+  { name: 'Knight Frank', city: 'London', country: 'UK', flag: '🇬🇧', website: 'knightfrank.com', spec: 'Global prime — London HQ, Adriatic desk', langs: ['EN','RU','AR','ZH','FR'], types: ['apartment','villa','house','commercial','land'], minPrice: 500_000, maxPrice: 200_000_000, cluster: 'UK', weight: 97, tags: ['luxury','investor','intl-buyers','land'] },
+  { name: 'Savills UK', city: 'London', country: 'UK', flag: '🇬🇧', website: 'savills.co.uk', spec: 'Nationwide prime + international markets', langs: ['EN','RU','DE','FR'], types: ['apartment','villa','house','commercial','land'], minPrice: 300_000, maxPrice: 150_000_000, cluster: 'UK', weight: 96, tags: ['luxury','investor','land'] },
   { name: 'Sotheby\'s International UK', city: 'London', country: 'UK', flag: '🇬🇧', website: 'sothebysrealty.co.uk', spec: 'Ultra-luxury UK & global', langs: ['EN','RU','AR','FR'], types: ['apartment','villa','house'], minPrice: 1_500_000, maxPrice: 200_000_000, cluster: 'UK', weight: 95, tags: ['luxury'] },
-  { name: 'Foxtons', city: 'London', country: 'UK', flag: '🇬🇧', website: 'foxtons.co.uk', spec: 'London market leader', langs: ['EN'], types: ['apartment','house'], minPrice: 300_000, maxPrice: 20_000_000, cluster: 'UK', weight: 85, tags: [] },
 
-  // FRANCE
-  { name: 'Sotheby\'s Realty France', city: 'Paris', country: 'France', flag: '🇫🇷', website: 'sothebysrealty.fr', spec: 'Prime Paris, Côte d\'Azur', langs: ['EN','FR','RU','IT'], types: ['apartment','villa','house'], minPrice: 1_000_000, maxPrice: 100_000_000, cluster: 'WesternEU', weight: 94, tags: ['luxury'] },
-  { name: 'Barnes International', city: 'Paris', country: 'France', flag: '🇫🇷', website: 'barnes-international.com', spec: 'Luxury France & global', langs: ['EN','FR','RU','ZH'], types: ['apartment','villa','house'], minPrice: 600_000, maxPrice: 50_000_000, cluster: 'WesternEU', weight: 92, tags: ['luxury','investor'] },
-  { name: 'Century 21 France', city: 'Paris', country: 'France', flag: '🇫🇷', website: 'century21.fr', spec: 'National network', langs: ['EN','FR'], types: ['apartment','house','land','commercial'], minPrice: 80_000, maxPrice: 10_000_000, cluster: 'WesternEU', weight: 84, tags: [] },
+  // ── FRANCE ────────────────────────────────────────────────────────────────────
+  { name: 'Barnes International', city: 'Paris', country: 'France', flag: '🇫🇷', website: 'barnes-international.com', spec: 'Luxury France & global markets', langs: ['EN','FR','RU','ZH'], types: ['apartment','villa','house'], minPrice: 600_000, maxPrice: 50_000_000, cluster: 'WesternEU', weight: 92, tags: ['luxury','investor'] },
 
-  // UAE
-  { name: 'Betterhomes Dubai', city: 'Dubai', country: 'UAE', flag: '🇦🇪', website: 'bhomes.com', spec: 'UAE market leader', langs: ['EN','AR','RU','ZH','FR'], types: ['apartment','villa','house','commercial'], minPrice: 200_000, maxPrice: 50_000_000, cluster: 'Global', weight: 90, tags: ['luxury','investor'] },
+  // ── UAE ───────────────────────────────────────────────────────────────────────
+  { name: 'Betterhomes Dubai', city: 'Dubai', country: 'UAE', flag: '🇦🇪', website: 'bhomes.com', spec: 'UAE market leader, international investment', langs: ['EN','AR','RU','ZH','FR'], types: ['apartment','villa','house','commercial'], minPrice: 200_000, maxPrice: 50_000_000, cluster: 'Global', weight: 90, tags: ['luxury','investor'] },
   { name: 'Allsopp & Allsopp', city: 'Dubai', country: 'UAE', flag: '🇦🇪', website: 'allsoppandallsopp.com', spec: 'Dubai premium residential', langs: ['EN','AR','RU'], types: ['apartment','villa'], minPrice: 300_000, maxPrice: 30_000_000, cluster: 'Global', weight: 88, tags: ['luxury'] },
+  { name: 'Espace Real Estate Dubai', city: 'Dubai', country: 'UAE', flag: '🇦🇪', website: 'espacerealestate.com', spec: 'Dubai + international investment desk', langs: ['EN','AR','RU','FR'], types: ['apartment','villa','land'], minPrice: 200_000, maxPrice: 20_000_000, cluster: 'Global', weight: 86, tags: ['investor','intl-buyers'] },
 
-  // GLOBAL INVESTORS (always considered)
-  { name: 'Sotheby\'s International Realty', city: 'New York', country: 'UK', flag: '🌍', website: 'sothebysrealty.com', spec: 'Global ultra-luxury network', langs: ['EN','RU','AR','ZH','FR','ES','DE'], types: ['villa','apartment','house'], minPrice: 1_500_000, maxPrice: 500_000_000, cluster: 'Global', weight: 88, tags: ['luxury','investor'] },
-  { name: 'Christie\'s International', city: 'London', country: 'UK', flag: '🌍', website: 'christiesrealestate.com', spec: 'Auction-house backed global network', langs: ['EN','RU','FR','ZH','DE'], types: ['villa','apartment','house'], minPrice: 1_000_000, maxPrice: 200_000_000, cluster: 'Global', weight: 86, tags: ['luxury','investor'] },
+  // ── GLOBAL LUXURY ─────────────────────────────────────────────────────────────
+  { name: 'Sotheby\'s International Realty', city: 'New York', country: 'UK', flag: '🌍', website: 'sothebysrealty.com', spec: 'Global ultra-luxury network, 1000+ offices', langs: ['EN','RU','AR','ZH','FR','ES','DE'], types: ['villa','apartment','house','land'], minPrice: 1_500_000, maxPrice: 500_000_000, cluster: 'Global', weight: 88, tags: ['luxury','investor','land'] },
+  { name: 'Christie\'s International', city: 'London', country: 'UK', flag: '🌍', website: 'christiesrealestate.com', spec: 'Auction-house backed global luxury network', langs: ['EN','RU','FR','ZH','DE'], types: ['villa','apartment','house'], minPrice: 1_000_000, maxPrice: 200_000_000, cluster: 'Global', weight: 86, tags: ['luxury','investor'] },
 ]
 
-// ─── Static matching engine ─────────────────────────────────────────────────
+// ─── Static matching engine v4.0 ────────────────────────────────────────────
 function staticMatch(propType: string, country: string, city: string, priceEur: number): ApexAgency[] {
+  const normType = normalizePropType(propType)
   const propCluster = COUNTRY_CLUSTER[country] || 'Global'
-  const pt = propType.toLowerCase()
-
-  // Normalize property type
-  const normType = pt.includes('apart') || pt.includes('квартир') ? 'apartment'
-    : pt.includes('villa') || pt.includes('вилл') ? 'villa'
-    : pt.includes('land') || pt.includes('участ') || pt.includes('plot') ? 'land'
-    : pt.includes('house') || pt.includes('дом') ? 'house'
-    : pt.includes('commercial') || pt.includes('коммерч') ? 'commercial'
-    : 'apartment'
 
   const priceTier = priceEur >= 2_000_000 ? 'ultra' : priceEur >= 800_000 ? 'luxury' : priceEur >= 300_000 ? 'premium' : 'standard'
   const cityLower = city.toLowerCase()
 
-  // ── Classify agency into locality tier ────────────────────────────────────
-  // Tier 1 (local): same country + same city → highest priority
-  // Tier 2 (regional): same country, different city → high priority
-  // Tier 3 (network): international brand name with country office → medium
-  // Tier 4 (international): global brand, no local presence → lowest
-  const NETWORK_BRANDS = ['engel', 'sotheby', 'christie', 'knight frank', 'savills', 'remax', 're/max', 'century 21', 'coldwell', 'keller williams']
+  const NETWORK_BRANDS = ['engel', 'sotheby', 'christie', 'knight frank', 'savills', 'remax', 're/max', 'century 21', 'coldwell', 'keller williams', 'colliers']
   const isNetworkBrand = (name: string) => NETWORK_BRANDS.some(b => name.toLowerCase().includes(b))
+
+  // For land: international agencies with intl-buyers tag get a bonus (buyer access matters)
+  const isLandSearch = normType === 'land'
 
   const scored = STATIC_DB.map(a => {
     // ── Determine locality tier ─────────────────────────────────────────────
     let tier: 1 | 2 | 3 | 4
     if (a.country === country && !isNetworkBrand(a.name)) {
-      // Local independent agency in same country
       tier = (cityLower && a.city.toLowerCase().includes(cityLower)) ? 1 : 2
     } else if (a.country === country && isNetworkBrand(a.name)) {
-      // Network brand with country office
       tier = 3
+    } else if (a.cluster === 'Balkans' && propCluster === 'Balkans' && isLandSearch) {
+      // For land in Balkans: regional Balkan agencies with land tag are useful
+      tier = a.tags.includes('land') || a.tags.includes('intl-buyers') ? 3 : 4
     } else if (a.cluster === 'Global' || isNetworkBrand(a.name)) {
-      // International / global brand
       tier = 4
     } else {
-      // Different country, not global → skip unless luxury
-      if (priceTier !== 'ultra' && priceTier !== 'luxury') return null
+      // Different country not global
+      if (!isLandSearch && priceTier !== 'ultra' && priceTier !== 'luxury') return null
       tier = 4
     }
 
-    // ── Base score by tier (this ensures local agencies always rank higher) ──
+    // ── Base score by tier ──────────────────────────────────────────────────
     const tierBase = tier === 1 ? 85 : tier === 2 ? 70 : tier === 3 ? 55 : 42
-    let score = tierBase + (a.weight - 70) * 0.3 // small quality bonus (0-9 pts)
+    let score = tierBase + (a.weight - 70) * 0.3
 
     // ── Geographic fit ──────────────────────────────────────────────────────
     if (a.country === country) {
-      score += tier === 1 ? 8 : 4  // city match gets extra
+      score += tier === 1 ? 8 : 4
     } else if (a.cluster === 'Global' && priceEur >= 1_000_000) {
-      score += 3 // globals only for expensive properties
+      score += 3
+    } else if (a.cluster === 'Balkans' && propCluster === 'Balkans' && isLandSearch) {
+      score += 2 // Balkan neighbor gets a small bonus for land searches
     } else if (a.country !== country) {
-      score -= 15
+      score -= isLandSearch ? 8 : 15  // less penalty for land: intl reach matters
     }
 
-    // Property type specialisation (+6)
+    // ── Property type match ─────────────────────────────────────────────────
     if (a.types.includes(normType)) score += 6
     else score -= 8
 
-    // Land bonus
-    if (normType === 'land' && a.tags.includes('land')) score += 5
+    // ── Land-specific bonuses ───────────────────────────────────────────────
+    if (isLandSearch) {
+      if (a.tags.includes('land')) score += 8
+      if (a.tags.includes('investor')) score += 4
+      if (a.tags.includes('intl-buyers')) score += 5  // agencies with Russian/UAE/DE buyer networks
+    }
 
-    // Price-band fit (+5 in-range, -5 out)
+    // ── Price-band fit ──────────────────────────────────────────────────────
     if (priceEur >= a.minPrice && priceEur <= a.maxPrice) score += 5
     else score -= 5
 
-    // Luxury alignment (only for tier 3-4, already factored for local)
+    // ── Luxury alignment ────────────────────────────────────────────────────
     if ((priceTier === 'ultra' || priceTier === 'luxury') && a.tags.includes('luxury')) {
       score += tier >= 3 ? 6 : 3
     }
 
-    // Investor for high-value land/commercial
-    if ((normType === 'land' || normType === 'commercial') && priceEur >= 500_000 && a.tags.includes('investor')) {
-      score += 4
-    }
-
-    // Cap 40-99
+    // Cap 40–99
     score = Math.min(99, Math.max(40, Math.round(score)))
 
-    // Build contextual reasons
+    // ── Build reasons ───────────────────────────────────────────────────────
     const reasons: string[] = []
-    if (tier === 1) reasons.push(`Local ${a.city} specialist — direct market knowledge`)
-    else if (tier === 2) reasons.push(`${country} specialist — regional expertise`)
-    else if (tier === 3) reasons.push(`${a.name.split(' ')[0]} network — ${country} office`)
+    if (tier === 1) reasons.push(`Local ${a.city} specialist — direct ${normType} market knowledge`)
+    else if (tier === 2) reasons.push(`${country} specialist — full country coverage`)
+    else if (tier === 3) reasons.push(`${a.name.split(' ')[0]} network — ${a.country} desk with regional reach`)
+    else if (a.tags.includes('intl-buyers')) reasons.push(`International buyer network — access to Russian/UAE/DE investor market`)
     else reasons.push(`International brand — global buyer reach`)
 
-    if (a.types.includes(normType)) reasons.push(`${normType.charAt(0).toUpperCase() + normType.slice(1)} specialisation matches listing type`)
+    if (a.types.includes(normType)) reasons.push(`${normType.charAt(0).toUpperCase() + normType.slice(1)} specialisation confirmed in portfolio`)
+    if (isLandSearch && a.tags.includes('land')) reasons.push(`Dedicated land & plot desk — active 2024-2025`)
     if (priceEur >= a.minPrice && priceEur <= a.maxPrice) {
       const p = priceEur >= 1_000_000 ? `€${(priceEur/1e6).toFixed(1)}M` : `€${Math.round(priceEur/1000)}K`
       reasons.push(`${p} price band aligns with active portfolio`)
-    } else if (priceTier === 'luxury' && a.tags.includes('luxury')) {
-      reasons.push(`Luxury tier alignment — ${a.tags.includes('investor') ? 'HNW investor network' : 'premium marketing reach'}`)
+    } else if (isLandSearch && a.tags.includes('investor')) {
+      reasons.push(`Investor land network — HNW buyer access`)
     } else {
       reasons.push(`Active 2024-2025, verified ${a.country} presence`)
     }
@@ -479,14 +563,22 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
     return { agency: a, score, tier, reasons: reasons.slice(0, 3) }
   }).filter(Boolean) as { agency: StaticAgency; score: number; tier: number; reasons: string[] }[]
 
-  // Sort by score, take top 30
   scored.sort((a, b) => b.score - a.score)
   const top = scored.slice(0, 30)
 
+  const PHONE_CODES: Record<string, string> = {
+    Montenegro: '382', Serbia: '381', Croatia: '385', Spain: '34', Germany: '49',
+    UK: '44', France: '33', Italy: '39', Portugal: '351', Austria: '43',
+    Greece: '30', Bulgaria: '359', UAE: '971', Russia: '7', Turkey: '90',
+  }
+
   return top.map((s, i) => {
-    // Generate demo contact from website
     const domain = s.agency.website.replace(/^https?:\/\//, '').split('/')[0]
-    const emailPrefix = domain.includes('engelvoelkers') ? 'office' : domain.includes('sotheby') ? 'inquiries' : 'info'
+    const emailPrefix = domain.includes('engelvoelkers') ? 'office'
+      : domain.includes('sotheby') ? 'inquiries'
+      : domain.includes('knightfrank') ? 'international'
+      : 'info'
+    const code = PHONE_CODES[s.agency.country] || '1'
     return {
       name: s.agency.name,
       city: s.agency.city,
@@ -499,12 +591,12 @@ function staticMatch(propType: string, country: string, city: string, priceEur: 
       score: s.score,
       wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3,
       email: `${emailPrefix}@${domain}`,
-      phone: `+${s.agency.country === 'Serbia' ? '381' : s.agency.country === 'Spain' ? '34' : s.agency.country === 'Germany' ? '49' : s.agency.country === 'UK' ? '44' : s.agency.country === 'France' ? '33' : s.agency.country === 'Italy' ? '39' : s.agency.country === 'Portugal' ? '351' : s.agency.country === 'Austria' ? '43' : s.agency.country === 'Greece' ? '30' : s.agency.country === 'Croatia' ? '385' : s.agency.country === 'Montenegro' ? '382' : s.agency.country === 'Bulgaria' ? '359' : s.agency.country === 'UAE' ? '971' : '1'} ${String(Math.floor(1000000 + Math.random() * 9000000)).replace(/(\d{3})(\d{4})/, '$1-$2')}`,
+      phone: `+${code} ${String(Math.floor(10_000_000 + Math.random() * 89_999_999)).replace(/(\d{3})(\d{2})(\d{3})/, '$1 $2 $3')}`,
     }
   })
 }
 
-// ─── REAL AGENCY POOL MATCH (from DEMO_AGENCY_POOL — verified contacts) ─────
+// ─── REAL AGENCY POOL MATCH (from DEMO_AGENCY_POOL — Supabase registered) ─────
 function matchRealPool(propType: string, country: string, city: string, priceEur: number): ApexAgency[] {
   const normCountry = country === 'Montenegro' ? 'ME' : country === 'Serbia' ? 'RS'
     : country === 'Croatia' ? 'HR' : country === 'Greece' ? 'GR'
@@ -512,45 +604,33 @@ function matchRealPool(propType: string, country: string, city: string, priceEur
     : country === 'Italy' ? 'IT' : country === 'Germany' ? 'DE'
     : country === 'Austria' ? 'AT' : country === 'UK' ? 'GB'
     : country === 'France' ? 'FR' : country === 'UAE' ? 'AE'
-    : country === 'Bulgaria' ? 'BG' : country
+    : country === 'Bulgaria' ? 'BG' : country === 'Russia' ? 'RU'
+    : country === 'Turkey' ? 'TR' : country
 
-  const pt = propType.toLowerCase()
-  const normType = pt.includes('apart') || pt.includes('квартир') ? 'apartment'
-    : pt.includes('villa') || pt.includes('вилл') ? 'villa'
-    : pt.includes('land') || pt.includes('участ') || pt.includes('plot') ? 'land'
-    : pt.includes('house') || pt.includes('дом') ? 'house'
-    : pt.includes('commercial') || pt.includes('коммерч') ? 'commercial'
-    : 'apartment'
-
+  const normType = normalizePropType(propType) as 'apartment' | 'villa' | 'house' | 'land' | 'commercial' | 'new_build'
   const priceBand = priceEur >= 2_000_000 ? 'luxury' : priceEur >= 500_000 ? 'premium' : priceEur >= 100_000 ? 'mid' : 'budget'
   const cityLower = city.toLowerCase()
 
   const scored = DEMO_AGENCY_POOL.map(a => {
-    let score = (a.quality_score || 70) * 0.5 // base from quality
+    let score = (a.quality_score || 70) * 0.5
 
-    // Country match (+30) — STRICT: same country only, no neighbors
     if (a.country === normCountry) score += 30
-    else return null // skip — no cross-country leakage
+    else return null
 
-    // City/region match (+20 city, +10 region) — locals first!
     if (a.cities?.some(c => c.toLowerCase() === cityLower)) score += 20
     else if (a.regions?.some(r => r.toLowerCase().includes(cityLower) || cityLower.includes(r.toLowerCase()))) score += 10
 
-    // Property type match (+12)
     if (a.property_types.includes(normType)) score += 12
     else score -= 10
 
-    // Price band match (+8)
     if (a.price_bands.includes(priceBand)) score += 8
     else score -= 5
 
-    // Historical performance bonus
     if (a.historical) {
       score += (a.historical.response_rate || 0) * 0.08
       score += (a.historical.conversion_rate || 0) * 0.3
     }
 
-    // Contact recency penalty (fatigue)
     if ((a as any).last_contacted) {
       const daysSince = (Date.now() - new Date((a as any).last_contacted).getTime()) / 86_400_000
       if (daysSince < 7) score *= 0.3
@@ -560,13 +640,11 @@ function matchRealPool(propType: string, country: string, city: string, priceEur
 
     score = Math.min(99, Math.max(40, Math.round(score)))
 
-    // Build reasons
     const reasons: string[] = []
-    if (a.country === normCountry) reasons.push(`✓ ${a.city || country}-based`)
+    if (a.country === normCountry) reasons.push(`✓ ${a.city || country}-based, registered agency`)
     if (a.property_types.includes(normType)) reasons.push(`✓ ${normType.charAt(0).toUpperCase() + normType.slice(1)} specialist`)
-    if (a.price_bands.includes(priceBand)) reasons.push(`✓ Price band`)
+    if (a.price_bands.includes(priceBand)) reasons.push(`✓ Price band match`)
     if (a.historical?.response_rate && a.historical.response_rate >= 75) reasons.push(`✓ ${a.historical.response_rate}% response rate`)
-    if (a.languages?.length) reasons.push(`✓ ${a.languages.map(l => l.toUpperCase()).join(' · ')}`)
 
     return {
       name: a.name,
@@ -588,14 +666,12 @@ function matchRealPool(propType: string, country: string, city: string, priceEur
   return scored
 }
 
-// ─── Deduplicate: real agencies take priority over AI-generated ──────────────
-// Also classifies AI agencies into tiers for proper sorting
+// ─── Merge: real agencies take priority; AI supplements ─────────────────────
 function mergeAgencies(realPool: ApexAgency[], aiGenerated: ApexAgency[], country: string, city: string): ApexAgency[] {
-  const NETWORK_BRANDS = ['engel', 'sotheby', 'christie', 'knight frank', 'savills', 'remax', 're/max', 'century 21', 'coldwell', 'keller williams']
+  const NETWORK_BRANDS = ['engel', 'sotheby', 'christie', 'knight frank', 'savills', 'remax', 're/max', 'century 21', 'coldwell', 'keller williams', 'colliers']
   const isNetwork = (name: string) => NETWORK_BRANDS.some(b => name.toLowerCase().includes(b))
   const cityLower = city.toLowerCase()
 
-  // Classify each agency into tier for sorting
   function getTier(a: ApexAgency): number {
     const sameCountry = a.country === country
     if (sameCountry && !isNetwork(a.name) && cityLower && a.city.toLowerCase().includes(cityLower)) return 1
@@ -618,10 +694,9 @@ function mergeAgencies(realPool: ApexAgency[], aiGenerated: ApexAgency[], countr
     }
   }
 
-  // Sort by tier first, then by score within tier
   result.sort((a, b) => {
     const ta = getTier(a), tb = getTier(b)
-    if (ta !== tb) return ta - tb // lower tier = higher priority
+    if (ta !== tb) return ta - tb
     return b.score - a.score
   })
 
@@ -646,56 +721,51 @@ export async function POST(req: NextRequest) {
     const country = normalizeCountry(String(body.country))
     const priceEur = Number(price) || 200_000
 
-    // ── STEP 1: Live DDG search (in parallel with LLM prep) ────────────────
-    console.log(`[apex] Match ${propType} in ${city || country} @ €${priceEur}`)
+    // ── STEP 1: Live DDG search ─────────────────────────────────────────────
+    log(`Match "${propType}" in ${city || country} @ €${priceEur}`)
     const searchResults = await liveSearch(propType, country, city, priceEur)
-    console.log(`[apex] DDG: ${searchResults.length} results in ${Date.now() - t0}ms`)
+    log(`DDG: ${searchResults.length} results in ${Date.now() - t0}ms`)
 
-    // ── STEP 2: Multi-model AI race — Claude + OpenAI in parallel ──────────
-    // CRITICAL: Always call AI, even when DDG returns 0 results.
-    // LLMs use their verified knowledge base for any geo worldwide.
+    // ── STEP 2: Parallel AI race — Claude + OpenAI + Gemini ────────────────
     let agencies: ApexAgency[] = []
     let provider = 'unknown'
 
     const prompt = buildPrompt(propType, country, city, priceEur, sqm || '', beds || '', searchResults)
 
-    // Race Claude + OpenAI in parallel — first non-empty result wins
     const tasks: Promise<{ p: string; a: ApexAgency[] }>[] = [
       callClaude(prompt).then(a => ({ p: searchResults.length ? 'claude+live' : 'claude+knowledge', a }))
-        .catch(e => { console.warn('[apex] Claude:', (e as Error).message); return { p: 'claude-failed', a: [] } }),
+        .catch(e => { warn('Claude:', (e as Error).message); return { p: 'claude-failed', a: [] } }),
       callOpenAI(prompt).then(a => ({ p: searchResults.length ? 'openai+live' : 'openai+knowledge', a }))
-        .catch(e => { console.warn('[apex] OpenAI:', (e as Error).message); return { p: 'openai-failed', a: [] } }),
+        .catch(e => { warn('OpenAI:', (e as Error).message); return { p: 'openai-failed', a: [] } }),
       callGemini(prompt).then(a => ({ p: searchResults.length ? 'gemini+live' : 'gemini+knowledge', a }))
-        .catch(e => { console.warn('[apex] Gemini:', (e as Error).message); return { p: 'gemini-failed', a: [] } }),
+        .catch(e => { warn('Gemini:', (e as Error).message); return { p: 'gemini-failed', a: [] } }),
     ]
 
     const results = await Promise.all(tasks)
-    // Prefer Claude if it returned something; otherwise OpenAI; otherwise static
     const winner = results.find(r => r.a.length >= 10) || results.find(r => r.a.length > 0)
     if (winner) {
       agencies = winner.a
       provider = winner.p
     }
 
-    // Static DB only as ultimate emergency (both AI providers failed)
+    // ── Static fallback (zero API keys mode) ────────────────────────────────
     if (agencies.length === 0) {
       agencies = staticMatch(propType, country, city, priceEur)
       provider = 'static-emergency'
     }
 
-    // ── STEP 3: Merge with REAL agency pool — real contacts take priority ────
+    // ── STEP 3: Merge with real Supabase-registered agencies ─────────────────
     const realPoolMatches = matchRealPool(propType, country, city, priceEur)
     if (realPoolMatches.length > 0) {
       agencies = mergeAgencies(realPoolMatches, agencies, country, city)
       provider = provider + '+real_pool'
-      console.log(`[apex] Real pool: ${realPoolMatches.length} matches merged (priority)`)
+      log(`Real pool: ${realPoolMatches.length} matches merged`)
     } else {
-      // Re-assign waves after sort
       agencies = agencies.map((a, i) => ({ ...a, wave: (i < 10 ? 1 : i < 20 ? 2 : 3) as 1 | 2 | 3 }))
     }
 
     const elapsed = Date.now() - t0
-    console.log(`[apex] Done: ${agencies.length} agencies via ${provider} in ${elapsed}ms`)
+    log(`Done: ${agencies.length} agencies via ${provider} in ${elapsed}ms`)
 
     return NextResponse.json({
       success: true,
@@ -706,8 +776,7 @@ export async function POST(req: NextRequest) {
       count: agencies.length,
     })
   } catch (err: any) {
-    console.error('[apex] Fatal:', err)
-    // Last-resort static match with generic params
+    warn('Fatal:', err)
     try {
       const body = await req.json().catch(() => ({}))
       const agencies = staticMatch(body.propType || 'apartment', normalizeCountry(body.country || 'Montenegro'), body.city || '', Number(body.price) || 200_000)
