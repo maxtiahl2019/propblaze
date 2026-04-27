@@ -18,20 +18,48 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const verify = async () => {
-      if (DEMO_MODE) { setVerified(true); return; }
+      // ── ADMIN GATE: dashboard is closed to the public ──────────────────
+      const ADMIN_EMAILS = ['contact@win-winsolution.com', 'max.tyagly@gmail.com', 'maxtiahyi@gmail.com']
+      const ADMIN_TOKEN  = process.env.NEXT_PUBLIC_ADMIN_TOKEN || 'propblaze-admin-2025'
+
+      // Check localStorage for admin token or email
       try {
-        const stored = localStorage.getItem('propblaze-auth');
+        const stored = localStorage.getItem('propblaze-auth')
         if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed?.state?.token === 'demo-token') { setVerified(true); return; }
+          const parsed = JSON.parse(stored)
+          const email = parsed?.state?.user?.email || ''
+          const token = parsed?.state?.token || ''
+          if (ADMIN_EMAILS.includes(email) || token === ADMIN_TOKEN) {
+            setVerified(true); return
+          }
         }
+        // Check sessionStorage for direct admin access
+        const adminKey = sessionStorage.getItem('admin-access')
+        if (adminKey === ADMIN_TOKEN) { setVerified(true); return }
       } catch {}
-      if (isSupabaseConfigured) {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) { logout(); router.replace('/login'); return; }
-        setVerified(true); return;
+
+      if (DEMO_MODE) {
+        // In demo mode only allow admin emails
+        try {
+          const stored = localStorage.getItem('propblaze-auth')
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            const email = parsed?.state?.user?.email || ''
+            if (ADMIN_EMAILS.includes(email)) { setVerified(true); return }
+          }
+        } catch {}
+        router.replace('/'); return
       }
-      router.replace('/login');
+
+      if (isSupabaseConfigured) {
+        const { data } = await supabase.auth.getSession()
+        if (!data.session) { logout(); router.replace('/'); return }
+        if (!ADMIN_EMAILS.includes(data.session.user.email || '')) {
+          router.replace('/'); return
+        }
+        setVerified(true); return
+      }
+      router.replace('/');
     };
     verify();
   // eslint-disable-next-line react-hooks/exhaustive-deps
